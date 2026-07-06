@@ -1,7 +1,15 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ["./App.{js,jsx,ts,tsx}", "./src/**/*.{js,jsx,ts,tsx}"],
+  content: ["./App.jsx", "./src/**/*.{js,jsx}"],
   presets: [require("nativewind/preset")],
-  theme: { extend: {} },
+  theme: {
+    extend: {
+      colors: {
+        vistaNavy: "#1B3A6B",
+        vistaOrange: "#F5A623",
+        vistaYellow: "#F7B733",
+      },
+    },
+  },
   plugins: [],
 };
