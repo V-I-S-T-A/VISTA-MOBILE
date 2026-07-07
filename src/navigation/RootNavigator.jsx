@@ -18,5 +18,9 @@ export default function RootNavigator() {
   if (showSplash) return <SplashScreen />;
   if (!user) return <AuthNavigator />;
 
-  return role === ROLES.STAFF ? <StaffNavigator /> : <StudentNavigator />;
+  if (role === ROLES.STAFF || role === ROLES.ADMIN) {
+    return <StaffNavigator />;
+  }
+
+  return <StudentNavigator />;
 }
