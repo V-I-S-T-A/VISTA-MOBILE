@@ -7,20 +7,34 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { ROLES } from "../../constants/roles";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { login } = useAuth();
 
-  const handleSignIn = () => {
-    // TODO: replace with real API call via src/services.
-    // Temporary staff-only redirect for static dashboard work.
-    login({ email: email || "staff@vista.local" }, ROLES.STAFF);
+  const handleSignIn = async () => {
+    if (!email.trim() || !password) {
+      setErrorMessage("Enter your email and password.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorMessage("");
+
+    try {
+      await login({ email: email.trim(), password });
+    } catch (error) {
+      setErrorMessage(error.message || "Login failed. Check credentials.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -48,12 +62,13 @@ export default function LoginScreen() {
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
+            autoCorrect={false}
             keyboardType="email-address"
             className="text-gray-700"
           />
         </View>
 
-        <View className="bg-white/90 rounded-full border border-vistaOrange px-5 py-4 mb-6">
+        <View className="bg-white/90 rounded-full border border-vistaOrange px-5 py-4 mb-3">
           <TextInput
             placeholder="password"
             placeholderTextColor="#9CA3AF"
@@ -64,13 +79,26 @@ export default function LoginScreen() {
           />
         </View>
 
+        {errorMessage ? (
+          <Text className="text-red-600 text-sm font-semibold mb-3 px-2">
+            {errorMessage}
+          </Text>
+        ) : null}
+
         <TouchableOpacity
           onPress={handleSignIn}
-          className="bg-vistaOrange rounded-full py-4 items-center shadow-md"
+          disabled={isSubmitting}
+          className={`bg-vistaOrange rounded-full py-4 items-center shadow-md ${
+            isSubmitting ? "opacity-70" : ""
+          }`}
         >
-          <Text className="text-white font-bold text-base tracking-wide">
-            SIGN IN
-          </Text>
+          {isSubmitting ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <Text className="text-white font-bold text-base tracking-wide">
+              SIGN IN
+            </Text>
+          )}
         </TouchableOpacity>
       </KeyboardAvoidingView>
     </ImageBackground>
