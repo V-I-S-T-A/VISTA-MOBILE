@@ -18,14 +18,9 @@ export default function LoginScreen() {
   const { login } = useAuth();
 
   const handleSignIn = () => {
-    if (!email || !password) return;
-
-    // TODO: replace with real API call via src/services
-    // Temporary role detection for testing: emails containing "staff" log in as staff
-    const role = email.toLowerCase().includes("staff")
-      ? ROLES.STAFF
-      : ROLES.STUDENT;
-    login({ email }, role);
+    // TODO: replace with real API call via src/services.
+    // Temporary staff-only redirect for static dashboard work.
+    login({ email: email || "staff@vista.local" }, ROLES.STAFF);
   };
 
   return (
