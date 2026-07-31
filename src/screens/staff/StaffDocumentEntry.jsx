@@ -17,6 +17,7 @@ export default function StaffDocumentEntry({ navigation }) {
         onHomePress={() => navigation.navigate("StaffHome")}
         onProfilePress={() => navigation.navigate("StaffDocumentEntry")}
         onReportsPress={() => navigation.navigate("StaffReviewPanel")}
+        onCloudPress={() => navigation.navigate("GDriveSync")}
       />
     </View>
   );
