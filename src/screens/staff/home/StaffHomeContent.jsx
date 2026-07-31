@@ -1,5 +1,6 @@
 import { View, Text, Image, TouchableOpacity, ScrollView } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 
 const submissions = [
   {
@@ -101,13 +102,14 @@ function RecentSubmissionItem({ item }) {
 }
 
 function RecentSubmissions() {
+  const navigation = useNavigation();
   return (
     <>
       <View className="flex-row justify-between items-center mb-3">
         <Text className="text-vistaNavy font-bold text-base">
           Recent Submissions
         </Text>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate("StaffSubmissionHistory")}>
           <Text className="text-vistaNavy text-sm">View All</Text>
         </TouchableOpacity>
       </View>
