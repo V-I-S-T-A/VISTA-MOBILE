@@ -1,4 +1,5 @@
 import { View, Text, TouchableOpacity } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 
 const submissions = [
   {
@@ -63,6 +64,8 @@ function LogoPlaceholder({ text, color }) {
 }
 
 export default function StaffReviewList() {
+  const navigation = useNavigation();
+
   return (
     <View className="mb-4">
       {submissions.map((item) => (
@@ -77,7 +80,7 @@ export default function StaffReviewList() {
             
             <View className="flex-row justify-between items-center mt-1">
               <Text className="text-gray-500 text-xs font-medium">{item.bottomLeft}</Text>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => navigation.navigate("ReviewPanelDetails")}>
                 <Text className="text-[#3b82f6] text-xs font-semibold">View details</Text>
               </TouchableOpacity>
             </View>
