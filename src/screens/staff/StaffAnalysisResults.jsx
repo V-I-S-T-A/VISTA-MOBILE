@@ -19,6 +19,7 @@ export default function StaffAnalysisResults({ navigation }) {
         activeTab="profile"
         onHomePress={() => navigation.navigate("StaffHome")}
         onProfilePress={() => navigation.navigate("StaffDocumentEntry")}
+        onReportsPress={() => navigation.navigate("StaffReviewPanel")}
       />
     </View>
   );
