@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { View, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import StaffBottomNav from "../../../components/staff/StaffBottomNav";
@@ -9,6 +10,8 @@ import SubmissionHistoryPagination from "./submissionHistory/SubmissionHistoryPa
 
 export default function StaffSubmissionHistory({ navigation }) {
   const insets = useSafeAreaInsets();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All Status");
 
   return (
     <View className="flex-1 bg-[#F3F3F3]" style={{ paddingTop: insets.top }}>
@@ -19,8 +22,16 @@ export default function StaffSubmissionHistory({ navigation }) {
       >
         <StaffReviewHeader />
         <SubmissionHistoryTop />
-        <SubmissionHistorySearch />
-        <SubmissionHistoryList />
+        <SubmissionHistorySearch 
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+        />
+        <SubmissionHistoryList 
+          searchQuery={searchQuery}
+          statusFilter={statusFilter}
+        />
         <SubmissionHistoryPagination />
       </ScrollView>
 
