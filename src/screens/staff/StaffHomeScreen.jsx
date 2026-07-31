@@ -14,6 +14,7 @@ export default function StaffHomeScreen({ navigation }) {
         activeTab="home"
         onHomePress={() => navigation.navigate("StaffHome")}
         onProfilePress={() => navigation.navigate("StaffDocumentEntry")}
+        onReportsPress={() => navigation.navigate("StaffReviewPanel")}
       />
     </View>
   );
