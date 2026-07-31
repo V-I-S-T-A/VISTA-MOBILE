@@ -46,6 +46,14 @@ export const authService = {
     return apiRequest(API_ENDPOINTS.AUTH.ME, { accessToken });
   },
 
+  updateMe({ data, accessToken }) {
+    return apiRequest(API_ENDPOINTS.AUTH.ME, {
+      method: "PATCH",
+      accessToken,
+      body: data,
+    });
+  },
+
   logout({ refresh, accessToken }) {
     return apiRequest(API_ENDPOINTS.AUTH.LOGOUT, {
       method: "POST",
