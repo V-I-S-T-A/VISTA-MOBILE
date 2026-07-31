@@ -7,7 +7,8 @@ const historyData = [
     line1: "angelo.SITE@gmail.com",
     line2: "29 JAN 2026",
     logoText: "SITE",
-    logoColor: "#1a5b82"
+    logoColor: "#1a5b82",
+    status: "Pending"
   },
   {
     id: 2,
@@ -15,7 +16,8 @@ const historyData = [
     line1: "Angelo Binonggo",
     line2: "angelo.SITE@gmail.com",
     logoText: "GDG",
-    logoColor: "#ea4335"
+    logoColor: "#ea4335",
+    status: "Under Review"
   },
   {
     id: 3,
@@ -23,7 +25,8 @@ const historyData = [
     line1: "Angelo Binonggo",
     line2: "angelo.SITE@gmail.com",
     logoText: "UCS",
-    logoColor: "#000000"
+    logoColor: "#000000",
+    status: "Approved"
   },
   {
     id: 4,
@@ -31,7 +34,8 @@ const historyData = [
     line1: "Angelo Binonggo",
     line2: "angelo.SITE@gmail.com",
     logoText: "USG",
-    logoColor: "#fbbc05"
+    logoColor: "#fbbc05",
+    status: "Rejected"
   },
   {
     id: 5,
@@ -39,7 +43,8 @@ const historyData = [
     line1: "Angelo Binonggo",
     line2: "angelo.SITE@gmail.com",
     logoText: "GDG",
-    logoColor: "#ea4335"
+    logoColor: "#ea4335",
+    status: "Resubmission Required"
   },
   {
     id: 6,
@@ -47,7 +52,8 @@ const historyData = [
     line1: "Angelo Binonggo",
     line2: "angelo.SITE@gmail.com",
     logoText: "SITE",
-    logoColor: "#1a5b82"
+    logoColor: "#1a5b82",
+    status: "Pending"
   }
 ];
 
@@ -62,10 +68,31 @@ function LogoPlaceholder({ text, color }) {
   );
 }
 
-export default function SubmissionHistoryList() {
+export default function SubmissionHistoryList({ searchQuery = "", statusFilter = "All Status" }) {
+  const filteredData = historyData.filter(item => {
+    // Search match
+    const query = searchQuery.toLowerCase();
+    const matchesSearch = item.title.toLowerCase().includes(query) || 
+                          item.line1.toLowerCase().includes(query) || 
+                          item.line2.toLowerCase().includes(query);
+                          
+    // Status match
+    const matchesStatus = statusFilter === "All Status" || item.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
+
+  if (filteredData.length === 0) {
+    return (
+      <View className="py-10 items-center justify-center">
+        <Text className="text-gray-500 font-medium">No submissions found.</Text>
+      </View>
+    );
+  }
+
   return (
     <View className="mb-2">
-      {historyData.map((item) => (
+      {filteredData.map((item) => (
         <View key={item.id} className="bg-white rounded-3xl p-5 mb-4 flex-row items-center shadow-sm">
           <LogoPlaceholder text={item.logoText} color={item.logoColor} />
           
