@@ -13,10 +13,12 @@ export default function ReviewDetailsTopSection() {
       <View className="flex-row items-center">
         <TouchableOpacity 
           onPress={() => navigation.goBack()}
-          className="bg-[#FFD740] flex-row items-center px-4 py-1.5 rounded-full mr-4 shadow-sm"
+          className="bg-[#FFE452] p-[3px] rounded-full mr-3 shadow-sm"
         >
-          <Feather name="chevron-left" size={16} color="#4b5563" />
-          <Text className="text-gray-700 font-semibold text-sm ml-1">Back</Text>
+          <View className="bg-[#FFF2A8] px-3.5 py-1 flex-row items-center rounded-full">
+            <Text className="text-[#1a1a1a] font-medium text-base mr-1 leading-5">›</Text>
+            <Text className="text-[#1a1a1a] font-medium text-[13px]">Back</Text>
+          </View>
         </TouchableOpacity>
         <Text className="text-vistaNavy font-semibold text-sm">Review Details</Text>
       </View>
