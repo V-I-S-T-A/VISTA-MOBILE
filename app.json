@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "V.I.S.T.A.",
+    "name": "VISTA",
     "slug": "vista-app",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -13,7 +13,9 @@
       "resizeMode": "cover",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true
     },
@@ -21,10 +23,14 @@
       "adaptiveIcon": {
         "foregroundImage": "./src/assets/logo.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.vista"
     },
     "web": {
       "favicon": "./src/assets/logo.png"
-    }
+    },
+    "plugins": [
+      "react-native-document-scanner-plugin"
+    ]
   }
 }
