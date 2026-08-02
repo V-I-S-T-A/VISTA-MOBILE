@@ -121,10 +121,8 @@ export default function StaffDocumentEntryContent({ onLogPhysicalDocPress }) {
 
   const runAutofill = async (file) => {
     try {
-      // const file = await scanDocument();
-      // if (!file) return; // staff cancelled the scan
-
       setScannedFile(file);
+      setOcrNotice(null);
       const draft = await autofillMutation.mutateAsync(file);
       setOcrDraft(draft);
 
@@ -205,15 +203,26 @@ export default function StaffDocumentEntryContent({ onLogPhysicalDocPress }) {
         {
           text: "Scan with Camera",
           onPress: async () => {
-            const file = await scanDocument();
-            if (file) runAutofill(file);
+            try {
+              const file = await scanDocument();
+              if (file) {
+                await runAutofill(file);
+              }
+            } catch (error) {
+              Alert.alert(
+                "Camera access needed",
+                error.message || "Please allow camera access and try again.",
+              );
+            }
           },
         },
         {
           text: "Choose File (PDF/Image)",
           onPress: async () => {
             const file = await pickDocumentFile();
-            if (file) runAutofill(file);
+            if (file) {
+              await runAutofill(file);
+            }
           },
         },
         { text: "Cancel", style: "cancel" },
@@ -359,7 +368,7 @@ export default function StaffDocumentEntryContent({ onLogPhysicalDocPress }) {
         <TouchableOpacity
           onPress={handleAttachDocument}
           disabled={isBusy}
-          className="h-28 rounded-md items-center justify-center mb-4 bg-slate-50"
+          className="h-28 rounded-md items-center justify-center mb-3 bg-slate-50"
           style={{
             borderWidth: 1,
             borderColor: "#DDE7F0",
@@ -382,14 +391,30 @@ export default function StaffDocumentEntryContent({ onLogPhysicalDocPress }) {
                 </View>
               </View>
               <Text className="text-slate-400 text-xs font-semibold">
-                Attach
+                {scannedFile ? "Replace" : "Attach"}
               </Text>
               <Text className="text-slate-400 text-xs font-semibold">
-                Document(Required)
+                Document (Required)
               </Text>
             </>
           )}
         </TouchableOpacity>
+
+        {scannedFile?.uri ? (
+          <View className="mb-4 rounded-xl overflow-hidden bg-slate-50 p-2">
+            <Text className="text-vistaNavy text-[11px] font-extrabold mb-2">
+              Captured document preview
+            </Text>
+            <Image
+              source={{ uri: scannedFile.uri }}
+              className="h-40 w-full rounded-lg"
+              resizeMode="cover"
+            />
+            <Text className="text-slate-500 text-[11px] font-semibold mt-2">
+              {scannedFile.name || "Document image"}
+            </Text>
+          </View>
+        ) : null}
 
         <TouchableOpacity
           onPress={handleSubmit}
