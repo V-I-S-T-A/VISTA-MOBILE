@@ -23,6 +23,15 @@ export const authService = {
     }
   },
 
+  async updateMe(payload) {
+    try {
+      const { data } = await apiClient.patch(API_ENDPOINTS.AUTH.ME, payload);
+      return data;
+    } catch (error) {
+      throw unwrapApiError(error);
+    }
+  },
+
   async logout({ refresh }) {
     try {
       const { data } = await apiClient.post(API_ENDPOINTS.AUTH.LOGOUT, {

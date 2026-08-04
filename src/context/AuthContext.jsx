@@ -1,6 +1,6 @@
 import { createContext, useContext, useState } from "react";
 import { authService } from "../services/authService";
-import {tokenStore} from "../lib/tokenStore";
+import { tokenStore } from "../lib/tokenStore";
 
 const AuthContext = createContext(null);
 
@@ -34,8 +34,14 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const updateUser = (newData) => {
+    setUser((prev) => ({ ...prev, ...newData }));
+  };
+
   return (
-    <AuthContext.Provider value={{ user, role, tokens, login, logout }}>
+    <AuthContext.Provider
+      value={{ user, role, tokens, login, logout, updateUser }}
+    >
       {children}
     </AuthContext.Provider>
   );
