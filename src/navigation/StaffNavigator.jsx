@@ -5,6 +5,7 @@ import StaffAnalysisResults from "../screens/staff/StaffAnalysisResults";
 import StaffReviewPanel from "../screens/staff/StaffReviewPanel";
 import ReviewPanelDetails from "../screens/staff/ReviewPanelDetails";
 import GDriveSync from "../screens/staff/GDriveSync";
+import StaffSubmissionHistory from "../screens/staff/home/StaffSubmissionHistory";
 
 const Stack = createNativeStackNavigator();
 
@@ -31,6 +32,10 @@ export default function StaffNavigator() {
       <Stack.Screen
         name="GDriveSync"
         component={GDriveSync}
+      />
+      <Stack.Screen
+        name="StaffSubmissionHistory"
+        component={StaffSubmissionHistory}
       />
     </Stack.Navigator>
   );
