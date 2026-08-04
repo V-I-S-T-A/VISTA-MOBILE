@@ -1,4 +1,4 @@
-package com.vista
+package com.wayvbb.vistaapp
 
 import android.app.Application
 import android.content.res.Configuration
@@ -46,7 +46,11 @@ class MainApplication : Application(), ReactApplication {
       ReleaseLevel.STABLE
     }
     loadReactNative(this)
-    ApplicationLifecycleDispatcher.onApplicationCreate(this)
+    try {
+      ApplicationLifecycleDispatcher.onApplicationCreate(this)
+    } catch (e: IllegalStateException) {
+      // Ignored: DevLauncherController was already initialized by loadReactNative
+    }
   }
 
   override fun onConfigurationChanged(newConfig: Configuration) {
