@@ -2,6 +2,8 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import StaffHomeScreen from "../screens/staff/StaffHomeScreen";
 import StaffDocumentEntry from "../screens/staff/StaffDocumentEntry";
 import StaffAnalysisResults from "../screens/staff/StaffAnalysisResults";
+import StaffReviewPanel from "../screens/staff/StaffReviewPanel";
+import ReviewPanelDetails from "../screens/staff/ReviewPanelDetails";
 
 const Stack = createNativeStackNavigator();
 
@@ -16,6 +18,14 @@ export default function StaffNavigator() {
       <Stack.Screen
         name="StaffAnalysisResults"
         component={StaffAnalysisResults}
+      />
+      <Stack.Screen
+        name="StaffReviewPanel"
+        component={StaffReviewPanel}
+      />
+      <Stack.Screen
+        name="ReviewPanelDetails"
+        component={ReviewPanelDetails}
       />
     </Stack.Navigator>
   );
