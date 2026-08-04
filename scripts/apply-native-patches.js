@@ -81,26 +81,32 @@ patchFile("node_modules/expo-dev-menu/android/src/main/java/expo/modules/devmenu
   fun addOnChangeListener(listener: () -> Unit) {`,
   },
   {
+    marker: `get() = getBoolean("motionGestureEnabled", true)`,
     find: `get() = sharedPreferences.getBoolean("motionGestureEnabled", true)`,
     replace: `get() = getBoolean("motionGestureEnabled", true)`,
   },
   {
+    marker: `get() = getBoolean("touchGestureEnabled", true)`,
     find: `get() = sharedPreferences.getBoolean("touchGestureEnabled", true)`,
     replace: `get() = getBoolean("touchGestureEnabled", true)`,
   },
   {
+    marker: `get() = getBoolean("keyCommandsEnabled", true)`,
     find: `get() = sharedPreferences.getBoolean("keyCommandsEnabled", true)`,
     replace: `get() = getBoolean("keyCommandsEnabled", true)`,
   },
   {
+    marker: `get() = getBoolean("showsAtLaunch", false)`,
     find: `get() = sharedPreferences.getBoolean("showsAtLaunch", false)`,
     replace: `get() = getBoolean("showsAtLaunch", false)`,
   },
   {
+    marker: `get() = getBoolean("isOnboardingFinished", false)`,
     find: `get() = sharedPreferences.getBoolean("isOnboardingFinished", false)`,
     replace: `get() = getBoolean("isOnboardingFinished", false)`,
   },
   {
+    marker: `get() = getBoolean("showFab", false)`,
     find: `get() = sharedPreferences.getBoolean("showFab", false)`,
     replace: `get() = getBoolean("showFab", false)`,
   },
