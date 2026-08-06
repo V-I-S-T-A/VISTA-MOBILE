@@ -1,0 +1,16 @@
+diff --git a/node_modules/react-native-screens/android/src/main/jni/CMakeLists.txt b/node_modules/react-native-screens/android/src/main/jni/CMakeLists.txt
+index a1b2c3d..e4f5g6h 100644
+--- a/node_modules/react-native-screens/android/src/main/jni/CMakeLists.txt
++++ b/node_modules/react-native-screens/android/src/main/jni/CMakeLists.txt
+@@ -1,3 +1,4 @@
++set(ANDROID_STL "c++_shared")
+ cmake_minimum_required(VERSION 3.13)
+ set(CMAKE_VERBOSE_MAKEFILE ON)
+ 
+@@ -41,6 +42,7 @@ if(ReactAndroid_VERSION_MINOR GREATER_EQUAL 76)
+   target_link_libraries(
+     ${LIB_TARGET_NAME}
++    c++_shared
+     ReactAndroid::reactnative
+     ReactAndroid::jsi
+     fbjni::fbjni

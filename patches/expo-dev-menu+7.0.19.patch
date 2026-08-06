@@ -1,0 +1,99 @@
+diff --git a/node_modules/expo-dev-menu/android/src/main/java/expo/modules/devmenu/AppInfo.kt b/node_modules/expo-dev-menu/android/src/main/java/expo/modules/devmenu/AppInfo.kt
+index a1b2c3d..e4f5g6h 100644
+--- a/node_modules/expo-dev-menu/android/src/main/java/expo/modules/devmenu/AppInfo.kt
++++ b/node_modules/expo-dev-menu/android/src/main/java/expo/modules/devmenu/AppInfo.kt
+@@ -15,7 +15,16 @@ object AppInfo {
+     val appVersion: String? = null
+   )
+ 
+-  lateinit var native: Native
++  private lateinit var _native: Native
++  var native: Native
++    get() {
++      if (!::_native.isInitialized) {
++        return Native(appName = "VISTA", appVersion = "1.0.0")
++      }
++      return _native
++    }
++    set(value) {
++      _native = value
++    }
+ 
+   fun init(application: Application) {
+-    native = getNativeAppInfo(application)
++    _native = getNativeAppInfo(application)
+   }
+diff --git a/node_modules/expo-dev-menu/android/src/main/java/expo/modules/devmenu/DevMenuPreferences.kt b/node_modules/expo-dev-menu/android/src/main/java/expo/modules/devmenu/DevMenuPreferences.kt
+index a1b2c3d..e4f5g6h 100644
+--- a/node_modules/expo-dev-menu/android/src/main/java/expo/modules/devmenu/DevMenuPreferences.kt
++++ b/node_modules/expo-dev-menu/android/src/main/java/expo/modules/devmenu/DevMenuPreferences.kt
+@@ -26,6 +26,13 @@ object DevMenuPreferencesHandle : DevMenuPreferencesInterface {
+     sharedPreferences.registerOnSharedPreferenceChangeListener(mainListener)
+   }
+ 
++  private fun getBoolean(key: String, defaultValue: Boolean): Boolean {
++    if (!::sharedPreferences.isInitialized) {
++      return defaultValue
++    }
++    return sharedPreferences.getBoolean(key, defaultValue)
++  }
++
+   fun addOnChangeListener(listener: () -> Unit) {
+     listeners.add(listener)
+   }
+@@ -38,43 +45,46 @@ object DevMenuPreferencesHandle : DevMenuPreferencesInterface {
+    * Whether to enable shake gesture.
+    */
+   override var motionGestureEnabled: Boolean
+-    get() = sharedPreferences.getBoolean("motionGestureEnabled", true)
++    get() = getBoolean("motionGestureEnabled", true)
+     set(value) = saveBoolean("motionGestureEnabled", value)
+ 
+   /**
+    * Whether to enable three-finger long press gesture.
+    */
+   override var touchGestureEnabled: Boolean
+-    get() = sharedPreferences.getBoolean("touchGestureEnabled", true)
++    get() = getBoolean("touchGestureEnabled", true)
+     set(value) = saveBoolean("touchGestureEnabled", value)
+ 
+   /**
+    * Whether to enable key commands.
+    */
+   override var keyCommandsEnabled: Boolean
+-    get() = sharedPreferences.getBoolean("keyCommandsEnabled", true)
++    get() = getBoolean("keyCommandsEnabled", true)
+     set(value) = saveBoolean("keyCommandsEnabled", value)
+ 
+   /**
+    * Whether to automatically show the dev menu once its delegate is set and the bridge is loaded.
+    */
+   override var showsAtLaunch: Boolean
+-    get() = sharedPreferences.getBoolean("showsAtLaunch", false)
++    get() = getBoolean("showsAtLaunch", false)
+     set(value) = saveBoolean("showsAtLaunch", value)
+ 
+   /**
+    * Returns `true` only if the user finished onboarding, `false` otherwise.
+    */
+   override var isOnboardingFinished: Boolean
+-    get() = sharedPreferences.getBoolean("isOnboardingFinished", false)
++    get() = getBoolean("isOnboardingFinished", false)
+     set(value) = saveBoolean("isOnboardingFinished", value)
+ 
+   /**
+    * Whether to show a floating action button that pulls up the DevMenu at launch.
+    */
+   override var showFab: Boolean
+     // TODO: @behenate, on VR this value should be true by default
+-    get() = sharedPreferences.getBoolean("showFab", false)
++    get() = getBoolean("showFab", false)
+     set(value) = saveBoolean("showFab", value)
+ 
+   private fun saveBoolean(key: String, value: Boolean) {
++    if (!::sharedPreferences.isInitialized) {
++      return
++    }
+     sharedPreferences
+       .edit(commit = true) {
+         putBoolean(key, value)

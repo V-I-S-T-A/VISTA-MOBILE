@@ -1,4 +1,4 @@
-package com.vista
+package com.wayvbb.vistaapp
 
 import android.os.Build
 import android.os.Bundle

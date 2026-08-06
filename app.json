@@ -24,7 +24,7 @@
         "foregroundImage": "./src/assets/logo.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.vista"
+      "package": "com.wayvbb.vistaapp"
     },
     "web": {
       "favicon": "./src/assets/logo.png"
