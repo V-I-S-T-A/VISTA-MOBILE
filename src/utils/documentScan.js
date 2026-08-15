@@ -1,24 +1,42 @@
-import DocumentScanner from "react-native-document-scanner-plugin";
 import * as DocumentPicker from "expo-document-picker";
+import * as ImagePicker from "expo-image-picker";
 
 /**
- * Launches the native document scanner (react-native-document-scanner-plugin)
- * and returns a file descriptor ready for submissionsService.autofillFromScan().
- * Returns null if the staff member cancels the scan.
+ * Opens the device camera with Expo Image Picker and returns a file descriptor
+ * ready for OCR/autofill. Returns null if the user cancels the capture.
  */
 export async function scanDocument() {
-  const { scannedImages, status } = await DocumentScanner.scanDocument({
-    maxNumDocuments: 1,
+  const permission = await ImagePicker.requestCameraPermissionsAsync();
+
+  if (!permission.granted) {
+    throw new Error("Camera access was not granted.");
+  }
+
+  const result = await ImagePicker.launchCameraAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    allowsEditing: true,
+    quality: 1,
+    cameraType: ImagePicker.CameraType.back,
   });
 
-  if (status !== "success" || !scannedImages?.length) {
+  if (result.canceled || !result.assets?.length) {
     return null;
   }
 
-  const uri = scannedImages[0];
-  const fileName = uri.split("/").pop() || `scan_${Date.now()}.jpg`;
+  const asset = result.assets[0];
+  return {
+    uri: asset.uri,
+    name: asset.fileName || `scan_${Date.now()}.jpg`,
+    type: asset.mimeType || "image/jpeg",
+  };
+}
 
-  return { uri, name: fileName, type: "image/jpeg" };
+/**
+ * Backward-compatible helper for the existing entry screen. This now uses the
+ * camera capture path instead of the native document scanner package.
+ */
+export async function pickImageFile() {
+  return scanDocument();
 }
 
 export async function pickDocumentFile() {
@@ -28,14 +46,14 @@ export async function pickDocumentFile() {
     multiple: false,
   });
 
-  if(result.canceled || !result.assets?.length) {
+  if (result.canceled || !result.assets?.length) {
     return null;
   }
 
   const asset = result.assets[0];
-  return { 
-    uri: asset.uri, 
-    name: asset.name || `document_${Date.now()}`, 
+  return {
+    uri: asset.uri,
+    name: asset.name || `document_${Date.now()}`,
     type: asset.mimeType || inferMimeTypeFromName(asset.name),
   };
 }
@@ -51,6 +69,6 @@ function inferMimeTypeFromName(name = "") {
     case "png":
       return "image/png";
     default:
-      return "application/octet-stream"; // Default binary type
+      return "application/octet-stream";
   }
 }
