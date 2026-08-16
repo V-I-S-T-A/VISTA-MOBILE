@@ -18,6 +18,8 @@ export const API_ENDPOINTS = {
   SUBMISSIONS: {
     LIST: "/submissions/",
     AUTOFILL: "/submissions/autofill/",
+    DETAIL: (id) => `/submissions/${id}/`,
+    STATUS: (id) => `/submissions/${id}/status/`,
   },
   ACADEMIC_YEARS: {
     LIST: "/academic-years/",
@@ -33,5 +35,15 @@ export const API_ENDPOINTS = {
   },
   DOCUMENT_TYPES: {
     LIST: "/document-types/",
+  },
+  DRIVE: {
+    CONNECTION: "/drive/connection/",
+    AUTH_START: "/drive/auth/start/",
+    FOLDERS: "/drive/folders/",
+    FOLDER_SELECT: "/drive/folders/select/",
+    FOLDER_CREATE: "/drive/folders/create/",
+    DISCONNECT: "/drive/disconnect/",
+    FOLDER_PATH_PREVIEW: "/drive/folder-path-preview/",
+    UPLOAD: "/drive/upload/",
   },
 };

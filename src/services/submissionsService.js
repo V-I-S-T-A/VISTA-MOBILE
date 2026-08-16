@@ -46,4 +46,38 @@ export const submissionsService = {
       throw unwrapApiError(error);
     }
   },
+
+  async listSubmissions(params = {}) {
+    try {
+      const { data } = await apiClient.get(API_ENDPOINTS.SUBMISSIONS.LIST, {
+        params: { page_size: 20, ordering: "-submitted_at", ...params },
+      });
+      return data; // paginated shape: { count, results, next, previous, ... }
+    } catch (error) {
+      throw unwrapApiError(error);
+    }
+  },
+
+  async getSubmission(submissionId) {
+    try {
+      const { data } = await apiClient.get(
+        API_ENDPOINTS.SUBMISSIONS.DETAIL(submissionId),
+      );
+      return data;
+    } catch (error) {
+      throw unwrapApiError(error);
+    }
+  },
+
+  async updateSubmissionStatus(submissionId, { status, remarksText }) {
+    try {
+      const { data } = await apiClient.patch(
+        API_ENDPOINTS.SUBMISSIONS.STATUS(submissionId),
+        { status, remarks_text: remarksText },
+      );
+      return data;
+    } catch (error) {
+      throw unwrapApiError(error);
+    }
+  },
 };

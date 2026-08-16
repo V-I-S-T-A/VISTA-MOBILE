@@ -1,6 +1,7 @@
 {
   "expo": {
     "name": "VISTA",
+    "scheme": "vista-app",
     "slug": "vista-app",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -30,7 +31,8 @@
       "favicon": "./src/assets/logo.png"
     },
     "plugins": [
-      "react-native-document-scanner-plugin"
+      "react-native-document-scanner-plugin",
+      "expo-web-browser"
     ]
   }
 }
