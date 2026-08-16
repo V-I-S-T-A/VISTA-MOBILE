@@ -15,11 +15,9 @@ import { useNavigation } from "@react-navigation/native";
 import SelectField from "../../../components/staff/SelectField";
 import { useAuth } from "../../../context/AuthContext";
 import { scanDocument, pickDocumentFile } from "../../../utils/documentScan";
-import { useAutofillDocument } from "../../../hooks/useAutofillDocument";
-import { useCreateSubmission } from "../../../hooks/useCreateSubmission";
-import { useActiveAcademicYear } from "../../../hooks/useActiveAcademicYear";
-import { useOrganizations } from "../../../hooks/useOrganizations";
-import { useOrganizationUsers } from "../../../hooks/useOrganizationUsers";
+import { useAutofillDocument, useCreateSubmission } from "../../../hooks/useSubmissions";
+import { useActiveAcademicYear } from "../../../hooks/useAcademicYears";
+import { useOrganizations, useOrganizationUsers } from "../../../hooks/useOrganizations";
 import { useCategories } from "../../../hooks/useCategories";
 import { useDocumentTypes } from "../../../hooks/useDocumentTypes";
 
