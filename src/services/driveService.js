@@ -16,7 +16,7 @@ export const driveService = {
       const { data } = await apiClient.get(API_ENDPOINTS.DRIVE.AUTH_START, {
         params: { mode, client_type: "mobile" },
       });
-      return data; 
+      return data;
     } catch (error) {
       throw unwrapApiError(error);
     }
@@ -98,6 +98,8 @@ export const driveService = {
     });
 
     try {
+      // Only enqueues the job server-side and returns a task id — the
+      // actual Drive upload happens in the background.
       const { data } = await apiClient.post(
         API_ENDPOINTS.DRIVE.UPLOAD,
         formData,
@@ -105,7 +107,18 @@ export const driveService = {
           headers: { "Content-Type": "multipart/form-data" },
         },
       );
-      return data;
+      return data; // { task_id, status: "queued", detail }
+    } catch (error) {
+      throw unwrapApiError(error);
+    }
+  },
+
+  async getUploadStatus(taskId) {
+    try {
+      const { data } = await apiClient.get(
+        API_ENDPOINTS.DRIVE.UPLOAD_STATUS(taskId),
+      );
+      return data; // { status: "pending" | "success" | "error", ... }
     } catch (error) {
       throw unwrapApiError(error);
     }

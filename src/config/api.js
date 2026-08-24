@@ -45,5 +45,6 @@ export const API_ENDPOINTS = {
     DISCONNECT: "/drive/disconnect/",
     FOLDER_PATH_PREVIEW: "/drive/folder-path-preview/",
     UPLOAD: "/drive/upload/",
+    UPLOAD_STATUS: (taskId) => `/drive/upload/status/${taskId}/`,
   },
 };
