@@ -32,7 +32,8 @@
     },
     "plugins": [
       "react-native-document-scanner-plugin",
-      "expo-web-browser"
+      "expo-web-browser",
+      "@react-native-vector-icons/ionicons"
     ]
   }
 }

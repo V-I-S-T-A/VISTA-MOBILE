@@ -6,6 +6,7 @@ import ReviewDetailsTopSection from "./reviewPanel/reviewPanelDetails/ReviewDeta
 import ReviewDetailsTitleCard from "./reviewPanel/reviewPanelDetails/ReviewDetailsTitleCard";
 import ReviewDetailsSubmitter from "./reviewPanel/reviewPanelDetails/ReviewDetailsSubmitter";
 import ReviewDetailsActionCard from "./reviewPanel/reviewPanelDetails/ReviewDetailsActionCard";
+import ReviewDetailsLogs from "./reviewPanel/reviewPanelDetails/ReviewDetailsLogs";
 import DriveArchiveCard from "../../components/staff/DriveArchiveCard";
 import { useSubmission } from "../../hooks/useSubmissions";
 
@@ -43,6 +44,7 @@ export default function ReviewPanelDetails({ navigation, route }) {
               submission={current}
               isLoading={isLoading}
             />
+            <ReviewDetailsLogs submissionId={current.submission_id} />
           </>
         )}
       </ScrollView>

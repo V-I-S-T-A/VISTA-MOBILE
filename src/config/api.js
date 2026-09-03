@@ -21,6 +21,9 @@ export const API_ENDPOINTS = {
     DETAIL: (id) => `/submissions/${id}/`,
     STATUS: (id) => `/submissions/${id}/status/`,
   },
+  REVIEW_LOGS: {
+    LIST: "/review-logs/",
+  },
   ACADEMIC_YEARS: {
     LIST: "/academic-years/",
   },
