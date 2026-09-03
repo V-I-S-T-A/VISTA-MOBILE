@@ -5,10 +5,10 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
+import { useQueryClient } from "@tanstack/react-query";
 import SelectField from "./SelectField";
 import { scanDocument, pickDocumentFile } from "../../utils/documentScan";
 import {
@@ -16,14 +16,20 @@ import {
   useDriveFolderPreview,
   useDriveFolders,
   useDriveUpload,
+  useDriveUploadStatus,
 } from "../../hooks/useDrive";
+import { useToast } from "../common/Toast";
 
 export default function DriveArchiveCard({ submission }) {
   const navigation = useNavigation();
+  const toast = useToast();
+  const queryClient = useQueryClient();
+
   const [useAutoFolder, setUseAutoFolder] = useState(true);
   const [manualFolder, setManualFolder] = useState(null);
   const [fileName, setFileName] = useState(submission?.title || "");
   const [pendingFile, setPendingFile] = useState(null);
+  const [activeTaskId, setActiveTaskId] = useState(null);
 
   const {
     data: connection,
@@ -39,13 +45,40 @@ export default function DriveArchiveCard({ submission }) {
     useDriveFolders();
   const uploadMutation = useDriveUpload();
 
+  // By the time uploadMutation resolves, the file has only reached OUR
+  // server -- the actual Drive upload runs in the background. This just
+  // polls for the result so we can toast it, without blocking anything.
+  const { data: uploadStatus } = useDriveUploadStatus(activeTaskId);
+
+  useEffect(() => {
+    if (!activeTaskId || !uploadStatus || uploadStatus.status === "pending") {
+      return;
+    }
+
+    if (uploadStatus.status === "success") {
+      toast.success(
+        uploadStatus.detail || "Document archived to Google Drive.",
+      );
+      queryClient.invalidateQueries({
+        queryKey: ["submissions", submission?.submission_id],
+      });
+    } else if (uploadStatus.code === "drive_reauth_required") {
+      toast.error("Your Google Drive connection expired. Please reconnect it.");
+      queryClient.invalidateQueries({ queryKey: ["drive", "connection"] });
+    } else {
+      toast.error(uploadStatus.detail || "The upload to Google Drive failed.");
+    }
+
+    setActiveTaskId(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTaskId, uploadStatus]);
+
   useEffect(() => {
     if (submission?.title) setFileName(submission.title);
   }, [submission?.title]);
 
   if ((submission?.status || "").toLowerCase() !== "approved") return null;
 
-  // --- Connection not ready: show a guard instead of the upload UI -----
   if (loadingConnection) {
     return (
       <View className="bg-white rounded-3xl p-6 mb-6 shadow-sm items-center">
@@ -84,7 +117,6 @@ export default function DriveArchiveCard({ submission }) {
     );
   }
 
-  // --- Connected: normal upload UI --------------------------------------
   const folderOptions = manualFolders.map((f) => ({ id: f.id, label: f.name }));
 
   const handlePick = (source) => async () => {
@@ -95,19 +127,14 @@ export default function DriveArchiveCard({ submission }) {
 
   const handleUpload = () => {
     if (!pendingFile) {
-      Alert.alert(
-        "No document selected",
-        "Take a photo or choose a file first.",
-      );
+      toast.error("Take a photo or choose a file first.");
       return;
     }
     if (!useAutoFolder && !manualFolder) {
-      Alert.alert(
-        "Choose a folder",
-        "Select a Drive folder or switch to automated folders.",
-      );
+      toast.error("Select a Drive folder or switch to automated folders.");
       return;
     }
+
     uploadMutation.mutate(
       {
         submissionId: submission.submission_id,
@@ -117,12 +144,25 @@ export default function DriveArchiveCard({ submission }) {
         folderId: useAutoFolder ? undefined : manualFolder?.id,
       },
       {
-        onSuccess: () => {
-          Alert.alert("Archived", "The document was uploaded to Google Drive.");
+        onSuccess: (data) => {
+          toast.info(
+            "Upload started — you can keep working, we'll let you know when it's done.",
+          );
+          setActiveTaskId(data.task_id);
           setPendingFile(null);
         },
-        onError: (error) =>
-          Alert.alert("Upload failed", error.message || "Please try again."),
+        onError: (error) => {
+          if (error.code === "drive_reauth_required") {
+            toast.error(
+              "Your Google Drive connection expired. Please reconnect it.",
+            );
+            queryClient.invalidateQueries({
+              queryKey: ["drive", "connection"],
+            });
+          } else {
+            toast.error(error.message || "Please try again.");
+          }
+        },
       },
     );
   };
@@ -170,6 +210,15 @@ export default function DriveArchiveCard({ submission }) {
           <TouchableOpacity onPress={() => setPendingFile(null)}>
             <Feather name="x" size={16} color="#94A3B8" />
           </TouchableOpacity>
+        </View>
+      ) : null}
+
+      {activeTaskId ? (
+        <View className="bg-blue-50 rounded-lg px-3 py-2 mb-4 flex-row items-center">
+          <ActivityIndicator size="small" />
+          <Text className="text-[#1e5aa0] text-xs font-semibold ml-2">
+            Archiving in the background — feel free to keep working.
+          </Text>
         </View>
       ) : null}
 

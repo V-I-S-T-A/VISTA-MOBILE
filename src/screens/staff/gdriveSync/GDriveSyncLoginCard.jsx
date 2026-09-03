@@ -19,8 +19,10 @@ import {
   useDisconnectDrive,
 } from "../../../hooks/useDrive";
 import { runDriveAuthSession } from "../../../utils/driveAuth";
+import { useToast } from "../../../components/common/Toast";
 
 export default function GDriveSyncLoginCard() {
+  const toast = useToast();
   const {
     data: connection,
     isLoading: loadingConnection,
@@ -51,18 +53,13 @@ export default function GDriveSyncLoginCard() {
 
       if (result.status === "success") {
         await refetch();
+        toast.success("Connected to Google Drive.");
       } else if (result.status === "error") {
-        Alert.alert(
-          "Sign-in failed",
-          result.detail || "Could not connect your Google account.",
-        );
+        toast.error(result.detail || "Could not connect your Google account.");
       }
       // "cancelled" -> user backed out of the browser, nothing to do
     } catch (error) {
-      Alert.alert(
-        "Sign-in failed",
-        error.message || "Could not start Google sign-in.",
-      );
+      toast.error(error.message || "Could not start Google sign-in.");
     } finally {
       setIsAuthorizing(false);
     }
@@ -73,14 +70,10 @@ export default function GDriveSyncLoginCard() {
       { folderId: folder.id, folderName: folder.name },
       {
         onSuccess: () =>
-          Alert.alert(
-            "Folder set",
-            `Documents will archive to "${folder.name}".`,
-          ),
+          toast.success(`Documents will archive to "${folder.name}".`),
         onError: (error) =>
-          Alert.alert(
-            "Could not select folder",
-            error.message || "Please try again.",
+          toast.error(
+            error.message || "Could not select folder. Please try again.",
           ),
       },
     );
@@ -88,25 +81,18 @@ export default function GDriveSyncLoginCard() {
 
   const handleCreateFolder = () => {
     if (!newFolderName.trim()) {
-      Alert.alert(
-        "Folder name required",
-        "Enter a name for the new Drive folder.",
-      );
+      toast.error("Enter a name for the new Drive folder.");
       return;
     }
     createFolderMutation.mutate(newFolderName.trim(), {
       onSuccess: (data) => {
-        Alert.alert(
-          "Folder created",
-          `Documents will archive to "${data.folder_name}".`,
-        );
+        toast.success(`Documents will archive to "${data.folder_name}".`);
         setNewFolderName("");
         setShowCreateFolder(false);
       },
       onError: (error) =>
-        Alert.alert(
-          "Could not create folder",
-          error.message || "Please try again.",
+        toast.error(
+          error.message || "Could not create folder. Please try again.",
         ),
     });
   };
@@ -122,10 +108,10 @@ export default function GDriveSyncLoginCard() {
           style: "destructive",
           onPress: () =>
             disconnectMutation.mutate(undefined, {
+              onSuccess: () => toast.success("Disconnected from Google Drive."),
               onError: (error) =>
-                Alert.alert(
-                  "Could not disconnect",
-                  error.message || "Please try again.",
+                toast.error(
+                  error.message || "Could not disconnect. Please try again.",
                 ),
             }),
         },
@@ -141,7 +127,6 @@ export default function GDriveSyncLoginCard() {
     );
   }
 
-  // --- Not connected: original sign-in card, now wired up --------------
   if (!isConnected) {
     return (
       <View className="bg-white rounded-3xl p-6 mb-8 shadow-sm border border-gray-100 items-center">
@@ -203,7 +188,6 @@ export default function GDriveSyncLoginCard() {
     );
   }
 
-  // --- Connected, no archive folder chosen yet --------------------------
   if (!hasFolder) {
     return (
       <View className="bg-white rounded-3xl p-6 mb-8 shadow-sm border border-gray-100">
@@ -219,6 +203,12 @@ export default function GDriveSyncLoginCard() {
               {connection.google_account_email}
             </Text>
           </View>
+          <TouchableOpacity
+            onPress={handleDisconnect}
+            disabled={disconnectMutation.isPending}
+          >
+            <Feather name="log-out" size={18} color="#dc2626" />
+          </TouchableOpacity>
         </View>
 
         <Text className="text-vistaNavy font-bold text-xs mb-2">
@@ -321,7 +311,6 @@ export default function GDriveSyncLoginCard() {
     );
   }
 
-  // --- Fully connected, folder chosen ------------------------------------
   return (
     <View className="bg-white rounded-3xl p-6 mb-8 shadow-sm border border-gray-100">
       <View className="flex-row items-center mb-4">

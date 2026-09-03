@@ -82,5 +82,8 @@ export function unwrapApiError(error) {
     (data && Object.values(data).flat?.()[0]) ||
     error.message ||
     "Request failed.";
-  return new Error(message);
+  const wrapped = new Error(message);
+  wrapped.code = data?.code;
+  wrapped.status = error?.response?.status;
+  return wrapped;
 }

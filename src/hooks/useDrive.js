@@ -57,14 +57,27 @@ export function useDriveFolderPreview(submissionId) {
   });
 }
 
+// Kicks off the archive-to-Drive job on the server and resolves as soon
+// as it's queued -- it does NOT wait for the actual upload. Pair with
+// useDriveUploadStatus to find out how it went.
 export function useDriveUpload() {
-  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (payload) => driveService.uploadDocument(payload),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ["submissions", variables.submissionId],
-      });
+  });
+}
+
+// Polls a background upload task until it finishes. Safe to mount with
+// taskId = null/undefined -- it just stays disabled.
+export function useDriveUploadStatus(taskId) {
+  return useQuery({
+    queryKey: ["drive", "upload-status", taskId],
+    queryFn: () => driveService.getUploadStatus(taskId),
+    enabled: !!taskId,
+    refetchInterval: (query) => {
+      const currentStatus = query.state.data?.status;
+      return currentStatus === "pending" || currentStatus === undefined
+        ? 1500
+        : false;
     },
   });
 }
