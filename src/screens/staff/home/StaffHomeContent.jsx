@@ -182,7 +182,7 @@ function RecentSubmissions() {
           Recent Submissions
         </Text>
         <TouchableOpacity
-          onPress={() => navigation.navigate("StaffSubmissionHistory")}
+          onPress={() => navigation.navigate("StaffReviewPanel")}
         >
           <Text className="text-vistaNavy text-sm">View All</Text>
         </TouchableOpacity>

@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import StaffBottomNav from "../../../components/staff/StaffBottomNav";
 import StaffReviewHeader from "../reviewPanel/StaffReviewHeader";
 import SubmissionHistoryTop from "./submissionHistory/SubmissionHistoryTop";
-import SubmissionHistorySearch from "./submissionHistory/SubmissionHistorySearch";
+import StaffReviewSearch from "../reviewPanel/StaffReviewSearch";
 import SubmissionHistoryList from "./submissionHistory/SubmissionHistoryList";
 import SubmissionHistoryPagination from "./submissionHistory/SubmissionHistoryPagination";
 
@@ -22,7 +22,7 @@ export default function StaffSubmissionHistory({ navigation }) {
       >
         <StaffReviewHeader />
         <SubmissionHistoryTop />
-        <SubmissionHistorySearch 
+        <StaffReviewSearch
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           statusFilter={statusFilter}

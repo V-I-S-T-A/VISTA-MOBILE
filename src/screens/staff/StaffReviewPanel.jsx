@@ -4,15 +4,42 @@ import { useState } from "react";
 import StaffBottomNav from "../../components/staff/StaffBottomNav";
 import StaffReviewHeader from "./reviewPanel/StaffReviewHeader";
 import StaffReviewBanner from "./reviewPanel/StaffReviewBanner";
+import StaffReviewSearch from "./reviewPanel/StaffReviewSearch";
 import StaffReviewList from "./reviewPanel/StaffReviewList";
 import StaffReviewPagination from "./reviewPanel/StaffReviewPagination";
 import { useSubmissions } from "../../hooks/useSubmissions";
 
+const STATUS_TO_PARAM = {
+  Pending: "pending",
+  "Under Review": "under_review",
+  Approved: "approved",
+  Rejected: "rejected",
+  "Resubmission Required": "resubmission_required",
+};
+
 export default function StaffReviewPanel({ navigation }) {
   const insets = useSafeAreaInsets();
   const [page, setPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All Status");
 
-  const { data, isLoading, isError, refetch } = useSubmissions({ page });
+  const params = { page };
+  if (searchQuery.trim()) params.search = searchQuery.trim();
+  if (statusFilter !== "All Status") {
+    params.status = STATUS_TO_PARAM[statusFilter];
+  }
+
+  const { data, isLoading, isError, refetch } = useSubmissions(params);
+
+  const handleSearchChange = (value) => {
+    setSearchQuery(value);
+    setPage(1);
+  };
+
+  const handleStatusChange = (value) => {
+    setStatusFilter(value);
+    setPage(1);
+  };
 
   return (
     <View className="flex-1 bg-[#F3F3F3]" style={{ paddingTop: insets.top }}>
@@ -23,6 +50,12 @@ export default function StaffReviewPanel({ navigation }) {
       >
         <StaffReviewHeader />
         <StaffReviewBanner />
+        <StaffReviewSearch
+          searchQuery={searchQuery}
+          setSearchQuery={handleSearchChange}
+          statusFilter={statusFilter}
+          setStatusFilter={handleStatusChange}
+        />
         <StaffReviewList
           submissions={data?.results ?? []}
           isLoading={isLoading}

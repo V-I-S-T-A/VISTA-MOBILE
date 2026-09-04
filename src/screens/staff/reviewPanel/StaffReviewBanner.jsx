@@ -1,4 +1,4 @@
-import { View, Text, Image } from "react-native";
+import { View, Text } from "react-native";
 
 export default function StaffReviewBanner() {
   return (
@@ -7,11 +7,6 @@ export default function StaffReviewBanner() {
         <Text className="text-2xl font-extrabold text-vistaNavy">Review Panel</Text>
         <Text className="text-gray-500 text-sm mt-1">Reviewing documents.</Text>
       </View>
-      <Image
-        source={require("../../../assets/review-panel.png")}
-        className="w-full h-44 rounded-2xl"
-        resizeMode="cover"
-      />
     </View>
   );
 }

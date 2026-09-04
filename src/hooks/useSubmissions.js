@@ -45,6 +45,9 @@ export function useUpdateSubmissionStatus() {
         queryKey: ["submissions", variables.submissionId],
       });
       queryClient.invalidateQueries({ queryKey: ["submissions", "list"] });
+      queryClient.invalidateQueries({
+        queryKey: ["review-logs", variables.submissionId],
+      });
     },
   });
 }
