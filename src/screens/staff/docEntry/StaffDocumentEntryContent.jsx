@@ -20,32 +20,7 @@ import { useActiveAcademicYear } from "../../../hooks/useAcademicYears";
 import { useOrganizations, useOrganizationUsers } from "../../../hooks/useOrganizations";
 import { useCategories } from "../../../hooks/useCategories";
 import { useDocumentTypes } from "../../../hooks/useDocumentTypes";
-
-function DocumentEntryHeader() {
-  const navigation = useNavigation();
-  const { user } = useAuth();
-
-  const avatarUrl = user?.image_url
-    ? { uri: user.image_url }
-    : require("../../../assets/default_user.jpg");
-
-  return (
-    <View className="flex-row items-center justify-between mb-4">
-      <TouchableOpacity onPress={() => navigation.navigate("StaffProfile")}>
-        <Image source={avatarUrl} className="w-10 h-10 rounded-full bg-gray-200" />
-      </TouchableOpacity>
-      <Image
-        source={require("../../../assets/logo.png")}
-        className="w-14 h-14"
-        resizeMode="contain"
-      />
-      <TouchableOpacity>
-        <Feather name="sliders" size={23} color="#111827" />
-      </TouchableOpacity>
-    </View>
-  );
-}
-
+import AccountHeader from "../../../components/common/AccountHeader";
 function toOption(row, idField, labelFn) {
   return { id: row[idField], label: labelFn(row) };
 }
@@ -274,7 +249,7 @@ export default function StaffDocumentEntryContent({ onLogPhysicalDocPress }) {
       contentContainerStyle={{ paddingBottom: 18 }}
       showsVerticalScrollIndicator={false}
     >
-      <DocumentEntryHeader />
+      <AccountHeader profileRoute="StaffProfile" />
 
       <Text className="text-2xl font-extrabold text-vistaNavy">
         Document Entry
