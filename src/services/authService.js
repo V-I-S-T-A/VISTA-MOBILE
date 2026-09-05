@@ -42,4 +42,38 @@ export const authService = {
       throw unwrapApiError(error);
     }
   },
+
+  async changePassword({ oldPassword, newPassword }) {
+    try {
+      const { data } = await apiClient.post(API_ENDPOINTS.AUTH.CHANGE_PASSWORD, {
+        old_password: oldPassword,
+        new_password: newPassword,
+      });
+      return data;
+    } catch (error) {
+      throw unwrapApiError(error);
+    }
+  },
+
+  async requestPasswordReset(email) {
+    try {
+      const { data } = await apiClient.post(API_ENDPOINTS.AUTH.PASSWORD_RESET_REQUEST, { email });
+      return data;
+    } catch (error) {
+      throw unwrapApiError(error);
+    }
+  },
+
+  async confirmPasswordReset({ email, code, newPassword }) {
+    try {
+      const { data } = await apiClient.post(API_ENDPOINTS.AUTH.PASSWORD_RESET_CONFIRM, {
+        email,
+        code,
+        new_password: newPassword,
+      });
+      return data;
+    } catch (error) {
+      throw unwrapApiError(error);
+    }
+  },
 };

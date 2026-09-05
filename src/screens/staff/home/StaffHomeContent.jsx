@@ -12,6 +12,8 @@ import { useQueries } from "@tanstack/react-query";
 import { useAuth } from "../../../context/AuthContext";
 import { useSubmissions } from "../../../hooks/useSubmissions";
 import { submissionsService } from "../../../services/submissionsService";
+import AccountHeader from "../../../components/common/AccountHeader";
+import SubmissionListCard from "../../../components/submissions/SubmissionListCard";
 
 function StaffHomeHeader() {
   const navigation = useNavigation();
@@ -132,44 +134,6 @@ function SubmissionSummary() {
   );
 }
 
-function RecentSubmissionItem({ item, onPress }) {
-  return (
-    <TouchableOpacity
-      onPress={onPress}
-      className="bg-white rounded-xl p-4 mb-3 flex-row justify-between items-center"
-    >
-      <View className="flex-1">
-        <Text className="text-gray-800 font-semibold" numberOfLines={1}>
-          {item.title}
-        </Text>
-        {item.submitted_by_email ? (
-          <Text className="text-gray-400 text-xs mt-1">
-            {item.submitted_by_email}
-          </Text>
-        ) : null}
-        {item.submitted_at ? (
-          <Text className="text-gray-400 text-xs">
-            {new Date(item.submitted_at).toLocaleDateString(undefined, {
-              day: "2-digit",
-              month: "short",
-              year: "numeric",
-            })}
-          </Text>
-        ) : null}
-      </View>
-      {item.status ? (
-        <View className="bg-vistaYellow/90 rounded-full px-3 py-1">
-          <Text className="text-white text-xs font-semibold">
-            {item.status
-              .replace("_", " ")
-              .replace(/\b\w/g, (c) => c.toUpperCase())}
-          </Text>
-        </View>
-      ) : null}
-    </TouchableOpacity>
-  );
-}
-
 function RecentSubmissions() {
   const navigation = useNavigation();
   const { data, isLoading, isError } = useSubmissions({ page_size: 3 });
@@ -197,12 +161,13 @@ function RecentSubmissions() {
       ) : submissions.length === 0 ? (
         <Text className="text-gray-500 text-sm">No submissions yet.</Text>
       ) : (
-        submissions.map((item) => (
-          <RecentSubmissionItem
-            key={item.submission_id}
-            item={item}
+        submissions.map((submission) => (
+          <SubmissionListCard
+            key={submission.submission_id}
+            submission={submission}
+            compact
             onPress={() =>
-              navigation.navigate("ReviewPanelDetails", { submission: item })
+              navigation.navigate("ReviewPanelDetails", { submission })
             }
           />
         ))
@@ -218,7 +183,7 @@ export default function StaffHomeContent() {
       contentContainerStyle={{ paddingBottom: 18 }}
       showsVerticalScrollIndicator={false}
     >
-      <StaffHomeHeader />
+      <AccountHeader profileRoute="StaffProfile" />
 
       <Text className="text-2xl font-bold text-vistaNavy">Staff Dashboard</Text>
       <Text className="text-gray-500 mb-4">Welcome back!</Text>

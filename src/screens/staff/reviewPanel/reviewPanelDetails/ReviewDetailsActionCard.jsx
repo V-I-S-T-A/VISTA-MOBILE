@@ -60,11 +60,12 @@ export default function ReviewDetailsActionCard({ submission, isLoading }) {
 
   return (
     <View className="bg-white rounded-3xl p-6 mb-8 shadow-sm">
-      <Text className="text-vistaNavy text-xs font-bold tracking-wider mb-2 mt-1">
+      <Text className="text-vistaNavy text-md font-bold tracking-wider mb-2 mt-1">
         DOCUMENT STATUS — currently {STATUS_LABELS[submission?.status] || "—"}
       </Text>
 
       <SelectField
+        className="text-md"
         label=""
         placeholder="Select status.."
         value={nextStatus}
@@ -73,7 +74,7 @@ export default function ReviewDetailsActionCard({ submission, isLoading }) {
         onChange={setNextStatus}
       />
 
-      <Text className="text-vistaNavy text-xs font-bold tracking-wider mb-2 mt-4">
+      <Text className="text-vistaNavy text-md font-bold tracking-wider mb-2 mt-4">
         REVIEWER REMARKS
       </Text>
       <View className="border border-gray-200 rounded-xl p-4 h-32 mb-6">

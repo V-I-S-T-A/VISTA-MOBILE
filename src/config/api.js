@@ -14,6 +14,9 @@ export const API_ENDPOINTS = {
     LOGOUT: `${API_CONFIG.ENDPOINTS.AUTH}/logout/`,
     ME: `${API_CONFIG.ENDPOINTS.AUTH}/me/`,
     REFRESH: `${API_CONFIG.ENDPOINTS.AUTH}/token/refresh/`,
+    CHANGE_PASSWORD: `${API_CONFIG.ENDPOINTS.AUTH}/change-password/`,
+    PASSWORD_RESET_REQUEST: `${API_CONFIG.ENDPOINTS.AUTH}/password-reset/request/`,
+    PASSWORD_RESET_CONFIRM: `${API_CONFIG.ENDPOINTS.AUTH}/password-reset/confirm/`,
   },
   SUBMISSIONS: {
     LIST: "/submissions/",
