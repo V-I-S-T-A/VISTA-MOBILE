@@ -20,17 +20,18 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     const currentTokens = tokens;
-    tokenStore.clear();
-    setUser(null);
-    setRole(null);
-    setTokens(null);
 
-    if (currentTokens?.refresh) {
-      try {
+    try {
+      if (currentTokens?.refresh) {
         await authService.logout({ refresh: currentTokens.refresh });
-      } catch {
-        // Local logout should still complete if the token is expired or offline.
       }
+    } catch {
+      // Local logout should still complete if the token is expired or offline.
+    } finally {
+      tokenStore.clear();
+      setUser(null);
+      setRole(null);
+      setTokens(null);
     }
   };
 

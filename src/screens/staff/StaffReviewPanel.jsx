@@ -6,7 +6,7 @@ import StaffReviewHeader from "./reviewPanel/StaffReviewHeader";
 import StaffReviewBanner from "./reviewPanel/StaffReviewBanner";
 import StaffReviewSearch from "./reviewPanel/StaffReviewSearch";
 import StaffReviewList from "./reviewPanel/StaffReviewList";
-import StaffReviewPagination from "./reviewPanel/StaffReviewPagination";
+import SubmissionPagination from "../../components/submissions/SubmissionPagination";
 import { useSubmissions } from "../../hooks/useSubmissions";
 
 const STATUS_TO_PARAM = {
@@ -65,11 +65,10 @@ export default function StaffReviewPanel({ navigation }) {
             navigation.navigate("ReviewPanelDetails", { submission })
           }
         />
-        <StaffReviewPagination
+        <SubmissionPagination
           currentPage={page}
           totalPages={data?.total_pages ?? 1}
-          onPrevious={() => setPage((p) => Math.max(1, p - 1))}
-          onNext={() => setPage((p) => Math.min(data?.total_pages ?? 1, p + 1))}
+          onPageChange={setPage}
         />
       </ScrollView>
 
