@@ -1,4 +1,4 @@
-import { View, ScrollView, ActivityIndicator, Text } from "react-native";
+import { View, ScrollView, Text } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import StaffBottomNav from "../../components/staff/StaffBottomNav";
 import StaffReviewHeader from "./reviewPanel/StaffReviewHeader";
@@ -33,7 +33,9 @@ export default function ReviewPanelDetails({ navigation, route }) {
 
         {!current ? (
           <View className="py-10 items-center">
-            <Text className="text-gray-500">No submission selected.</Text>
+            <Text className="text-gray-500 text-sm">
+              No submission selected.
+            </Text>
           </View>
         ) : (
           <>
