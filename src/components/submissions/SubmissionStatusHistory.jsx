@@ -1,16 +1,9 @@
 import { ActivityIndicator, Text, View } from "react-native";
 import { useReviewLogs } from "../../hooks/useReviewLogs";
+import StatusBadge from "./StatusBadge";
+import { getStatusMeta } from "../../constants/submissionStatus";
 
-const STATUS_LABELS = {
-  pending: "Pending",
-  under_review: "Under Review",
-  approved: "Approved",
-  rejected: "Rejected",
-  resubmission_required: "Resubmission Required",
-};
-
-const formatStatus = (status) =>
-  STATUS_LABELS[status] || status?.replace(/_/g, " ") || "—";
+const formatStatus = (status) => getStatusMeta(status).label;
 
 const formatDate = (value) => {
   if (!value) return "—";
@@ -30,11 +23,11 @@ export default function SubmissionStatusHistory({ submissionId }) {
   return (
     <View className="bg-white rounded-3xl mb-8 overflow-hidden border border-gray-300 shadow-sm">
       <View className="bg-[#FFE35B] px-6 py-3.5">
-        <Text className="text-vistaNavy text-lg font-extrabold tracking-wide">
+        <Text className="text-vistaNavy text-base font-extrabold tracking-wide">
           STATUS HISTORY
         </Text>
       </View>
-      <View className="px-6 py-7">
+      <View className="px-6 py-6">
         {isLoading ? (
           <View className="py-5 items-center">
             <ActivityIndicator />
@@ -48,38 +41,36 @@ export default function SubmissionStatusHistory({ submissionId }) {
         ) : (
           logs.map((log, index) => {
             const hasNextLog = index < logs.length - 1;
+            const meta = getStatusMeta(log.new_status);
             return (
               <View key={log.log_id} className="flex-row">
-                <View className="w-12 items-center relative">
+                <View className="w-10 items-center relative">
                   {hasNextLog ? (
                     <View
-                      className="absolute w-[2px] bg-gray-300"
-                      style={{ top: 28, bottom: -8 }}
+                      className="absolute w-[2px] bg-gray-200"
+                      style={{ top: 24, bottom: -8 }}
                     />
                   ) : null}
-                  <View className="w-8 h-8 rounded-full bg-white border border-gray-100 items-center justify-center z-10">
+                  <View className="w-7 h-7 rounded-full bg-white border border-gray-100 items-center justify-center z-10">
                     <View
-                      className="w-4 h-4 rounded-full"
-                      style={{
-                        backgroundColor: index === 0 ? "#4285F4" : "#94A3B8",
-                      }}
+                      className="w-3.5 h-3.5 rounded-full"
+                      style={{ backgroundColor: meta.dot }}
                     />
                   </View>
                 </View>
-                <View className={`flex-1 ${hasNextLog ? "pb-7" : ""}`}>
-                  <Text className="text-vistaNavy text-lg font-medium leading-6">
-                    {formatStatus(log.new_status)}
-                  </Text>
-                  <Text className="text-gray-600 text-sm font-medium mt-1">
+
+                <View className={`flex-1 ${hasNextLog ? "pb-6" : ""}`}>
+                  <StatusBadge status={log.new_status} />
+                  <Text className="text-gray-500 text-xs mt-2">
                     {formatDate(log.changed_at)}
                   </Text>
                   {log.old_status ? (
-                    <Text className="text-gray-500 text-sm mt-2">
+                    <Text className="text-gray-500 text-xs mt-1">
                       Updated from {formatStatus(log.old_status)}
                     </Text>
                   ) : null}
                   {log.remarks_text ? (
-                    <Text className="text-gray-600 text-base leading-6 mt-2">
+                    <Text className="text-vistaNavy text-sm leading-5 mt-2">
                       {log.remarks_text}
                     </Text>
                   ) : null}
