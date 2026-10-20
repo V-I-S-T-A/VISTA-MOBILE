@@ -46,11 +46,7 @@ class MainApplication : Application(), ReactApplication {
       ReleaseLevel.STABLE
     }
     loadReactNative(this)
-    try {
-      ApplicationLifecycleDispatcher.onApplicationCreate(this)
-    } catch (e: IllegalStateException) {
-      // Ignored: DevLauncherController was already initialized by loadReactNative
-    }
+    ApplicationLifecycleDispatcher.onApplicationCreate(this)
   }
 
   override fun onConfigurationChanged(newConfig: Configuration) {

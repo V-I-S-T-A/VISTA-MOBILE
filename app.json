@@ -33,7 +33,14 @@
     "plugins": [
       "react-native-document-scanner-plugin",
       "expo-web-browser",
-      "@react-native-vector-icons/ionicons"
-    ]
+      "@react-native-vector-icons/ionicons",
+      "expo-secure-store"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "42779503-b7fd-40a9-b7ae-fed66a9c646e"
+      }
+    },
+    "owner": "purplehouse"
   }
 }
