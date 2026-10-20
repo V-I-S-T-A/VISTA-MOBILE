@@ -1,20 +1,5 @@
 import { Image, Text, TouchableOpacity, View } from "react-native";
-
-const STATUS_LABELS = {
-  pending: "Pending",
-  under_review: "Under Review",
-  approved: "Approved",
-  rejected: "Rejected",
-  resubmission_required: "Resubmission Required",
-};
-
-const STATUS_CLASSES = {
-  pending: "bg-[#FFF0C2] text-[#A66500]",
-  under_review: "bg-blue-100 text-blue-700",
-  approved: "bg-green-100 text-green-700",
-  rejected: "bg-red-100 text-red-700",
-  resubmission_required: "bg-orange-100 text-orange-700",
-};
+import SubmissionStatusBadge from "./SubmissionStatusBadge";
 
 export default function SubmissionListCard({
   submission,
@@ -24,8 +9,6 @@ export default function SubmissionListCard({
   const logo = submission.org_image_url
     ? { uri: submission.org_image_url }
     : null;
-  const statusClass =
-    STATUS_CLASSES[submission.status] || "bg-gray-100 text-gray-700";
 
   return (
     <TouchableOpacity
@@ -41,27 +24,19 @@ export default function SubmissionListCard({
           </Text>
         )}
       </View>
-      <View className="flex-1">
+      <View className="flex-1 min-w-0">
         <View className="flex-row items-start justify-between">
           <Text
-            className="text-vistaNavy font-bold text-[15px] flex-1 mr-2"
+            className="text-vistaNavy font-bold text-[15px] flex-1 min-w-0 mr-2"
             numberOfLines={1}
           >
             {submission.title || "Untitled Submission"}
           </Text>
           {compact ? (
-            <View
-              className={`rounded-full px-2.5 py-1 ${statusClass.split(" ")[0]}`}
-            >
-              <Text
-                className={`text-xs font-semibold ${statusClass.split(" ")[1]}`}
-              >
-                {STATUS_LABELS[submission.status] || submission.status || "—"}
-              </Text>
-            </View>
+            <SubmissionStatusBadge status={submission.status} size="small" />
           ) : null}
         </View>
-        <Text className="text-gray-500 text-xs mt-1" numberOfLines={1}>
+        <Text className="text-gray-500 text-xs mt-1" numberOfLines={1} ellipsizeMode="tail">
           {submission.org_name || "Organization unavailable"}
         </Text>
         <View className="flex-row justify-between items-center mt-3">

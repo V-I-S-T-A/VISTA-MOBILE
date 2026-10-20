@@ -9,9 +9,12 @@ import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import StudentHeader from "../../components/students/StudentHeader";
 import StudentBottomNav from "../../components/student/StudentBottomNav";
-import SubmissionDetailsCard from "../../components/submissions/SubmissionDetailsCard";
+import ReviewDetailsSubmitter from "../../components/submissions/ReviewDetailsSubmitter";
+import SubmissionDetailsRemarks from "../../components/submissions/SubmissionDetailsRemarks";
 import SubmissionStatusHistory from "../../components/submissions/SubmissionStatusHistory";
 import { useSubmission } from "../../hooks/useSubmissions";
+import SubmissionDocuments from "../../components/submissions/SubmissionDocuments";
+import SubmissionStatusBadge from "../../components/submissions/SubmissionStatusBadge";
 
 export default function StudentSubmissionDetails({ navigation, route }) {
   const insets = useSafeAreaInsets();
@@ -59,6 +62,12 @@ export default function StudentSubmissionDetails({ navigation, route }) {
                 {submission.title || "Untitled Submission"}
               </Text>
             </View>
+            <View className="mb-5">
+              <Text className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">
+                Current status
+              </Text>
+              <SubmissionStatusBadge status={submission.status} />
+            </View>
             <View className="bg-white rounded-3xl p-5 mb-6 border border-gray-300 flex-row">
               <Feather name="info" size={20} color="#1E3A68" />
               <Text className="text-gray-600 text-sm leading-6 flex-1 ml-3">
@@ -66,8 +75,15 @@ export default function StudentSubmissionDetails({ navigation, route }) {
                 submission.
               </Text>
             </View>
-            <SubmissionDetailsCard submission={submission} />
+            <ReviewDetailsSubmitter
+              submission={submission}
+              showDocumentType
+            />
+            <SubmissionDocuments documents={submission.documents || []} />
             <SubmissionStatusHistory submissionId={submission.submission_id} />
+            <SubmissionDetailsRemarks
+              submissionId={submission.submission_id}
+            />
           </>
         )}
       </ScrollView>

@@ -10,12 +10,10 @@ import {
   Alert,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
 
 import SelectField from "../../../components/staff/SelectField";
-import { useAuth } from "../../../context/AuthContext";
 import { scanDocument, pickDocumentFile } from "../../../utils/documentScan";
-import { useAutofillDocument, useCreateSubmission } from "../../../hooks/useSubmissions";
+import { useAutofillDocument } from "../../../hooks/useSubmissions";
 import { useActiveAcademicYear } from "../../../hooks/useAcademicYears";
 import { useOrganizations, useOrganizationUsers } from "../../../hooks/useOrganizations";
 import { useCategories } from "../../../hooks/useCategories";
@@ -25,7 +23,7 @@ function toOption(row, idField, labelFn) {
   return { id: row[idField], label: labelFn(row) };
 }
 
-export default function StaffDocumentEntryContent({ onLogPhysicalDocPress }) {
+export default function StaffDocumentEntryContent({ navigation }) {
   // --- form state -----------------------------------------------------
   const [organization, setOrganization] = useState(null); // { id, label }
   const [docType, setDocType] = useState(null);
@@ -98,7 +96,6 @@ export default function StaffDocumentEntryContent({ onLogPhysicalDocPress }) {
 
   // --- OCR autofill + create submission mutations -----------------------
   const autofillMutation = useAutofillDocument();
-  const createSubmissionMutation = useCreateSubmission();
 
   const runAutofill = async (file) => {
     try {
@@ -215,33 +212,19 @@ export default function StaffDocumentEntryContent({ onLogPhysicalDocPress }) {
       return;
     }
 
-    createSubmissionMutation.mutate(
-      {
+    navigation.navigate("StaffSubmissionConfirmation", { draft: {
         doc_type_id: docType.id,
         org_id: organization.id,
         category_id: category.id,
         academic_year_id: academicYear?.id,
         submitted_by: submittedBy?.id,
         title: title.trim(),
-        description: description.trim(),
-      },
-      {
-        onSuccess: () => {
-          Alert.alert("Submitted", "The submission was created successfully.");
-          onLogPhysicalDocPress?.();
-        },
-        onError: (error) => {
-          Alert.alert(
-            "Submission failed",
-            error.message || "Please review the form and try again.",
-          );
-        },
-      },
-    );
+        ...(description.trim() ? { description: description.trim() } : {}),
+      }, file: scannedFile, labels: { organization: organization.label, docType: docType.label, category: category.label, academicYear: academicYear?.label, submittedBy: submittedBy?.label } });
   };
 
   const isBusy =
-    autofillMutation.isPending || createSubmissionMutation.isPending;
+    autofillMutation.isPending;
 
   return (
     <ScrollView
@@ -366,7 +349,7 @@ export default function StaffDocumentEntryContent({ onLogPhysicalDocPress }) {
                 Attach
               </Text>
               <Text className="text-slate-400 text-xs font-semibold">
-                Document(Required)
+                Document (Optional)
               </Text>
             </>
           )}
@@ -377,11 +360,9 @@ export default function StaffDocumentEntryContent({ onLogPhysicalDocPress }) {
           disabled={isBusy}
           className={`bg-[#FFC342] h-10 items-center justify-center ${isBusy ? "opacity-70" : ""}`}
         >
-          {createSubmissionMutation.isPending ? (
-            <ActivityIndicator color="white" />
-          ) : (
+          {
             <Text className="text-white font-extrabold text-base">Submit</Text>
-          )}
+          }
         </TouchableOpacity>
       </View>
     </ScrollView>

@@ -15,6 +15,7 @@ export default function SubmissionPagination({
   currentPage = 1,
   totalPages = 1,
   onPageChange,
+  className = "mb-6",
 }) {
   const safeTotalPages = Math.max(1, totalPages);
   const safeCurrentPage = Math.min(Math.max(1, currentPage), safeTotalPages);
@@ -27,7 +28,7 @@ export default function SubmissionPagination({
   };
 
   return (
-    <View className="bg-[#FFD740] rounded-full py-3 px-5 flex-row justify-between items-center mb-8">
+    <View className={`bg-[#FFD740] rounded-full py-3 px-5 flex-row justify-between items-center ${className}`}>
       <TouchableOpacity
         className="px-2"
         disabled={!canGoPrevious}

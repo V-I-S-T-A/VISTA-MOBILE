@@ -30,8 +30,9 @@ export default function SubmissionDetailsCard({ submission }) {
           >
             <Text className="text-gray-500 text-sm">{label}</Text>
             <Text
-              className="text-vistaNavy font-bold text-sm flex-1 text-right ml-5"
+              className="text-vistaNavy font-bold text-sm flex-1 min-w-0 text-right ml-5"
               numberOfLines={1}
+              ellipsizeMode="tail"
             >
               {value}
             </Text>

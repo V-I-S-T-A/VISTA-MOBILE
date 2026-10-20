@@ -2,8 +2,12 @@ import { View, Text } from "react-native";
 
 export default function ReviewDetailsTitleCard({ submission }) {
   return (
-    <View className="bg-[#1e5aa0] rounded-2xl p-6 mb-6 shadow-sm">
-      <Text className="text-white font-extrabold text-[22px] leading-8">
+    <View className="bg-[#245EA9] rounded-2xl p-5 mb-4">
+      <Text
+        className="text-white font-extrabold text-[22px] leading-8"
+        numberOfLines={3}
+        ellipsizeMode="tail"
+      >
         {submission?.org_name ? `${submission.org_name}: ` : ""}
         {submission?.title || "Untitled Submission"}
       </Text>
