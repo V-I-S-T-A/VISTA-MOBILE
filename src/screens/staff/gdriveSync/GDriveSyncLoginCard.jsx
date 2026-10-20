@@ -157,10 +157,9 @@ export default function GDriveSyncLoginCard() {
             <>
               <View className="bg-white p-1 rounded-sm mr-3">
                 <Image
-                  source={{
-                    uri: "https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg",
-                  }}
+                  source={require("../../../assets/google-icon-logo-svgrepo-com.png")}
                   className="w-4 h-4"
+                  resizeMode="contain"
                 />
               </View>
               <Text className="text-gray-800 font-semibold text-[15px]">
