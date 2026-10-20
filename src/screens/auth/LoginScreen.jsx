@@ -54,12 +54,13 @@ export default function LoginScreen() {
     if (!resetEmail.trim()) return;
     setIsResetting(true);
     try {
-      const response = await authService.requestPasswordReset(
-        resetEmail.trim(),
-      );
+      await authService.requestPasswordReset(resetEmail.trim());
       setResetStep("confirm");
       setErrorMessage("");
-      Alert.alert("Check your email", response.detail);
+      Alert.alert(
+        "Check your email",
+        "If an active account uses this email, a verification code has been sent.",
+      );
     } catch (error) {
       Alert.alert("Could not send code", error.message || "Please try again.");
     } finally {
@@ -88,8 +89,12 @@ export default function LoginScreen() {
       });
       setIsForgotOpen(false);
       setResetStep("email");
+      setEmail(resetEmail.trim());
+      setPassword("");
+      setResetEmail("");
       setResetCode("");
       setResetPassword("");
+      setConfirmResetPassword("");
       Alert.alert(
         "Password reset",
         "You can now sign in with your new password.",
@@ -207,12 +212,14 @@ export default function LoginScreen() {
             {resetStep === "email" ? (
               <>
                 <Text className="text-gray-500 mb-5">
-                  Enter your account email and we’ll send a verification code.
+                  If an active account uses this email, we’ll send a verification code.
                 </Text>
                 <TextInput
                   value={resetEmail}
                   onChangeText={setResetEmail}
                   placeholder="Email address"
+                  autoCorrect={false}
+                  autoComplete="email"
                   autoCapitalize="none"
                   keyboardType="email-address"
                   className="border border-gray-200 rounded-xl px-4 h-12 mb-5"
@@ -275,7 +282,12 @@ export default function LoginScreen() {
                 />
                 <View className="flex-row">
                   <TouchableOpacity
-                    onPress={() => setResetStep("email")}
+                    onPress={() => {
+                      setResetStep("email");
+                      setResetCode("");
+                      setResetPassword("");
+                      setConfirmResetPassword("");
+                    }}
                     className="flex-1 items-center py-3 mr-3"
                   >
                     <Text className="text-gray-600 font-semibold">Back</Text>

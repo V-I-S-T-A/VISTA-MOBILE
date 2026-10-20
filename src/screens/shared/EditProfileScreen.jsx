@@ -26,6 +26,11 @@ export default function EditProfileScreen({ navigation }) {
   const [isPasswordOpen, setIsPasswordOpen] = useState(false);
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [passwordStep, setPasswordStep] = useState("form");
+  const [passwordError, setPasswordError] = useState("");
+  const [isSendingCode, setIsSendingCode] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   useEffect(() => {
     setFirstName(user?.first_name || "");
@@ -96,7 +101,16 @@ export default function EditProfileScreen({ navigation }) {
       setSaving(false);
     }
   };
-  const changePassword = async () => {
+  const resetPasswordFlow = () => {
+    setIsPasswordOpen(false);
+    setPasswordStep("form");
+    setOldPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setVerificationCode("");
+    setPasswordError("");
+  };
+  const requestPasswordCode = async () => {
     if (!oldPassword || newPassword.length < 8) {
       Alert.alert(
         "Check your password",
@@ -104,15 +118,39 @@ export default function EditProfileScreen({ navigation }) {
       );
       return;
     }
+    if (newPassword !== confirmPassword) {
+      Alert.alert("Passwords do not match", "Confirm your new password.");
+      return;
+    }
+    setPasswordError("");
+    setIsSendingCode(true);
+    try {
+      await authService.requestPasswordChangeCode();
+      setPasswordStep("verify");
+      setVerificationCode("");
+    } catch (error) {
+      setPasswordError(error.message || "Could not send a verification code.");
+    } finally {
+      setIsSendingCode(false);
+    }
+  };
+  const changePassword = async () => {
+    if (verificationCode.length !== 6) {
+      setPasswordError("Enter the 6-digit verification code from your email.");
+      return;
+    }
+    setPasswordError("");
     setIsChangingPassword(true);
     try {
-      await authService.changePassword({ oldPassword, newPassword });
-      setOldPassword("");
-      setNewPassword("");
-      setIsPasswordOpen(false);
+      await authService.confirmPasswordChange({
+        oldPassword,
+        newPassword,
+        code: verificationCode,
+      });
+      resetPasswordFlow();
       Alert.alert("Success", "Your password has been changed.");
     } catch (error) {
-      Alert.alert("Error", error.message || "Could not change password.");
+      setPasswordError(error.message || "Could not change password.");
     } finally {
       setIsChangingPassword(false);
     }
@@ -207,51 +245,108 @@ export default function EditProfileScreen({ navigation }) {
         visible={isPasswordOpen}
         transparent
         animationType="fade"
-        onRequestClose={() => setIsPasswordOpen(false)}
+        onRequestClose={resetPasswordFlow}
       >
         <View className="flex-1 bg-black/40 justify-center px-6">
           <View className="bg-white rounded-3xl p-6">
             <Text className="text-vistaNavy text-xl font-bold mb-5">
-              Change Password
+              {passwordStep === "form" ? "Change Password" : "Verify Your Email"}
             </Text>
-            <TextInput
-              value={oldPassword}
-              onChangeText={setOldPassword}
-              placeholder="Current password"
-              placeholderTextColor="#9CA3AF"
-              autoCapitalize="none"
-              autoCorrect={false}
-              textContentType="password"
-              secureTextEntry
-              className="border border-gray-200 rounded-xl px-4 h-12 mb-3 text-gray-700"
-            />
-            <TextInput
-              value={newPassword}
-              onChangeText={setNewPassword}
-              placeholder="New password (8+ characters)"
-              placeholderTextColor="#9CA3AF"
-              autoCapitalize="none"
-              autoCorrect={false}
-              textContentType="newPassword"
-              secureTextEntry
-              className="border border-gray-200 rounded-xl px-4 h-12 mb-5 text-gray-700"
-            />
+            {passwordStep === "form" ? (
+              <>
+                <TextInput
+                  value={oldPassword}
+                  onChangeText={setOldPassword}
+                  placeholder="Current password"
+                  placeholderTextColor="#9CA3AF"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  textContentType="password"
+                  secureTextEntry
+                  className="border border-gray-200 rounded-xl px-4 h-12 mb-3 text-gray-700"
+                />
+                <TextInput
+                  value={newPassword}
+                  onChangeText={setNewPassword}
+                  placeholder="New password (8+ characters)"
+                  placeholderTextColor="#9CA3AF"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  textContentType="newPassword"
+                  secureTextEntry
+                  className="border border-gray-200 rounded-xl px-4 h-12 mb-3 text-gray-700"
+                />
+                <TextInput
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  placeholder="Confirm new password"
+                  placeholderTextColor="#9CA3AF"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  textContentType="newPassword"
+                  secureTextEntry
+                  className="border border-gray-200 rounded-xl px-4 h-12 mb-4 text-gray-700"
+                />
+              </>
+            ) : (
+              <>
+                <Text className="text-gray-600 mb-4">
+                  Enter the 6-digit verification code sent to {user?.email}.
+                </Text>
+                <TextInput
+                  value={verificationCode}
+                  onChangeText={(value) =>
+                    setVerificationCode(value.replace(/\D/g, "").slice(0, 6))
+                  }
+                  placeholder="6-digit verification code"
+                  placeholderTextColor="#9CA3AF"
+                  keyboardType="number-pad"
+                  maxLength={6}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  className="border border-gray-200 rounded-xl px-4 h-12 mb-3 text-gray-700"
+                />
+                <TouchableOpacity
+                  onPress={requestPasswordCode}
+                  disabled={isSendingCode || isChangingPassword}
+                  className="mb-4"
+                >
+                  <Text className="text-[#245EA9] font-semibold">
+                    {isSendingCode ? "Sending code..." : "Resend verification code"}
+                  </Text>
+                </TouchableOpacity>
+              </>
+            )}
+            {!!passwordError && (
+              <Text className="text-red-600 mb-4">{passwordError}</Text>
+            )}
             <View className="flex-row">
               <TouchableOpacity
-                onPress={() => setIsPasswordOpen(false)}
+                onPress={passwordStep === "verify"
+                  ? () => {
+                      setPasswordStep("form");
+                      setVerificationCode("");
+                      setPasswordError("");
+                    }
+                  : resetPasswordFlow}
+                disabled={isSendingCode || isChangingPassword}
                 className="flex-1 items-center py-3 mr-3"
               >
-                <Text className="text-gray-600 font-semibold">Cancel</Text>
+                <Text className="text-gray-600 font-semibold">
+                  {passwordStep === "verify" ? "Back" : "Cancel"}
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={changePassword}
-                disabled={isChangingPassword}
+                onPress={passwordStep === "form" ? requestPasswordCode : changePassword}
+                disabled={isSendingCode || isChangingPassword}
                 className="bg-[#FFC342] rounded-xl flex-1 items-center py-3"
               >
-                {isChangingPassword ? (
+                {isSendingCode || isChangingPassword ? (
                   <ActivityIndicator color="#5a3d00" />
                 ) : (
-                  <Text className="text-[#5a3d00] font-bold">Change</Text>
+                  <Text className="text-[#5a3d00] font-bold">
+                    {passwordStep === "form" ? "Send Code" : "Change Password"}
+                  </Text>
                 )}
               </TouchableOpacity>
             </View>

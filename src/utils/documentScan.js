@@ -37,6 +37,7 @@ export async function pickDocumentFile() {
     uri: asset.uri, 
     name: asset.name || `document_${Date.now()}`, 
     type: asset.mimeType || inferMimeTypeFromName(asset.name),
+    size: asset.size,
   };
 }
 

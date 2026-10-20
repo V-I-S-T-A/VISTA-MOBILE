@@ -1,6 +1,6 @@
 import { View, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import StaffBottomNav from "../../components/staff/StaffBottomNav";
 import StaffReviewHeader from "./reviewPanel/StaffReviewHeader";
 import StaffReviewBanner from "./reviewPanel/StaffReviewBanner";
@@ -17,11 +17,33 @@ const STATUS_TO_PARAM = {
   "Resubmission Required": "resubmission_required",
 };
 
-export default function StaffReviewPanel({ navigation }) {
+const FILTER_OPTIONS = [
+  "All Status",
+  "Pending",
+  "Under Review",
+  "Approved",
+  "Rejected",
+  "Resubmission Required",
+];
+
+const getInitialFilter = (route) =>
+  FILTER_OPTIONS.includes(route?.params?.statusFilter)
+    ? route.params.statusFilter
+    : "All Status";
+
+export default function StaffReviewPanel({ navigation, route }) {
   const insets = useSafeAreaInsets();
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All Status");
+  const [statusFilter, setStatusFilter] = useState(() => getInitialFilter(route));
+
+  useEffect(() => {
+    const requestedFilter = route?.params?.statusFilter;
+    if (!FILTER_OPTIONS.includes(requestedFilter)) return;
+    setStatusFilter(requestedFilter);
+    setPage(1);
+    navigation.setParams({ statusFilter: undefined });
+  }, [navigation, route?.params?.statusFilter]);
 
   const params = { page };
   if (searchQuery.trim()) params.search = searchQuery.trim();
@@ -43,11 +65,7 @@ export default function StaffReviewPanel({ navigation }) {
 
   return (
     <View className="flex-1 bg-[#F3F3F3]" style={{ paddingTop: insets.top }}>
-      <ScrollView
-        className="flex-1 px-5 pt-4"
-        contentContainerStyle={{ paddingBottom: 20 }}
-        showsVerticalScrollIndicator={false}
-      >
+      <View className="flex-1 px-5 pt-4">
         <StaffReviewHeader />
         <StaffReviewBanner />
         <StaffReviewSearch
@@ -56,21 +74,27 @@ export default function StaffReviewPanel({ navigation }) {
           statusFilter={statusFilter}
           setStatusFilter={handleStatusChange}
         />
-        <StaffReviewList
-          submissions={data?.results ?? []}
-          isLoading={isLoading}
-          isError={isError}
-          onRetry={refetch}
-          onOpen={(submission) =>
-            navigation.navigate("ReviewPanelDetails", { submission })
-          }
-        />
+        <ScrollView
+          className="flex-1"
+          contentContainerStyle={{ paddingBottom: 8, flexGrow: 1 }}
+          showsVerticalScrollIndicator={false}
+        >
+          <StaffReviewList
+            submissions={data?.results ?? []}
+            isLoading={isLoading}
+            isError={isError}
+            onRetry={refetch}
+            onOpen={(submission) =>
+              navigation.navigate("ReviewPanelDetails", { submission })
+            }
+          />
+        </ScrollView>
         <SubmissionPagination
           currentPage={page}
           totalPages={data?.total_pages ?? 1}
           onPageChange={setPage}
         />
-      </ScrollView>
+      </View>
 
       <StaffBottomNav
         activeTab="reports"

@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { ROLES } from "../constants/roles";
 import SplashScreen from "../screens/SplashScreen";
@@ -7,15 +6,12 @@ import StudentNavigator from "./StudentNavigator";
 import StaffNavigator from "./StaffNavigator";
 
 export default function RootNavigator() {
-  const { user, role } = useAuth();
-  const [showSplash, setShowSplash] = useState(true);
+  const { user, role, isRestoring, restoreError, retryRestore } = useAuth();
 
-  useEffect(() => {
-    const timer = setTimeout(() => setShowSplash(false), 1800);
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (showSplash) return <SplashScreen />;
+  if (isRestoring) return <SplashScreen />;
+  if (restoreError) {
+    return <SplashScreen error={restoreError.message} onRetry={retryRestore} />;
+  }
   if (!user) return <AuthNavigator />;
 
   if (role === ROLES.STAFF || role === ROLES.ADMIN) {

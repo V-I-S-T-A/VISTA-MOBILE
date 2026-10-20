@@ -43,9 +43,6 @@ function StaffHomeHeader() {
   );
 }
 
-// Statuses that count as "completed" for the dashboard tile.
-const COMPLETED_STATUSES = ["approved", "rejected"];
-
 function useSubmissionCounts() {
   const results = useQueries({
     queries: [
@@ -69,34 +66,34 @@ function useSubmissionCounts() {
             status: "approved",
           }),
       },
-      {
-        queryKey: ["submissions", "count", "rejected"],
-        queryFn: () =>
-          submissionsService.listSubmissions({
-            page_size: 1,
-            status: "rejected",
-          }),
-      },
     ],
   });
 
-  const [all, pending, approved, rejected] = results;
+  const [all, pending, approved] = results;
   const isLoading = results.some((r) => r.isLoading);
 
   return {
     isLoading,
     total: all.data?.count ?? 0,
     pending: pending.data?.count ?? 0,
-    completed: (approved.data?.count ?? 0) + (rejected.data?.count ?? 0),
+    approved: approved.data?.count ?? 0,
   };
 }
 
 function SubmissionSummary() {
-  const { isLoading, total, pending, completed } = useSubmissionCounts();
+  const navigation = useNavigation();
+  const { isLoading, total, pending, approved } = useSubmissionCounts();
+
+  const openReviews = (statusFilter) =>
+    navigation.navigate("StaffReviewPanel", { statusFilter });
 
   return (
     <>
-      <View className="bg-vistaNavy rounded-2xl p-5 flex-row justify-between items-center mb-4">
+      <TouchableOpacity
+        onPress={() => openReviews("All Status")}
+        accessibilityRole="button"
+        className="bg-vistaNavy rounded-2xl p-5 flex-row justify-between items-center mb-4"
+      >
         <View>
           <Text className="text-white/80 text-sm mb-1">Total Submissions</Text>
           {isLoading ? (
@@ -108,10 +105,14 @@ function SubmissionSummary() {
         <View className="bg-white/20 rounded-xl p-3">
           <Feather name="folder" size={26} color="white" />
         </View>
-      </View>
+      </TouchableOpacity>
 
       <View className="flex-row gap-3 mb-6">
-        <View className="flex-1 bg-vistaYellow rounded-2xl p-4 flex-row justify-between items-center">
+        <TouchableOpacity
+          onPress={() => openReviews("Pending")}
+          accessibilityRole="button"
+          className="flex-1 bg-vistaYellow rounded-2xl p-4 flex-row justify-between items-center"
+        >
           <View>
             <Text className="text-white/90 text-sm mb-1">Pending</Text>
             <Text className="text-white text-2xl font-bold">
@@ -119,16 +120,20 @@ function SubmissionSummary() {
             </Text>
           </View>
           <Feather name="clock" size={22} color="white" />
-        </View>
-        <View className="flex-1 bg-vistaYellow rounded-2xl p-4 flex-row justify-between items-center">
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => openReviews("Approved")}
+          accessibilityRole="button"
+          className="flex-1 bg-vistaYellow rounded-2xl p-4 flex-row justify-between items-center"
+        >
           <View>
-            <Text className="text-white/90 text-sm mb-1">Completed</Text>
+            <Text className="text-white/90 text-sm mb-1">Approved</Text>
             <Text className="text-white text-2xl font-bold">
-              {isLoading ? "—" : completed}
+              {isLoading ? "—" : approved}
             </Text>
           </View>
           <Feather name="check-square" size={22} color="white" />
-        </View>
+        </TouchableOpacity>
       </View>
     </>
   );

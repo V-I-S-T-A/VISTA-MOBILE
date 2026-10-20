@@ -28,9 +28,9 @@ export default function SubmissionStatusHistory({ submissionId }) {
   const logs = data?.results ?? [];
 
   return (
-    <View className="bg-white rounded-3xl mb-8 overflow-hidden border border-gray-300 shadow-sm">
+    <View className="bg-white rounded-2xl mb-8 overflow-hidden border border-gray-300 shadow-sm">
       <View className="bg-[#FFE35B] px-6 py-3.5">
-        <Text className="text-vistaNavy text-lg font-extrabold tracking-wide">
+        <Text className="text-vistaNavy text-sm font-extrabold tracking-wide">
           STATUS HISTORY
         </Text>
       </View>
@@ -67,7 +67,7 @@ export default function SubmissionStatusHistory({ submissionId }) {
                   </View>
                 </View>
                 <View className={`flex-1 ${hasNextLog ? "pb-7" : ""}`}>
-                  <Text className="text-vistaNavy text-lg font-medium leading-6">
+                  <Text className="text-vistaNavy text-md font-medium leading-6">
                     {formatStatus(log.new_status)}
                   </Text>
                   <Text className="text-gray-600 text-sm font-medium mt-1">

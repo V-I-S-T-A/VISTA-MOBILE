@@ -10,6 +10,9 @@ import {
 import { Feather } from "@expo/vector-icons";
 import SelectField from "../../../../components/staff/SelectField";
 import { useUpdateSubmissionStatus } from "../../../../hooks/useSubmissions";
+import SubmissionStatusBadge, {
+  getSubmissionStatus,
+} from "../../../../components/submissions/SubmissionStatusBadge";
 
 const STATUS_TRANSITIONS = {
   pending: ["under_review", "rejected", "resubmission_required"],
@@ -19,21 +22,16 @@ const STATUS_TRANSITIONS = {
   rejected: ["under_review", "resubmission_required", "approved"],
 };
 
-const STATUS_LABELS = {
-  pending: "Pending",
-  under_review: "Under Review",
-  approved: "Approved",
-  rejected: "Rejected",
-  resubmission_required: "Resubmission Required",
-};
-
 export default function ReviewDetailsActionCard({ submission, isLoading }) {
   const [nextStatus, setNextStatus] = useState(null);
   const [remarks, setRemarks] = useState("");
   const updateStatus = useUpdateSubmissionStatus();
 
   const allowed = STATUS_TRANSITIONS[submission?.status] || [];
-  const options = allowed.map((s) => ({ id: s, label: STATUS_LABELS[s] }));
+  const options = allowed.map((s) => ({
+    id: s,
+    label: getSubmissionStatus(s).label,
+  }));
 
   const handleUpdate = () => {
     if (!nextStatus) {
@@ -60,9 +58,12 @@ export default function ReviewDetailsActionCard({ submission, isLoading }) {
 
   return (
     <View className="bg-white rounded-3xl p-6 mb-8 shadow-sm">
-      <Text className="text-vistaNavy text-md font-bold tracking-wider mb-2 mt-1">
-        DOCUMENT STATUS — currently {STATUS_LABELS[submission?.status] || "—"}
-      </Text>
+      <View className="flex-row items-center justify-between mb-4">
+        <Text className="text-vistaNavy text-sm font-bold tracking-wider mb-2 mt-1">
+          DOCUMENT STATUS
+        </Text>
+        <SubmissionStatusBadge status={submission?.status} />
+      </View>
 
       <SelectField
         className="text-md"
@@ -74,7 +75,7 @@ export default function ReviewDetailsActionCard({ submission, isLoading }) {
         onChange={setNextStatus}
       />
 
-      <Text className="text-vistaNavy text-md font-bold tracking-wider mb-2 mt-4">
+      <Text className="text-vistaNavy text-sm font-bold tracking-wider mb-2 mt-4">
         REVIEWER REMARKS
       </Text>
       <View className="border border-gray-200 rounded-xl p-4 h-32 mb-6">

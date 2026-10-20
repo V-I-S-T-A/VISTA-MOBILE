@@ -60,13 +60,18 @@ apiClient.interceptors.response.use(
         `${API_CONFIG.BASE_URL}${API_ENDPOINTS.AUTH.REFRESH}`,
         { refresh: tokenStore.getRefreshToken() },
       );
-      tokenStore.setAccessToken(data.access);
+      await tokenStore.setTokens({
+        access: data.access,
+        refresh: data.refresh,
+      });
       resolveQueue(null, data.access);
       config.headers.Authorization = `Bearer ${data.access}`;
       return apiClient(config);
     } catch (refreshError) {
       resolveQueue(refreshError, null);
-      tokenStore.clear();
+      if ([400, 401].includes(refreshError.response?.status)) {
+        await tokenStore.clear();
+      }
       return Promise.reject(refreshError);
     } finally {
       isRefreshing = false;

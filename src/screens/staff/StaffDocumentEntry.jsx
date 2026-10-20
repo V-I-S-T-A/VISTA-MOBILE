@@ -9,6 +9,7 @@ export default function StaffDocumentEntry({ navigation }) {
   return (
     <View className="flex-1 bg-[#F3F3F3]" style={{ paddingTop: insets.top }}>
       <StaffDocumentEntryContent
+        navigation={navigation}
         onLogPhysicalDocPress={() => navigation.navigate("StaffReviewPanel")}
       />
 
