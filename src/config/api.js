@@ -15,6 +15,8 @@ export const API_ENDPOINTS = {
     ME: `${API_CONFIG.ENDPOINTS.AUTH}/me/`,
     REFRESH: `${API_CONFIG.ENDPOINTS.AUTH}/token/refresh/`,
     CHANGE_PASSWORD: `${API_CONFIG.ENDPOINTS.AUTH}/change-password/`,
+    REQUEST_PASSWORD_CHANGE_CODE: `${API_CONFIG.ENDPOINTS.AUTH}/change-password/request-code/`,
+    CONFIRM_PASSWORD_CHANGE: `${API_CONFIG.ENDPOINTS.AUTH}/change-password/confirm/`,
     PASSWORD_RESET_REQUEST: `${API_CONFIG.ENDPOINTS.AUTH}/password-reset/request/`,
     PASSWORD_RESET_CONFIRM: `${API_CONFIG.ENDPOINTS.AUTH}/password-reset/confirm/`,
   },
@@ -24,6 +26,7 @@ export const API_ENDPOINTS = {
     DETAIL: (id) => `/submissions/${id}/`,
     STATUS: (id) => `/submissions/${id}/status/`,
   },
+  DOCUMENTS: { LIST: "/documents/" },
   REVIEW_LOGS: {
     LIST: "/review-logs/",
   },
