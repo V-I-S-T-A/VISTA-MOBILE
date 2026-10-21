@@ -37,15 +37,24 @@ export default function StaffDocumentEntryContent({ navigation }) {
   const [ocrDraft, setOcrDraft] = useState(null);
 
   // --- reference data ---------------------------------------------------
-  const { data: organizations = [], isLoading: loadingOrgs } =
-    useOrganizations();
-  const { data: categories = [], isLoading: loadingCategories } =
-    useCategories();
-  const { data: documentTypes = [], isLoading: loadingDocTypes } =
-    useDocumentTypes();
-  const { data: activeAcademicYear } = useActiveAcademicYear();
-  const { data: orgUsers = [], isLoading: loadingOrgUsers } =
-    useOrganizationUsers(organization?.id);
+  const organizationsQuery = useOrganizations();
+  const categoriesQuery = useCategories();
+  const documentTypesQuery = useDocumentTypes();
+  const academicYearQuery = useActiveAcademicYear();
+  const orgUsersQuery = useOrganizationUsers(organization?.id);
+  const { data: organizations = [], isLoading: loadingOrgs } = organizationsQuery;
+  const { data: categories = [], isLoading: loadingCategories } = categoriesQuery;
+  const { data: documentTypes = [], isLoading: loadingDocTypes } = documentTypesQuery;
+  const { data: activeAcademicYear } = academicYearQuery;
+  const { data: orgUsers = [], isLoading: loadingOrgUsers } = orgUsersQuery;
+  const failedOptions = [
+    ["organizations", organizationsQuery],
+    ["categories", categoriesQuery],
+    ["document types", documentTypesQuery],
+    ["academic year", academicYearQuery],
+    ["organization users", orgUsersQuery],
+  ].filter(([, query]) => query.isError);
+  const retryingOptions = failedOptions.some(([, query]) => query.isFetching);
 
   const orgOptions = useMemo(
     () => organizations.map((o) => toOption(o, "org_id", (r) => r.name)),
@@ -200,6 +209,10 @@ export default function StaffDocumentEntryContent({ navigation }) {
   };
 
   const handleSubmit = () => {
+    if (failedOptions.length > 0 || loadingOrgs || loadingCategories || loadingDocTypes || loadingOrgUsers || academicYearQuery.isLoading) {
+      Alert.alert("Form options unavailable", "Please wait for the form options to load, or use Try again before submitting.");
+      return;
+    }
     if (!title.trim()) {
       Alert.alert("Missing title", "Please enter a document title.");
       return;
@@ -241,6 +254,17 @@ export default function StaffDocumentEntryContent({ navigation }) {
         Registration Portal.
       </Text>
 
+      {failedOptions.length > 0 && (
+        <View accessibilityRole="alert" className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+          <Text className="text-red-700 text-sm">
+            Could not load {failedOptions.map(([label]) => label).join(", ")}. Please try again before submitting.
+          </Text>
+          <TouchableOpacity accessibilityRole="button" disabled={retryingOptions}
+            onPress={() => { failedOptions.forEach(([, query]) => { query.refetch(); }); }}>
+            <Text className="text-red-700 font-bold mt-2">{retryingOptions ? "Retrying?" : "Try again"}</Text>
+          </TouchableOpacity>
+        </View>
+      )}
       <View className="bg-white rounded-2xl px-6 pt-6 pb-7">
         <SelectField
           label="ORGANIZATION"
