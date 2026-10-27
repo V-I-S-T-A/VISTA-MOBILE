@@ -1,4 +1,5 @@
-import { Text, View } from "react-native";
+import { Text } from "../common/FontText";
+import { View } from "react-native";
 
 export default function SubmissionDetailsCard({ submission }) {
   const rows = [

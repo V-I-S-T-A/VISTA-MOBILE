@@ -1,12 +1,6 @@
-import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  ScrollView,
-  ActivityIndicator,
-} from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { Text } from "../../../components/common/FontText";
+import { View, Image, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
+import { Feather, FontAwesome6, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useQueries } from "@tanstack/react-query";
 import { useAuth } from "../../../context/AuthContext";
@@ -14,6 +8,8 @@ import { useSubmissions } from "../../../hooks/useSubmissions";
 import { submissionsService } from "../../../services/submissionsService";
 import AccountHeader from "../../../components/common/AccountHeader";
 import SubmissionListCard from "../../../components/submissions/SubmissionListCard";
+import SubmissionDashboardCards from "../../../components/submissions/SubmissionDashboardCards";
+import { MAIN_BLACK } from "../../../constants/colors";
 
 function StaffHomeHeader() {
   const navigation = useNavigation();
@@ -88,54 +84,16 @@ function SubmissionSummary() {
     navigation.navigate("StaffReviewPanel", { statusFilter });
 
   return (
-    <>
-      <TouchableOpacity
-        onPress={() => openReviews("All Status")}
-        accessibilityRole="button"
-        className="bg-vistaNavy rounded-2xl p-5 flex-row justify-between items-center mb-4"
-      >
-        <View>
-          <Text className="text-white/80 text-sm mb-1">Total Submissions</Text>
-          {isLoading ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <Text className="text-white text-3xl font-bold">{total}</Text>
-          )}
-        </View>
-        <View className="bg-white/20 rounded-xl p-3">
-          <Feather name="folder" size={26} color="white" />
-        </View>
-      </TouchableOpacity>
-
-      <View className="flex-row gap-3 mb-6">
-        <TouchableOpacity
-          onPress={() => openReviews("Pending")}
-          accessibilityRole="button"
-          className="flex-1 bg-vistaYellow rounded-2xl p-4 flex-row justify-between items-center"
-        >
-          <View>
-            <Text className="text-white/90 text-sm mb-1">Pending</Text>
-            <Text className="text-white text-2xl font-bold">
-              {isLoading ? "—" : pending}
-            </Text>
-          </View>
-          <Feather name="clock" size={22} color="white" />
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => openReviews("Approved")}
-          accessibilityRole="button"
-          className="flex-1 bg-vistaYellow rounded-2xl p-4 flex-row justify-between items-center"
-        >
-          <View>
-            <Text className="text-white/90 text-sm mb-1">Approved</Text>
-            <Text className="text-white text-2xl font-bold">
-              {isLoading ? "—" : approved}
-            </Text>
-          </View>
-          <Feather name="check-square" size={22} color="white" />
-        </TouchableOpacity>
-      </View>
-    </>
+    <SubmissionDashboardCards
+      isLoading={isLoading}
+      total={total}
+      pending={pending}
+      approved={approved}
+      totalOnPress={() => openReviews("All Status")}
+      pendingOnPress={() => openReviews("Pending")}
+      approvedOnPress={() => openReviews("Approved")}
+      showTotalLoader
+    />
   );
 }
 
@@ -147,7 +105,7 @@ function RecentSubmissions() {
   return (
     <>
       <View className="flex-row justify-between items-center mb-3">
-        <Text className="text-vistaNavy font-bold text-base">
+        <Text className="font-bold text-base" style={{ color: MAIN_BLACK }}>
           Recent Submissions
         </Text>
         <TouchableOpacity
@@ -171,6 +129,7 @@ function RecentSubmissions() {
             key={submission.submission_id}
             submission={submission}
             compact
+            showSubmitterEmail
             onPress={() =>
               navigation.navigate("ReviewPanelDetails", { submission })
             }
@@ -184,14 +143,14 @@ function RecentSubmissions() {
 export default function StaffHomeContent() {
   return (
     <ScrollView
-      className="flex-1 px-4 pt-4"
+      className="flex-1 pt-4"
       contentContainerStyle={{ paddingBottom: 18 }}
       showsVerticalScrollIndicator={false}
     >
       <AccountHeader profileRoute="StaffProfile" />
 
-      <Text className="text-2xl font-bold text-vistaNavy">Staff Dashboard</Text>
-      <Text className="text-gray-500 mb-4">Welcome back!</Text>
+      <Text className="text-2xl font-bold" style={{ color: MAIN_BLACK }}>Staff Dashboard</Text>
+      <Text className="mb-6" style={{ color: MAIN_BLACK }}>Welcome back!</Text>
 
       <SubmissionSummary />
       <RecentSubmissions />

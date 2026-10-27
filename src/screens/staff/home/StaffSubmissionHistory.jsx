@@ -6,7 +6,7 @@ import StaffReviewHeader from "../reviewPanel/StaffReviewHeader";
 import SubmissionHistoryTop from "./submissionHistory/SubmissionHistoryTop";
 import StaffReviewSearch from "../reviewPanel/StaffReviewSearch";
 import SubmissionHistoryList from "./submissionHistory/SubmissionHistoryList";
-import SubmissionHistoryPagination from "./submissionHistory/SubmissionHistoryPagination";
+import { openDocumentEntryWithAttachment } from "../../../utils/openDocumentEntryWithAttachment";
 
 export default function StaffSubmissionHistory({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -32,11 +32,11 @@ export default function StaffSubmissionHistory({ navigation }) {
           searchQuery={searchQuery}
           statusFilter={statusFilter}
         />
-        <SubmissionHistoryPagination />
       </ScrollView>
 
       <StaffBottomNav
         activeTab="home"
+        onScanPress={() => openDocumentEntryWithAttachment(navigation)}
         onHomePress={() => navigation?.navigate("StaffHome")}
         onProfilePress={() => navigation?.navigate("StaffDocumentEntry")}
         onReportsPress={() => navigation?.navigate("StaffReviewPanel")}

@@ -1,4 +1,5 @@
-import { Text, TouchableOpacity, View } from "react-native";
+import { Text } from "../common/FontText";
+import { TouchableOpacity, View } from "react-native";
 
 function getPageNumbers(currentPage, totalPages) {
   if (totalPages <= 5) {

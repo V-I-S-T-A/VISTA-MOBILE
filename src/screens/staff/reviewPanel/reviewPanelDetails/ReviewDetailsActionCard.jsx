@@ -1,12 +1,6 @@
+import { Text, TextInput } from "../../../../components/common/FontText";
 import { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator,
-} from "react-native";
+import { View, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import SelectField from "../../../../components/staff/SelectField";
 import { useUpdateSubmissionStatus } from "../../../../hooks/useSubmissions";
@@ -58,7 +52,7 @@ export default function ReviewDetailsActionCard({ submission, isLoading }) {
 
   return (
     <View className="bg-white rounded-3xl p-6 mb-8 shadow-sm">
-      <View className="flex-row items-center justify-between mb-4">
+      <View className="flex-row items-center justify-between">
         <Text className="text-vistaNavy text-sm font-bold tracking-wider mb-2 mt-1">
           DOCUMENT STATUS
         </Text>
@@ -75,7 +69,7 @@ export default function ReviewDetailsActionCard({ submission, isLoading }) {
         onChange={setNextStatus}
       />
 
-      <Text className="text-vistaNavy text-sm font-bold tracking-wider mb-2 mt-4">
+      <Text className="text-vistaNavy text-sm font-bold tracking-wider mb-2">
         REVIEWER REMARKS
       </Text>
       <View className="border border-gray-200 rounded-xl p-4 h-32 mb-6">

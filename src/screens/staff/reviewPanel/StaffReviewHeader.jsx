@@ -1,5 +1,5 @@
 import AccountHeader from "../../../components/common/AccountHeader";
 
-export default function StaffReviewHeader() {
-  return <AccountHeader profileRoute="StaffProfile" />;
+export default function StaffReviewHeader({ showSettings = false }) {
+  return <AccountHeader profileRoute="StaffProfile" showSettings={showSettings} />;
 }

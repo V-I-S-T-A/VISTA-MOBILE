@@ -1,14 +1,6 @@
+import { Text, TextInput } from "../../../components/common/FontText";
 import { useState } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Image,
-  TextInput,
-  ActivityIndicator,
-  Alert,
-  FlatList,
-} from "react-native";
+import { View, TouchableOpacity, Image, ActivityIndicator, Alert, FlatList } from "react-native";
 import { MaterialCommunityIcons, Feather } from "@expo/vector-icons";
 import {
   useDriveConnection,

@@ -1,3 +1,4 @@
+import { Text } from "./FontText";
 import {
   createContext,
   useCallback,
@@ -6,7 +7,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { Animated, StyleSheet, Text, View } from "react-native";
+import { Animated, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 

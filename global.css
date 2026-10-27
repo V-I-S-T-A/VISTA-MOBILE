@@ -1,3 +1,15 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer utilities {
+  .font-thin { font-family: "DMSans_100Thin"; font-weight: 400; }
+  .font-extralight { font-family: "DMSans_200ExtraLight"; font-weight: 400; }
+  .font-light { font-family: "DMSans_300Light"; font-weight: 400; }
+  .font-normal { font-family: "DMSans_400Regular"; font-weight: 400; }
+  .font-medium { font-family: "DMSans_500Medium"; font-weight: 400; }
+  .font-semibold { font-family: "DMSans_600SemiBold"; font-weight: 400; }
+  .font-bold { font-family: "DMSans_700Bold"; font-weight: 400; }
+  .font-extrabold { font-family: "DMSans_800ExtraBold"; font-weight: 400; }
+  .font-black { font-family: "DMSans_900Black"; font-weight: 400; }
+}

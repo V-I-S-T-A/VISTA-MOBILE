@@ -8,6 +8,8 @@ import StaffReviewSearch from "./reviewPanel/StaffReviewSearch";
 import StaffReviewList from "./reviewPanel/StaffReviewList";
 import SubmissionPagination from "../../components/submissions/SubmissionPagination";
 import { useSubmissions } from "../../hooks/useSubmissions";
+import { openDocumentEntryWithAttachment } from "../../utils/openDocumentEntryWithAttachment";
+import {PADDING_HORIZONTAL} from "../../constants/spacing";
 
 const STATUS_TO_PARAM = {
   Pending: "pending",
@@ -65,8 +67,8 @@ export default function StaffReviewPanel({ navigation, route }) {
 
   return (
     <View className="flex-1 bg-[#F3F3F3]" style={{ paddingTop: insets.top }}>
-      <View className="flex-1 px-5 pt-4">
-        <StaffReviewHeader />
+      <View className="flex-1 pt-4" style={{ paddingHorizontal: PADDING_HORIZONTAL }}>
+        <StaffReviewHeader showSettings />
         <StaffReviewBanner />
         <StaffReviewSearch
           searchQuery={searchQuery}
@@ -89,15 +91,18 @@ export default function StaffReviewPanel({ navigation, route }) {
             }
           />
         </ScrollView>
-        <SubmissionPagination
-          currentPage={page}
-          totalPages={data?.total_pages ?? 1}
-          onPageChange={setPage}
-        />
+        {(data?.total_pages ?? 1) > 1 && (
+          <SubmissionPagination
+            currentPage={page}
+            totalPages={data.total_pages}
+            onPageChange={setPage}
+          />
+        )}
       </View>
 
       <StaffBottomNav
         activeTab="reports"
+        onScanPress={() => openDocumentEntryWithAttachment(navigation)}
         onHomePress={() => navigation?.navigate("StaffHome")}
         onProfilePress={() => navigation?.navigate("StaffDocumentEntry")}
         onReportsPress={() => navigation?.navigate("StaffReviewPanel")}

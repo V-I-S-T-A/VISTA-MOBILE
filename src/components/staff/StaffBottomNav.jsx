@@ -1,6 +1,7 @@
 import { View, TouchableOpacity } from "react-native";
 import { Ionicons, Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {MAIN_BLUE, MAIN_YELLOW} from "../../constants/colors";
 
 const ACTIVE_COLOR = "#F5A623";
 const INACTIVE_COLOR = "white";
@@ -17,21 +18,21 @@ export default function StaffBottomNav({
 
   return (
     <View
-      className="bg-vistaNavy flex-row justify-between items-center px-8 py-4 rounded-t-2xl"
-      style={{ paddingBottom: insets.bottom + 12 }}
+      className="flex-row justify-between items-center px-8 py-4 rounded-t-2xl"
+      style={{ paddingBottom: insets.bottom + 20, backgroundColor: MAIN_BLUE }}
     >
       <TouchableOpacity onPress={onHomePress}>
         <Ionicons
           name="home-outline"
-          size={24}
+          size={28}
           color={activeTab === "home" ? ACTIVE_COLOR : INACTIVE_COLOR}
         />
       </TouchableOpacity>
 
       <TouchableOpacity onPress={onProfilePress}>
-        <Ionicons
-          name="person-outline"
-          size={24}
+        <Feather
+          name="edit"
+          size={28}
           color={activeTab === "profile" ? ACTIVE_COLOR : INACTIVE_COLOR}
         />
       </TouchableOpacity>
@@ -40,13 +41,13 @@ export default function StaffBottomNav({
         onPress={onScanPress}
         className="bg-vistaNavy border-2 border-white rounded-full p-3 -mt-6"
       >
-        <Feather name="maximize" size={22} color="white" />
+        <Feather name="maximize" size={35} color="white" />
       </TouchableOpacity>
 
       <TouchableOpacity onPress={onReportsPress}>
-        <Feather
-          name="file-text"
-          size={22}
+        <Ionicons
+          name="document-text-outline"
+          size={28}
           color={activeTab === "reports" ? ACTIVE_COLOR : INACTIVE_COLOR}
         />
       </TouchableOpacity>
@@ -54,7 +55,7 @@ export default function StaffBottomNav({
       <TouchableOpacity onPress={onCloudPress}>
         <Feather
           name="cloud"
-          size={22}
+          size={28}
           color={activeTab === "cloud" ? ACTIVE_COLOR : INACTIVE_COLOR}
         />
       </TouchableOpacity>

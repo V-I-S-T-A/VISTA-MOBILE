@@ -1,4 +1,5 @@
-import { Text, View } from "react-native";
+import { Text } from "../common/FontText";
+import { View } from "react-native";
 
 export const SUBMISSION_STATUS = {
   pending: { label: "Pending", background: "#FFF0C2", foreground: "#A66500" },

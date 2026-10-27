@@ -1,4 +1,5 @@
-import { View, Text, TouchableOpacity } from "react-native";
+import { Text } from "../../../components/common/FontText";
+import { View, TouchableOpacity } from "react-native";
 
 export default function AnalysisActions({ onRedoPress }) {
   return (

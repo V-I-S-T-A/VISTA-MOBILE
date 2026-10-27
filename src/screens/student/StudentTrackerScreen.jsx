@@ -1,17 +1,14 @@
-import {
-  ActivityIndicator,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Text } from "../../components/common/FontText";
+import { ActivityIndicator, ScrollView, TouchableOpacity, View } from "react-native";
 import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import BackButton from "../../components/common/BackButton";
 import StudentHeader from "../../components/students/StudentHeader";
 import StudentBottomNav from "../../components/student/StudentBottomNav";
 import SubmissionListCard from "../../components/submissions/SubmissionListCard";
 import SubmissionPagination from "../../components/submissions/SubmissionPagination";
 import { useSubmissions } from "../../hooks/useSubmissions";
+import { PADDING_HORIZONTAL } from "../../constants/spacing";
 
 export default function StudentTrackerScreen({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -22,7 +19,8 @@ export default function StudentTrackerScreen({ navigation }) {
   return (
     <View className="flex-1 bg-[#F3F3F3]" style={{ paddingTop: insets.top }}>
       <ScrollView
-        className="flex-1 px-5 pt-4"
+        className="flex-1 pt-4"
+        style={{ paddingHorizontal: PADDING_HORIZONTAL }}
         contentContainerStyle={{ paddingBottom: 20 }}
         showsVerticalScrollIndicator={false}
       >
@@ -33,6 +31,9 @@ export default function StudentTrackerScreen({ navigation }) {
         <Text className="text-vistaNavy text-sm mb-7">
           Reviewing processing status.
         </Text>
+        <View className="self-start mb-5">
+          <BackButton />
+        </View>
         {isLoading ? (
           <View className="py-10">
             <ActivityIndicator />
@@ -66,11 +67,13 @@ export default function StudentTrackerScreen({ navigation }) {
                 }
               />
             ))}
-            <SubmissionPagination
-              currentPage={page}
-              totalPages={data?.total_pages ?? 1}
-              onPageChange={setPage}
-            />
+            {(data?.total_pages ?? 1) > 1 && (
+              <SubmissionPagination
+                currentPage={page}
+                totalPages={data.total_pages}
+                onPageChange={setPage}
+              />
+            )}
           </>
         )}
       </ScrollView>

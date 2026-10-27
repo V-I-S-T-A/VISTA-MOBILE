@@ -1,16 +1,5 @@
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  ImageBackground,
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  ActivityIndicator,
-  Modal,
-  Alert,
-} from "react-native";
+import { Text, TextInput } from "../../components/common/FontText";
+import { View, TouchableOpacity, ImageBackground, Image, KeyboardAvoidingView, Platform, ActivityIndicator, Modal, Alert } from "react-native";
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { Feather } from "@expo/vector-icons";

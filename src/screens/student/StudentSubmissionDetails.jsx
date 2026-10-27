@@ -1,10 +1,5 @@
-import {
-  ActivityIndicator,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Text } from "../../components/common/FontText";
+import { ActivityIndicator, ScrollView, TouchableOpacity, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import StudentHeader from "../../components/students/StudentHeader";
@@ -15,6 +10,8 @@ import SubmissionStatusHistory from "../../components/submissions/SubmissionStat
 import { useSubmission } from "../../hooks/useSubmissions";
 import SubmissionDocuments from "../../components/submissions/SubmissionDocuments";
 import SubmissionStatusBadge from "../../components/submissions/SubmissionStatusBadge";
+import { PADDING_HORIZONTAL } from "../../constants/spacing";
+import BackButton from "../../components/common/BackButton";
 
 export default function StudentSubmissionDetails({ navigation, route }) {
   const insets = useSafeAreaInsets();
@@ -25,19 +22,15 @@ export default function StudentSubmissionDetails({ navigation, route }) {
   return (
     <View className="flex-1 bg-[#F3F3F3]" style={{ paddingTop: insets.top }}>
       <ScrollView
-        className="flex-1 px-5 pt-4"
+        className="flex-1 pt-4"
+        style={{ paddingHorizontal: PADDING_HORIZONTAL }}
         contentContainerStyle={{ paddingBottom: 20 }}
         showsVerticalScrollIndicator={false}
       >
         <StudentHeader />
         <View className="flex-row items-center mb-5">
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            className="bg-[#FFE35B] rounded-full px-3 py-1 mr-4"
-          >
-            <Text className="text-vistaNavy font-semibold">‹ Back</Text>
-          </TouchableOpacity>
-          <Text className="text-vistaNavy font-medium">Track Details</Text>
+          <BackButton />
+          <Text className="text-vistaNavy font-medium ml-3">Track Details</Text>
         </View>
         {!submission ? (
           <View className="py-10 items-center">

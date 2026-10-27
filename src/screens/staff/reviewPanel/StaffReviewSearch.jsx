@@ -1,12 +1,6 @@
+import { Text, TextInput } from "../../../components/common/FontText";
 import { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  Modal,
-  TouchableWithoutFeedback,
-} from "react-native";
+import { View, TouchableOpacity, Modal, TouchableWithoutFeedback } from "react-native";
 import { Feather, Ionicons } from "@expo/vector-icons";
 
 const STATUS_OPTIONS = [
@@ -41,7 +35,7 @@ export default function StaffReviewSearch({
         </View>
         <TouchableOpacity
           onPress={() => setIsFilterOpen(true)}
-          className="bg-[#FFC342] flex-row items-center justify-center rounded-lg px-4 h-[42px] shadow-sm relative z-50"
+          className="bg-[#FFC342] flex-row items-center justify-center rounded-lg px-4 h-[42px] shadow-sm relative z-50 ml-3"
         >
           <Ionicons name="filter" size={16} color="white" className="mr-2 mt-0.5" />
           <Text className="text-white font-bold text-sm ml-0.5">Filter</Text>

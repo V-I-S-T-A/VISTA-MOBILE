@@ -1,4 +1,5 @@
-import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
+import { Text } from "../../../components/common/FontText";
+import { ActivityIndicator, TouchableOpacity, View } from "react-native";
 import SubmissionListCard from "../../../components/submissions/SubmissionListCard";
 
 export default function StaffReviewList({
@@ -22,7 +23,7 @@ export default function StaffReviewList({
         <Text className="text-gray-500 mb-3">Could not load submissions.</Text>
         <TouchableOpacity
           onPress={onRetry}
-          className="bg-vistaNavy rounded-full px-4 py-2"
+          className="bg-black rounded-full px-4 py-2"
         >
           <Text className="text-white font-semibold text-xs">Retry</Text>
         </TouchableOpacity>
@@ -47,6 +48,7 @@ export default function StaffReviewList({
           key={submission.submission_id}
           submission={submission}
           compact
+          showSubmitterEmail
           onPress={() => onOpen?.(submission)}
         />
       ))}
