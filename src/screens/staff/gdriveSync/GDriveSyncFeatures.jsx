@@ -1,4 +1,5 @@
-import { View, Text } from "react-native";
+import { Text } from "../../../components/common/FontText";
+import { View } from "react-native";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 
 export default function GDriveSyncFeatures() {

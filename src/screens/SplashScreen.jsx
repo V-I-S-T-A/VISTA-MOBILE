@@ -1,4 +1,4 @@
-import { View, Image, Text, TouchableOpacity } from "react-native";
+import { Text, View, Image, TouchableOpacity } from "react-native";
 
 export default function SplashScreen({ error, onRetry }) {
   return (
@@ -8,8 +8,11 @@ export default function SplashScreen({ error, onRetry }) {
         className="w-40 h-40"
         resizeMode="contain"
       />
-      <Text className="text-vistaOrange text-3xl font-extrabold tracking-widest mt-6">
-        V.I.S.T.A.
+      <Text
+        className="text-vistaOrange text-3xl tracking-widest mt-6"
+        style={{ fontWeight: "800" }}
+      >
+        VISTA
       </Text>
       {error ? (
         <>
@@ -18,7 +21,9 @@ export default function SplashScreen({ error, onRetry }) {
             className="bg-vistaOrange rounded-lg px-6 py-3 mt-4"
             onPress={onRetry}
           >
-            <Text className="text-white font-semibold">Try again</Text>
+            <Text className="text-white" style={{ fontWeight: "600" }}>
+              Try again
+            </Text>
           </TouchableOpacity>
         </>
       ) : null}

@@ -1,4 +1,5 @@
-import { ActivityIndicator, Image, Text, View } from "react-native";
+import { Text } from "../../../../components/common/FontText";
+import { ActivityIndicator, Image, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useReviewLogs } from "../../../../hooks/useReviewLogs";
 

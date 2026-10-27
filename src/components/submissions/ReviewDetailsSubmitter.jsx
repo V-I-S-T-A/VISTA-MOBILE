@@ -1,4 +1,5 @@
-import { Image, Text, View } from "react-native";
+import { Text } from "../common/FontText";
+import { Image, View } from "react-native";
 
 export default function ReviewDetailsSubmitter({
   submission,

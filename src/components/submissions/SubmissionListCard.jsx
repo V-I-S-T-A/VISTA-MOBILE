@@ -1,10 +1,13 @@
-import { Image, Text, TouchableOpacity, View } from "react-native";
+import { Text } from "../common/FontText";
+import { Image, TouchableOpacity, View } from "react-native";
 import SubmissionStatusBadge from "./SubmissionStatusBadge";
+import { SECONDARY_BLUE } from "../../constants/colors";
 
 export default function SubmissionListCard({
   submission,
   onPress,
   compact = false,
+  showSubmitterEmail = false,
 }) {
   const logo = submission.org_image_url
     ? { uri: submission.org_image_url }
@@ -15,9 +18,9 @@ export default function SubmissionListCard({
       onPress={onPress}
       className="bg-white rounded-3xl p-4 mb-4 flex-row items-center"
     >
-      <View className="w-14 h-14 rounded-2xl bg-[#F3F6FA] items-center justify-center mr-4 overflow-hidden">
+      <View className="w-16 h-16 rounded-full bg-[#00000000] items-center justify-center mr-4 overflow-hidden">
         {logo ? (
-          <Image source={logo} className="w-11 h-11" resizeMode="contain" />
+          <Image source={logo} className="w-16 h-16" resizeMode="contain" />
         ) : (
           <Text className="text-vistaNavy font-extrabold text-xs">
             {(submission.org_name || "N/A").slice(0, 4).toUpperCase()}
@@ -36,17 +39,37 @@ export default function SubmissionListCard({
             <SubmissionStatusBadge status={submission.status} size="small" />
           ) : null}
         </View>
-        <Text className="text-gray-500 text-xs mt-1" numberOfLines={1} ellipsizeMode="tail">
+        <Text
+          className="text-gray-500 text-xs mt-1"
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
           {submission.org_name || "Organization unavailable"}
         </Text>
         <View className="flex-row justify-between items-center mt-3">
-          <Text className="text-gray-500 text-[11px]">
-            {submission.submitted_at
-              ? new Date(submission.submitted_at).toLocaleDateString()
-              : "—"}
+          <Text
+            className="text-gray-500 text-[11px] flex-1 mr-2"
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {showSubmitterEmail
+              ? submission.submitted_by_email || "—"
+              : submission.submitted_at
+                ? new Date(submission.submitted_at).toLocaleDateString()
+                : "—"}
           </Text>
+          {showSubmitterEmail && (
+            <Text className="text-gray-500 text-[11px]">
+              {submission.submitted_at
+                ? new Date(submission.submitted_at).toLocaleDateString()
+                : "—"}
+            </Text>
+          )}
           {!compact ? (
-            <Text className="text-[#3B82F6] text-[11px] font-semibold">
+            <Text
+              className="text-[11px] font-semibold"
+              style={{ color: SECONDARY_BLUE }}
+            >
               View details
             </Text>
           ) : null}

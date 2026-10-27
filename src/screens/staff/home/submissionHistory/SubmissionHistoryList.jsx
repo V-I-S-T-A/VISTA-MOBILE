@@ -1,6 +1,9 @@
-import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
+import { Text } from "../../../../components/common/FontText";
+import { View, TouchableOpacity, ActivityIndicator } from "react-native";
+import { useEffect, useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { useSubmissions } from "../../../../hooks/useSubmissions";
+import SubmissionPagination from "../../../../components/submissions/SubmissionPagination";
 
 const STATUS_TO_PARAM = {
   Pending: "pending",
@@ -22,8 +25,13 @@ export default function SubmissionHistoryList({
   statusFilter = "All Status",
 }) {
   const navigation = useNavigation();
+  const [page, setPage] = useState(1);
 
-  const params = {};
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, statusFilter]);
+
+  const params = { page };
   if (searchQuery.trim()) params.search = searchQuery.trim();
   if (statusFilter !== "All Status")
     params.status = STATUS_TO_PARAM[statusFilter];
@@ -124,6 +132,13 @@ export default function SubmissionHistoryList({
           </View>
         );
       })}
+      {(data?.total_pages ?? 1) > 1 && (
+        <SubmissionPagination
+          currentPage={page}
+          totalPages={data.total_pages}
+          onPageChange={setPage}
+        />
+      )}
     </View>
   );
 }

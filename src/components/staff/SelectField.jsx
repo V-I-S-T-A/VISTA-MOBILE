@@ -1,12 +1,6 @@
+import { Text } from "../common/FontText";
 import { useState } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Modal,
-  FlatList,
-  ActivityIndicator,
-} from "react-native";
+import { View, TouchableOpacity, Modal, FlatList, ActivityIndicator } from "react-native";
 import { Feather } from "@expo/vector-icons";
 
 export default function SelectField({
@@ -56,7 +50,7 @@ export default function SelectField({
           activeOpacity={1}
           onPress={() => setOpen(false)}
         >
-          <View className="bg-white rounded-t-2xl max-h-[60%] px-4 pt-4 pb-8">
+          <View className="bg-white rounded-t-2xl max-h-[60%] px-8 pt-4 pb-8">
             <Text className="text-vistaNavy font-extrabold text-base mb-3">
               {label}
             </Text>

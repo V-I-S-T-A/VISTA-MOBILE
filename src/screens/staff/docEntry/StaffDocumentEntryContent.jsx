@@ -1,14 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
-import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  ScrollView,
-  TextInput,
-  ActivityIndicator,
-  Alert,
-} from "react-native";
+import { Text, TextInput } from "../../../components/common/FontText";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { View, Image, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from "react-native";
 import { Feather } from "@expo/vector-icons";
 
 import SelectField from "../../../components/staff/SelectField";
@@ -23,7 +15,7 @@ function toOption(row, idField, labelFn) {
   return { id: row[idField], label: labelFn(row) };
 }
 
-export default function StaffDocumentEntryContent({ navigation }) {
+export default function StaffDocumentEntryContent({ navigation, initialAttachment }) {
   // --- form state -----------------------------------------------------
   const [organization, setOrganization] = useState(null); // { id, label }
   const [docType, setDocType] = useState(null);
@@ -96,6 +88,7 @@ export default function StaffDocumentEntryContent({ navigation }) {
 
   // --- OCR autofill + create submission mutations -----------------------
   const autofillMutation = useAutofillDocument();
+  const runAutofillRef = useRef(null);
 
   const runAutofill = async (file) => {
     try {
@@ -169,11 +162,30 @@ export default function StaffDocumentEntryContent({ navigation }) {
       });
     } catch (error) {
       Alert.alert(
-        "Scan failed",
-        error.message || "Could not process the scanned document.",
+        "Document recognition failed",
+        error.message || "Could not read this document. Please try another file or try again.",
       );
     }
   };
+
+  runAutofillRef.current = runAutofill;
+
+  useEffect(() => {
+    if (!initialAttachment?.uri) return;
+
+    const attachment = {
+      uri: initialAttachment.uri,
+      name: initialAttachment.name,
+      type: initialAttachment.type,
+    };
+    navigation.setParams({ attachment: undefined });
+    runAutofillRef.current?.(attachment);
+  }, [
+    initialAttachment?.uri,
+    initialAttachment?.name,
+    initialAttachment?.type,
+    navigation,
+  ]);
 
   const handleAttachDocument = () => {
     Alert.alert(
@@ -183,15 +195,29 @@ export default function StaffDocumentEntryContent({ navigation }) {
         {
           text: "Scan with Camera",
           onPress: async () => {
-            const file = await scanDocument();
-            if (file) runAutofill(file);
+            try {
+              const file = await scanDocument();
+              if (file) runAutofill(file);
+            } catch (error) {
+              Alert.alert(
+                "Scan failed",
+                error?.message || "Could not scan the document. Please try again.",
+              );
+            }
           },
         },
         {
           text: "Choose File (PDF/Image)",
           onPress: async () => {
-            const file = await pickDocumentFile();
-            if (file) runAutofill(file);
+            try {
+              const file = await pickDocumentFile();
+              if (file) runAutofill(file);
+            } catch (error) {
+              Alert.alert(
+                "File selection failed",
+                error?.message || "Could not choose that file. Please try again.",
+              );
+            }
           },
         },
         { text: "Cancel", style: "cancel" },
@@ -228,7 +254,7 @@ export default function StaffDocumentEntryContent({ navigation }) {
 
   return (
     <ScrollView
-      className="flex-1 px-4 pt-4"
+      className="flex-1 pt-4"
       contentContainerStyle={{ paddingBottom: 18 }}
       showsVerticalScrollIndicator={false}
     >

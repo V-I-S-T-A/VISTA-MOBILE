@@ -5,12 +5,12 @@
     "slug": "vista-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./src/assets/logo.png",
+    "icon": "./src/assets/vista-logo.png",
     "userInterfaceStyle": "light",
     "sdkVersion": "54.0.0",
     "newArchEnabled": true,
     "splash": {
-      "image": "./src/assets/splash-bg.png",
+      "image": "./src/assets/vista-logo.png",
       "resizeMode": "cover",
       "backgroundColor": "#ffffff"
     },
@@ -22,7 +22,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./src/assets/logo.png",
+        "foregroundImage": "./src/assets/vista-logo.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.wayvbb.vistaapp"

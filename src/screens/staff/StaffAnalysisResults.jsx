@@ -2,6 +2,7 @@ import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import StaffBottomNav from "../../components/staff/StaffBottomNav";
 import StaffAnalysisResultsContent from "./analysisResults/StaffAnalysisResultsContent";
+import { openDocumentEntryWithAttachment } from "../../utils/openDocumentEntryWithAttachment";
 
 export default function StaffAnalysisResults({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -17,6 +18,7 @@ export default function StaffAnalysisResults({ navigation }) {
 
       <StaffBottomNav
         activeTab="profile"
+        onScanPress={() => openDocumentEntryWithAttachment(navigation)}
         onHomePress={() => navigation.navigate("StaffHome")}
         onProfilePress={() => navigation.navigate("StaffDocumentEntry")}
         onReportsPress={() => navigation.navigate("StaffReviewPanel")}

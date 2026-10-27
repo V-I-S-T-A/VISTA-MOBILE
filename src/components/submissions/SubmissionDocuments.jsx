@@ -1,4 +1,5 @@
-import { Alert, Linking, Text, TouchableOpacity, View } from "react-native";
+import { Text } from "../common/FontText";
+import { Alert, Linking, TouchableOpacity, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 
 export default function SubmissionDocuments({ documents = [] }) {

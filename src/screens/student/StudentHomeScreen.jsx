@@ -1,18 +1,14 @@
-import {
-  ActivityIndicator,
-  Text,
-  TouchableOpacity,
-  View,
-  ScrollView,
-} from "react-native";
+import { Text } from "../../components/common/FontText";
+import { ActivityIndicator, TouchableOpacity, View, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
 import { useQueries } from "@tanstack/react-query";
 import StudentHeader from "../../components/students/StudentHeader";
 import StudentBottomNav from "../../components/student/StudentBottomNav";
 import SubmissionListCard from "../../components/submissions/SubmissionListCard";
+import SubmissionDashboardCards from "../../components/submissions/SubmissionDashboardCards";
 import { useSubmissions } from "../../hooks/useSubmissions";
 import { submissionsService } from "../../services/submissionsService";
+import { PADDING_HORIZONTAL } from "../../constants/spacing";
 
 function useSubmissionCounts() {
   const results = useQueries({
@@ -56,7 +52,8 @@ export default function StudentHomeScreen({ navigation }) {
   return (
     <View className="flex-1 bg-[#F3F3F3]" style={{ paddingTop: insets.top }}>
       <ScrollView
-        className="flex-1 px-5 pt-4"
+        className="flex-1 pt-4"
+        style={{ paddingHorizontal: PADDING_HORIZONTAL }}
         contentContainerStyle={{ paddingBottom: 20 }}
         showsVerticalScrollIndicator={false}
       >
@@ -66,31 +63,14 @@ export default function StudentHomeScreen({ navigation }) {
         </Text>
         <Text className="text-vistaNavy text-sm mb-5">Welcome back!</Text>
 
-        <View className="bg-[#245EA9] rounded-3xl p-5 flex-row justify-between items-center mb-5">
-          <View>
-            <Text className="text-white/80 text-sm">Total</Text>
-            <Text className="text-white text-5xl font-bold mt-2">
-              {counts.loading ? "—" : counts.total}
-            </Text>
-          </View>
-          <View className="bg-[#073D7D] rounded-xl p-3">
-            <Feather name="folder" size={30} color="white" />
-          </View>
-        </View>
-        <View className="flex-row gap-4 mb-8">
-          <View className="flex-1 bg-[#FFC342] rounded-3xl p-5">
-            <Text className="text-white text-sm">Pending</Text>
-            <Text className="text-white text-4xl font-bold mt-2">
-              {counts.loading ? "—" : counts.pending}
-            </Text>
-          </View>
-          <View className="flex-1 bg-[#FFC342] rounded-3xl p-5">
-            <Text className="text-white text-sm">Verified</Text>
-            <Text className="text-white text-4xl font-bold mt-2">
-              {counts.loading ? "—" : counts.approved}
-            </Text>
-          </View>
-        </View>
+        <SubmissionDashboardCards
+          isLoading={counts.loading}
+          total={counts.total}
+          pending={counts.pending}
+          approved={counts.approved}
+          totalLabel="Total"
+          approvedLabel="Approved"
+        />
 
         <View className="flex-row justify-between items-center mb-3">
           <Text className="text-vistaNavy text-lg font-bold">
@@ -116,6 +96,7 @@ export default function StudentHomeScreen({ navigation }) {
               key={submission.submission_id}
               submission={submission}
               compact
+              showSubmitterEmail
               onPress={() =>
                 navigation.navigate("StudentSubmissionDetails", { submission })
               }

@@ -2,19 +2,30 @@ import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import StaffBottomNav from "../../components/staff/StaffBottomNav";
 import StaffDocumentEntryContent from "./docEntry/StaffDocumentEntryContent";
+import {PADDING_HORIZONTAL} from "../../constants/spacing";
+import { openDocumentEntryWithAttachment } from "../../utils/openDocumentEntryWithAttachment";
 
-export default function StaffDocumentEntry({ navigation }) {
+export default function StaffDocumentEntry({ navigation, route }) {
   const insets = useSafeAreaInsets();
 
   return (
-    <View className="flex-1 bg-[#F3F3F3]" style={{ paddingTop: insets.top }}>
-      <StaffDocumentEntryContent
-        navigation={navigation}
-        onLogPhysicalDocPress={() => navigation.navigate("StaffReviewPanel")}
-      />
-
+    <View className="flex-1 bg-[#F3F3F3]">
+      <View
+        className="flex-1 bg-[#F3F3F3]"
+        style={{
+          paddingTop: insets.top,
+          paddingHorizontal: PADDING_HORIZONTAL,
+        }}
+      >
+        <StaffDocumentEntryContent
+          navigation={navigation}
+          initialAttachment={route?.params?.attachment}
+          onLogPhysicalDocPress={() => navigation.navigate("StaffReviewPanel")}
+        />
+      </View>
       <StaffBottomNav
         activeTab="profile"
+        onScanPress={() => openDocumentEntryWithAttachment(navigation)}
         onHomePress={() => navigation.navigate("StaffHome")}
         onProfilePress={() => navigation.navigate("StaffDocumentEntry")}
         onReportsPress={() => navigation.navigate("StaffReviewPanel")}

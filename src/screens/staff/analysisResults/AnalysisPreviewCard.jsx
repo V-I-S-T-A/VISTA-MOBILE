@@ -1,4 +1,5 @@
-import { View, Text, Image } from "react-native";
+import { Text } from "../../../components/common/FontText";
+import { View, Image } from "react-native";
 
 export default function AnalysisPreviewCard() {
   return (

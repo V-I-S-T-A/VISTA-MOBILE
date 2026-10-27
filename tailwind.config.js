@@ -4,6 +4,9 @@ module.exports = {
   presets: [require("nativewind/preset")],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["DMSans_400Regular"],
+      },
       colors: {
         vistaNavy: "#1B3A6B",
         vistaOrange: "#F5A623",
