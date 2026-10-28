@@ -3,6 +3,7 @@ import StudentHomeScreen from "../screens/student/StudentHomeScreen";
 import StudentTrackerScreen from "../screens/student/StudentTrackerScreen";
 import StudentSubmissionDetails from "../screens/student/StudentSubmissionDetails";
 import StudentProfile from "../screens/student/StudentProfile";
+import StudentNotificationsScreen from "../screens/student/StudentNotificationsScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -16,6 +17,7 @@ export default function StudentNavigator() {
         component={StudentSubmissionDetails}
       />
       <Stack.Screen name="StudentProfile" component={StudentProfile} />
+      <Stack.Screen name="StudentNotifications" component={StudentNotificationsScreen} />
     </Stack.Navigator>
   );
 }

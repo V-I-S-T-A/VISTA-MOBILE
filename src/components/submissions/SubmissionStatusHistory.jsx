@@ -81,7 +81,9 @@ export default function SubmissionStatusHistory({ submissionId }) {
                     </Text>
                     {index === 0 ? (
                       <View className="bg-blue-50 rounded-full px-3 py-1">
-                        <Text className="text-blue-600 text-xs font-bold">Latest</Text>
+                        <Text className="text-blue-600 text-xs font-bold">
+                          Latest
+                        </Text>
                       </View>
                     ) : null}
                   </View>
@@ -90,13 +92,15 @@ export default function SubmissionStatusHistory({ submissionId }) {
                   </Text>
                   {log.old_status ? (
                     <View className="flex-row items-center gap-2 mt-4">
-                      <Text className="text-gray-600 text-base">
-                        {formatStatus(log.old_status)}
-                      </Text>
+                      <View className="flex items-center shrink">
+                        <Text className="">{formatStatus(log.old_status)}</Text>
+                      </View>
                       <Feather name="arrow-right" size={16} color="#94A3B8" />
-                      <Text className="text-gray-600 text-base">
-                        {formatStatus(log.new_status)}
-                      </Text>
+                      <View className="flex items-center shrink">
+                        <Text className="text-gray-600 text-base">
+                          {formatStatus(log.new_status)}
+                        </Text>
+                      </View>
                     </View>
                   ) : null}
                   <View className="flex-row items-center mt-4">
@@ -112,7 +116,10 @@ export default function SubmissionStatusHistory({ submissionId }) {
                     </View>
                     <View className="flex-1">
                       <Text className="text-gray-500 text-sm">Updated by</Text>
-                      <Text className="text-vistaNavy text-base font-bold" numberOfLines={2}>
+                      <Text
+                        className="text-vistaNavy text-base font-bold"
+                        numberOfLines={2}
+                      >
                         {log.changed_by_name || "Staff"}
                       </Text>
                     </View>

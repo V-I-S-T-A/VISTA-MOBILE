@@ -30,6 +30,10 @@ export const API_ENDPOINTS = {
   REVIEW_LOGS: {
     LIST: "/review-logs/",
   },
+  NOTIFICATIONS: {
+    LIST: "/notifications/",
+    READ: (notificationId) => `/notifications/${notificationId}/read/`,
+  },
   ACADEMIC_YEARS: {
     LIST: "/academic-years/",
   },

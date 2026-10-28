@@ -9,7 +9,7 @@ import { authService } from "../../services/authService";
 
 export default function EditProfileScreen({ navigation }) {
   const insets = useSafeAreaInsets();
-  const { user, updateUser } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [saving, setSaving] = useState(false);
@@ -146,6 +146,18 @@ export default function EditProfileScreen({ navigation }) {
       setIsChangingPassword(false);
     }
   };
+  const confirmLogout = () =>
+    Alert.alert("Log out", "Are you sure you want to log out?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Log out",
+        style: "destructive",
+        onPress: async () => {
+          await logout();
+          navigation.reset({ index: 0, routes: [{ name: "Login" }] });
+        },
+      },
+    ]);
   return (
     <View className="flex-1 bg-[#F3F3F3]" style={{ paddingTop: insets.top }}>
       <View className="px-5 pt-4 pb-20">
@@ -229,6 +241,14 @@ export default function EditProfileScreen({ navigation }) {
             className="items-center mt-6"
           >
             <Text className="text-white font-semibold">Change Password</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={confirmLogout}
+            accessibilityRole="button"
+            className="flex-row items-center justify-center bg-white/10 border border-white/40 rounded-full h-12 mt-8"
+          >
+            <Feather name="log-out" size={17} color="white" />
+            <Text className="text-white font-bold ml-2">Log out</Text>
           </TouchableOpacity>
         </ScrollView>
       </View>

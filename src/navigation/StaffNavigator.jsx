@@ -8,6 +8,7 @@ import GDriveSync from "../screens/staff/GDriveSync";
 import StaffSubmissionHistory from "../screens/staff/home/StaffSubmissionHistory";
 import StaffProfile from "../screens/staff/StaffProfile";
 import StaffSubmissionConfirmation from "../screens/staff/StaffSubmissionConfirmation";
+import NotificationsScreen from "../screens/student/StudentNotificationsScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -44,6 +45,7 @@ export default function StaffNavigator() {
         name="StaffProfile"
         component={StaffProfile}
       />
+      <Stack.Screen name="StaffNotifications" component={NotificationsScreen} />
     </Stack.Navigator>
   );
 }

@@ -1,11 +1,11 @@
 import { Image, TouchableOpacity, View } from "react-native";
-import { Feather } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "../../context/AuthContext";
+import StudentNotificationBell from "../student/StudentNotificationBell";
 
 export default function AccountHeader({ profileRoute, showSettings = false }) {
   const navigation = useNavigation();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const avatar = user?.image_url
     ? { uri: user.image_url }
     : require("../../assets/default_user.jpg");
@@ -24,17 +24,7 @@ export default function AccountHeader({ profileRoute, showSettings = false }) {
         style={{ width: 80, height: 80 }}
         resizeMode="contain"
       />
-      <TouchableOpacity
-        onPress={() =>
-          logout().then(() => navigation.reset({ index: 0, routes: [{ name: "Login" }] }))
-        }
-      >
-        <Feather
-          name="log-out"
-          size={23}
-          color="#111827"
-        />
-      </TouchableOpacity>
+      <StudentNotificationBell />
     </View>
   );
 }
