@@ -24,6 +24,7 @@ export default function DriveArchiveCard({ submission }) {
   const [manualFolder, setManualFolder] = useState(null);
   const [fileName, setFileName] = useState(submission?.title || "");
   const [pendingFile, setPendingFile] = useState(null);
+  const [uploadKind, setUploadKind] = useState("approved");
   const [activeTaskId, setActiveTaskId] = useState(null);
 
   const {
@@ -114,6 +115,13 @@ export default function DriveArchiveCard({ submission }) {
 
   const folderOptions = manualFolders.map((f) => ({ id: f.id, label: f.name }));
 
+  const isAccomplishmentReport = !!submission?.is_accomplishment_report;
+  const folderPathSegments = folderPreview?.path_segments || [];
+  const destinationPathSegments =
+    uploadKind === "report" &&
+    folderPathSegments[folderPathSegments.length - 1] === "Approved"
+      ? folderPathSegments.slice(0, -1)
+      : folderPathSegments;
   const handlePick = (source) => async () => {
     const file =
       source === "camera" ? await scanDocument() : await pickDocumentFile();
@@ -137,6 +145,7 @@ export default function DriveArchiveCard({ submission }) {
         fileName: fileName.trim() || submission.title,
         useAutoFolder,
         folderId: useAutoFolder ? undefined : manualFolder?.id,
+        uploadKind,
       },
       {
         onSuccess: (data) => {
@@ -194,6 +203,39 @@ export default function DriveArchiveCard({ submission }) {
         </TouchableOpacity>
       </View>
 
+      {isAccomplishmentReport ? (
+        <View className="mb-4">
+          <Text className="text-vistaNavy text-xs font-extrabold mb-2">
+            FILE DESTINATION
+          </Text>
+          <View className="flex-row mb-2">
+            <TouchableOpacity
+              onPress={() => setUploadKind("approved")}
+              disabled={!!activeTaskId || uploadMutation.isPending}
+              className={`flex-1 rounded-lg py-2 items-center mr-2 ${uploadKind === "approved" ? "bg-vistaNavy" : "bg-slate-100"}`}
+            >
+              <Text className={`text-xs font-bold ${uploadKind === "approved" ? "text-white" : "text-slate-500"}`}>
+                Approved copy
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setUploadKind("report")}
+              disabled={!!activeTaskId || uploadMutation.isPending}
+              className={`flex-1 rounded-lg py-2 items-center ml-2 ${uploadKind === "report" ? "bg-vistaNavy" : "bg-slate-100"}`}
+            >
+              <Text className={`text-xs font-bold ${uploadKind === "report" ? "text-white" : "text-slate-500"}`}>
+                Accomplishment Report
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <Text className="text-slate-500 text-xs">
+            {uploadKind === "approved"
+              ? "Uploads into the Approved subfolder."
+              : "Uploads into the Accomplishment Report folder."}
+          </Text>
+        </View>
+      ) : null}
+
       {pendingFile ? (
         <View className="bg-slate-50 rounded-lg px-3 py-2 mb-4 flex-row items-center justify-between">
           <Text
@@ -212,7 +254,9 @@ export default function DriveArchiveCard({ submission }) {
         <View className="bg-blue-50 rounded-lg px-3 py-2 mb-4 flex-row items-center">
           <ActivityIndicator size="small" />
           <Text className="text-[#1e5aa0] text-xs font-semibold ml-2">
-            Archiving in the background — feel free to keep working.
+            {uploadKind === "report"
+              ? "Archiving the Accomplishment Report in the background."
+              : "Archiving the approved copy in the background — feel free to keep working."}
           </Text>
         </View>
       ) : null}
@@ -261,7 +305,7 @@ export default function DriveArchiveCard({ submission }) {
             <ActivityIndicator size="small" />
           ) : (
             <Text className="text-slate-500 text-xs font-semibold">
-              {(folderPreview?.path_segments || []).join(" › ") ||
+              {destinationPathSegments.join(" › ") ||
                 "Academic Year › Organization › Title"}
             </Text>
           )}
@@ -290,7 +334,7 @@ export default function DriveArchiveCard({ submission }) {
           <ActivityIndicator color="white" />
         ) : (
           <Text className="text-white font-extrabold text-sm">
-            Archive Document
+            {uploadKind === "report" ? "Archive Accomplishment Report" : "Archive Approved Copy"}
           </Text>
         )}
       </TouchableOpacity>
