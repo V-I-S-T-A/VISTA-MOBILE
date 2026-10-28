@@ -1,5 +1,5 @@
 import { Text } from "../../components/common/FontText";
-import { ActivityIndicator, ScrollView, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, ScrollView, TouchableOpacity, View, RefreshControl } from "react-native";
 import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import BackButton from "../../components/common/BackButton";
@@ -9,16 +9,19 @@ import SubmissionListCard from "../../components/submissions/SubmissionListCard"
 import SubmissionPagination from "../../components/submissions/SubmissionPagination";
 import { useSubmissions } from "../../hooks/useSubmissions";
 import { PADDING_HORIZONTAL } from "../../constants/spacing";
+import { useScreenRefresh } from "../../hooks/useScreenRefresh";
 
 export default function StudentTrackerScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const [page, setPage] = useState(1);
   const { data, isLoading, isError, refetch } = useSubmissions({ page });
   const submissions = data?.results ?? [];
+  const { refreshing, onRefresh } = useScreenRefresh([["submissions"]]);
 
   return (
     <View className="flex-1 bg-[#F3F3F3]" style={{ paddingTop: insets.top }}>
       <ScrollView
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         className="flex-1 pt-4"
         style={{ paddingHorizontal: PADDING_HORIZONTAL }}
         contentContainerStyle={{ paddingBottom: 20 }}

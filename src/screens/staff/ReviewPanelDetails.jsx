@@ -1,5 +1,5 @@
 import { Text } from "../../components/common/FontText";
-import { View, ScrollView, ActivityIndicator } from "react-native";
+import { View, ScrollView, ActivityIndicator, RefreshControl } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import StaffBottomNav from "../../components/staff/StaffBottomNav";
 import StaffReviewHeader from "./reviewPanel/StaffReviewHeader";
@@ -14,6 +14,7 @@ import SubmissionDocuments from "../../components/submissions/SubmissionDocument
 import { Feather } from "@expo/vector-icons";
 import { PADDING_HORIZONTAL } from "../../constants/spacing";
 import { openDocumentEntryWithAttachment } from "../../utils/openDocumentEntryWithAttachment";
+import { useScreenRefresh } from "../../hooks/useScreenRefresh";
 
 export default function ReviewPanelDetails({ navigation, route }) {
   const insets = useSafeAreaInsets();
@@ -25,6 +26,7 @@ export default function ReviewPanelDetails({ navigation, route }) {
     passedSubmission?.submission_id,
   );
   const current = submission || passedSubmission;
+  const { refreshing, onRefresh } = useScreenRefresh([["submissions", passedSubmission?.submission_id], ["review-logs", passedSubmission?.submission_id], ["drive"]]);
 
   return (
     <View className="flex-1 bg-[#F3F3F3]">
@@ -36,6 +38,7 @@ export default function ReviewPanelDetails({ navigation, route }) {
         }}
       >
         <ScrollView
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           className="flex-1 pt-4"
           contentContainerStyle={{ paddingBottom: 20 }}
           showsVerticalScrollIndicator={false}

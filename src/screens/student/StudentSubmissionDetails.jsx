@@ -1,5 +1,5 @@
 import { Text } from "../../components/common/FontText";
-import { ActivityIndicator, ScrollView, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, ScrollView, TouchableOpacity, View, RefreshControl } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import StudentHeader from "../../components/students/StudentHeader";
@@ -12,16 +12,19 @@ import SubmissionDocuments from "../../components/submissions/SubmissionDocument
 import SubmissionStatusBadge from "../../components/submissions/SubmissionStatusBadge";
 import { PADDING_HORIZONTAL } from "../../constants/spacing";
 import BackButton from "../../components/common/BackButton";
+import { useScreenRefresh } from "../../hooks/useScreenRefresh";
 
 export default function StudentSubmissionDetails({ navigation, route }) {
   const insets = useSafeAreaInsets();
   const summary = route.params?.submission;
   const { data, isLoading } = useSubmission(summary?.submission_id);
   const submission = data || summary;
+  const { refreshing, onRefresh } = useScreenRefresh([["submissions", summary?.submission_id], ["review-logs", summary?.submission_id]]);
 
   return (
     <View className="flex-1 bg-[#F3F3F3]" style={{ paddingTop: insets.top }}>
       <ScrollView
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         className="flex-1 pt-4"
         style={{ paddingHorizontal: PADDING_HORIZONTAL }}
         contentContainerStyle={{ paddingBottom: 20 }}

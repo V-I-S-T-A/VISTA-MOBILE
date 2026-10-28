@@ -1,4 +1,4 @@
-import { View, ScrollView } from "react-native";
+import { View, ScrollView, RefreshControl } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useEffect, useState } from "react";
 import StaffBottomNav from "../../components/staff/StaffBottomNav";
@@ -10,6 +10,7 @@ import SubmissionPagination from "../../components/submissions/SubmissionPaginat
 import { useSubmissions } from "../../hooks/useSubmissions";
 import { openDocumentEntryWithAttachment } from "../../utils/openDocumentEntryWithAttachment";
 import {PADDING_HORIZONTAL} from "../../constants/spacing";
+import { useScreenRefresh } from "../../hooks/useScreenRefresh";
 
 const STATUS_TO_PARAM = {
   Pending: "pending",
@@ -54,6 +55,7 @@ export default function StaffReviewPanel({ navigation, route }) {
   }
 
   const { data, isLoading, isError, refetch } = useSubmissions(params);
+  const { refreshing, onRefresh } = useScreenRefresh([["submissions"]]);
 
   const handleSearchChange = (value) => {
     setSearchQuery(value);
@@ -77,6 +79,7 @@ export default function StaffReviewPanel({ navigation, route }) {
           setStatusFilter={handleStatusChange}
         />
         <ScrollView
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           className="flex-1"
           contentContainerStyle={{ paddingBottom: 8, flexGrow: 1 }}
           showsVerticalScrollIndicator={false}
