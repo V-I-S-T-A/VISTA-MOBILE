@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, ScrollView } from "react-native";
+import { View, ScrollView, RefreshControl } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import StaffBottomNav from "../../../components/staff/StaffBottomNav";
 import StaffReviewHeader from "../reviewPanel/StaffReviewHeader";
@@ -7,15 +7,18 @@ import SubmissionHistoryTop from "./submissionHistory/SubmissionHistoryTop";
 import StaffReviewSearch from "../reviewPanel/StaffReviewSearch";
 import SubmissionHistoryList from "./submissionHistory/SubmissionHistoryList";
 import { openDocumentEntryWithAttachment } from "../../../utils/openDocumentEntryWithAttachment";
+import { useScreenRefresh } from "../../../hooks/useScreenRefresh";
 
 export default function StaffSubmissionHistory({ navigation }) {
   const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All Status");
+  const { refreshing, onRefresh } = useScreenRefresh([["submissions"]]);
 
   return (
     <View className="flex-1 bg-[#F3F3F3]" style={{ paddingTop: insets.top }}>
       <ScrollView 
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         className="flex-1 px-5 pt-4"
         contentContainerStyle={{ paddingBottom: 20 }}
         showsVerticalScrollIndicator={false}

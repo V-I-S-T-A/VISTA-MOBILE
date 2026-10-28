@@ -1,5 +1,5 @@
 import { Text } from "../../components/common/FontText";
-import { ActivityIndicator, TouchableOpacity, View, ScrollView } from "react-native";
+import { ActivityIndicator, TouchableOpacity, View, ScrollView, RefreshControl } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQueries } from "@tanstack/react-query";
 import StudentHeader from "../../components/students/StudentHeader";
@@ -9,6 +9,7 @@ import SubmissionDashboardCards from "../../components/submissions/SubmissionDas
 import { useSubmissions } from "../../hooks/useSubmissions";
 import { submissionsService } from "../../services/submissionsService";
 import { PADDING_HORIZONTAL } from "../../constants/spacing";
+import { useScreenRefresh } from "../../hooks/useScreenRefresh";
 
 function useSubmissionCounts() {
   const results = useQueries({
@@ -48,10 +49,12 @@ export default function StudentHomeScreen({ navigation }) {
   const counts = useSubmissionCounts();
   const { data, isLoading, isError } = useSubmissions({ page_size: 3 });
   const submissions = data?.results ?? [];
+  const { refreshing, onRefresh } = useScreenRefresh([["student-submissions"], ["submissions"]]);
 
   return (
     <View className="flex-1 bg-[#F3F3F3]" style={{ paddingTop: insets.top }}>
       <ScrollView
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         className="flex-1 pt-4"
         style={{ paddingHorizontal: PADDING_HORIZONTAL }}
         contentContainerStyle={{ paddingBottom: 20 }}

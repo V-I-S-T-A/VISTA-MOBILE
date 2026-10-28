@@ -1,5 +1,5 @@
 import { Text } from "../../../components/common/FontText";
-import { View, Image, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
+import { View, Image, TouchableOpacity, ScrollView, ActivityIndicator, RefreshControl } from "react-native";
 import { Feather, FontAwesome6, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useQueries } from "@tanstack/react-query";
@@ -10,6 +10,7 @@ import AccountHeader from "../../../components/common/AccountHeader";
 import SubmissionListCard from "../../../components/submissions/SubmissionListCard";
 import SubmissionDashboardCards from "../../../components/submissions/SubmissionDashboardCards";
 import { MAIN_BLACK } from "../../../constants/colors";
+import { useScreenRefresh } from "../../../hooks/useScreenRefresh";
 
 function StaffHomeHeader() {
   const navigation = useNavigation();
@@ -141,8 +142,10 @@ function RecentSubmissions() {
 }
 
 export default function StaffHomeContent() {
+  const { refreshing, onRefresh } = useScreenRefresh([["submissions"]]);
   return (
     <ScrollView
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       className="flex-1 pt-4"
       contentContainerStyle={{ paddingBottom: 18 }}
       showsVerticalScrollIndicator={false}

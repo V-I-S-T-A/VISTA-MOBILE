@@ -85,10 +85,12 @@ export const driveService = {
     fileName,
     folderId,
     useAutoFolder = true,
+    uploadKind = "approved",
   }) {
     const formData = new FormData();
     formData.append("submission_id", submissionId);
     formData.append("use_auto_folder", useAutoFolder ? "true" : "false");
+    formData.append("upload_kind", uploadKind);
     if (fileName) formData.append("file_name", fileName);
     if (folderId) formData.append("folder_id", folderId);
     formData.append("file", {
