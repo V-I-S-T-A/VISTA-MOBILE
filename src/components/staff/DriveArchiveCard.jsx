@@ -212,18 +212,22 @@ export default function DriveArchiveCard({ submission }) {
             <TouchableOpacity
               onPress={() => setUploadKind("approved")}
               disabled={!!activeTaskId || uploadMutation.isPending}
-              className={`flex-1 rounded-lg py-2 items-center mr-2 ${uploadKind === "approved" ? "bg-vistaNavy" : "bg-slate-100"}`}
+              className={`flex-1 rounded-lg py-2 justify-center items-center mr-2 ${uploadKind === "approved" ? "bg-vistaNavy" : "bg-slate-100"}`}
             >
-              <Text className={`text-xs font-bold ${uploadKind === "approved" ? "text-white" : "text-slate-500"}`}>
+              <Text
+                className={`text-xs text-center font-bold ${uploadKind === "approved" ? "text-white" : "text-slate-500"}`}
+              >
                 Approved copy
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => setUploadKind("report")}
               disabled={!!activeTaskId || uploadMutation.isPending}
-              className={`flex-1 rounded-lg py-2 items-center ml-2 ${uploadKind === "report" ? "bg-vistaNavy" : "bg-slate-100"}`}
+              className={`flex-1 rounded-lg py-2 justify-center items-center ml-2 ${uploadKind === "report" ? "bg-vistaNavy" : "bg-slate-100"}`}
             >
-              <Text className={`text-xs font-bold ${uploadKind === "report" ? "text-white" : "text-slate-500"}`}>
+              <Text
+                className={`text-xs text-center font-bold ${uploadKind === "report" ? "text-white" : "text-slate-500"}`}
+              >
                 Accomplishment Report
               </Text>
             </TouchableOpacity>
@@ -334,7 +338,9 @@ export default function DriveArchiveCard({ submission }) {
           <ActivityIndicator color="white" />
         ) : (
           <Text className="text-white font-extrabold text-sm">
-            {uploadKind === "report" ? "Archive Accomplishment Report" : "Archive Approved Copy"}
+            {uploadKind === "report"
+              ? "Archive Accomplishment Report"
+              : "Archive Approved Copy"}
           </Text>
         )}
       </TouchableOpacity>

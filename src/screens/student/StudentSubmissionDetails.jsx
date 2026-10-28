@@ -77,9 +77,6 @@ export default function StudentSubmissionDetails({ navigation, route }) {
             />
             <SubmissionDocuments documents={submission.documents || []} />
             <SubmissionStatusHistory submissionId={submission.submission_id} />
-            <SubmissionDetailsRemarks
-              submissionId={submission.submission_id}
-            />
           </>
         )}
       </ScrollView>
