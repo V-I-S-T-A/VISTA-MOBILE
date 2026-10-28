@@ -18,6 +18,7 @@ export default function GDriveSyncLoginCard() {
   const {
     data: connection,
     isLoading: loadingConnection,
+    isError: connectionError,
     refetch,
   } = useDriveConnection();
   const authStart = useDriveAuthStart();
@@ -29,8 +30,9 @@ export default function GDriveSyncLoginCard() {
   const [folderSearch, setFolderSearch] = useState("");
   const [newFolderName, setNewFolderName] = useState("");
   const [showCreateFolder, setShowCreateFolder] = useState(false);
+  const [showFolderPicker, setShowFolderPicker] = useState(false);
 
-  const { data: folders = [], isLoading: loadingFolders } =
+  const { data: folders = [], isLoading: loadingFolders, isError: foldersError, refetch: refetchFolders } =
     useDriveFolders(folderSearch);
 
   const isConnected = !!connection?.connected;
@@ -62,7 +64,11 @@ export default function GDriveSyncLoginCard() {
       { folderId: folder.id, folderName: folder.name },
       {
         onSuccess: () =>
-          toast.success(`Documents will archive to "${folder.name}".`),
+          (async () => {
+            await refetch();
+            setShowFolderPicker(false);
+            toast.success(`Documents will archive to "${folder.name}".`);
+          })(),
         onError: (error) =>
           toast.error(
             error.message || "Could not select folder. Please try again.",
@@ -78,6 +84,8 @@ export default function GDriveSyncLoginCard() {
     }
     createFolderMutation.mutate(newFolderName.trim(), {
       onSuccess: (data) => {
+        refetch();
+        setShowFolderPicker(false);
         toast.success(`Documents will archive to "${data.folder_name}".`);
         setNewFolderName("");
         setShowCreateFolder(false);
@@ -115,6 +123,19 @@ export default function GDriveSyncLoginCard() {
     return (
       <View className="bg-white rounded-3xl p-6 mb-8 shadow-sm items-center">
         <ActivityIndicator />
+      </View>
+    );
+  }
+
+  if (connectionError) {
+    return (
+      <View className="bg-white rounded-3xl p-6 mb-8 shadow-sm items-center">
+        <Text className="text-gray-500 text-xs text-center mb-3">
+          Could not check your Google Drive connection.
+        </Text>
+        <TouchableOpacity onPress={() => refetch()} className="bg-vistaNavy rounded-xl px-4 py-3">
+          <Text className="text-white font-bold text-xs">Try again</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -179,7 +200,7 @@ export default function GDriveSyncLoginCard() {
     );
   }
 
-  if (!hasFolder) {
+  if (!hasFolder || showFolderPicker) {
     return (
       <View className="bg-white rounded-3xl p-6 mb-8 shadow-sm border border-gray-100">
         <View className="flex-row items-center mb-4">
@@ -203,12 +224,18 @@ export default function GDriveSyncLoginCard() {
         </View>
 
         <Text className="text-vistaNavy font-bold text-xs mb-2">
-          CHOOSE AN ARCHIVE FOLDER
+          {hasFolder ? "CHANGE ARCHIVE FOLDER" : "CHOOSE AN ARCHIVE FOLDER"}
         </Text>
         <Text className="text-gray-500 text-xs leading-5 mb-4">
           Approved submissions will be organized under this folder as Academic
           Year → Organization → Title.
         </Text>
+
+        {hasFolder ? (
+          <TouchableOpacity onPress={() => setShowFolderPicker(false)} className="self-end mb-2">
+            <Text className="text-vistaNavy text-xs font-bold">Cancel</Text>
+          </TouchableOpacity>
+        ) : null}
 
         <View className="flex-row items-center bg-[#eef0f3] border border-gray-200 rounded-lg px-3 h-[42px] mb-3">
           <Feather name="search" size={16} color="#9ca3af" />
@@ -223,6 +250,13 @@ export default function GDriveSyncLoginCard() {
 
         {loadingFolders ? (
           <ActivityIndicator className="my-3" />
+        ) : foldersError ? (
+          <View className="py-3 items-center">
+            <Text className="text-gray-500 text-xs mb-2">Could not load Drive folders.</Text>
+            <TouchableOpacity onPress={() => refetchFolders()}>
+              <Text className="text-vistaNavy text-xs font-bold">Try again</Text>
+            </TouchableOpacity>
+          </View>
         ) : (
           <FlatList
             data={folders}
@@ -325,6 +359,13 @@ export default function GDriveSyncLoginCard() {
           {connection.folder_name}
         </Text>
       </View>
+
+      <TouchableOpacity
+        onPress={() => setShowFolderPicker(true)}
+        className="border border-vistaNavy rounded-lg py-3 items-center mb-3"
+      >
+        <Text className="text-vistaNavy font-bold text-xs">Change folder</Text>
+      </TouchableOpacity>
 
       <TouchableOpacity
         onPress={handleDisconnect}
