@@ -1,4 +1,5 @@
-import { Alert } from "react-native";
+import { AppAlert as Alert } from '../components/common/AppDialog';
+
 import { pickDocumentFile, scanDocument } from "./documentScan";
 
 export function openDocumentEntryWithAttachment(navigation) {

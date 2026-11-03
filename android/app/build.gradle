@@ -2,6 +2,29 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
+// Expo's messaging SDK is already supplied by expo-notifications.
+// Keep Firebase optional for developers without the local configuration file.
+def vistaFirebasePath = System.getenv('VISTA_GOOGLE_SERVICES_FILE') ?: 'google-services.json'
+def vistaFirebaseConfig = new File(vistaFirebasePath)
+if (!vistaFirebaseConfig.isAbsolute()) {
+    vistaFirebaseConfig = new File(rootDir.parentFile, vistaFirebasePath)
+}
+if (vistaFirebaseConfig.exists()) {
+    copy {
+        from vistaFirebaseConfig
+        into projectDir
+        rename { 'google-services.json' }
+    }
+}
+if (file('google-services.json').exists()) {
+    apply plugin: 'com.google.gms.google-services'
+}
+gradle.taskGraph.whenReady { graph ->
+    if (graph.allTasks.any { it.project == project && it.name.toLowerCase().contains('release') } && !file('google-services.json').exists()) {
+        throw new GradleException('VISTA release builds require the team Firebase google-services.json configuration. Debug builds remain optional.')
+    }
+}
+
 def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
 
 /**
@@ -93,7 +116,7 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "1.0.0"
+        versionName "1.0.4"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }

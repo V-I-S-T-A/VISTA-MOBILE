@@ -3,6 +3,25 @@ const path = require("path");
 
 const root = path.resolve(__dirname, "..");
 
+// Expo's temporary launcher delegate has no ReactDelegate during reloads.
+// RN 0.81 added callbacks which must also be no-ops in that state.
+patchFile("node_modules/expo-dev-launcher/android/src/main/java/expo/modules/devlauncher/react/activitydelegates/DevLauncherReactActivityNOPDelegate.kt", [
+  {
+    marker: "override fun onUserLeaveHint() {}",
+    find: "  override fun onPause() {}",
+    replace: "  override fun onPause() {}\n  override fun onUserLeaveHint() {}",
+  },
+  {
+    marker: "override fun onKeyDown(keyCode: Int, event: android.view.KeyEvent): Boolean = false",
+    find: "  override fun onWindowFocusChanged(hasFocus: Boolean) {}",
+    replace: `  override fun onWindowFocusChanged(hasFocus: Boolean) {}
+  override fun onKeyDown(keyCode: Int, event: android.view.KeyEvent): Boolean = false
+  override fun onKeyUp(keyCode: Int, event: android.view.KeyEvent): Boolean = false
+  override fun onKeyLongPress(keyCode: Int, event: android.view.KeyEvent): Boolean = false
+  override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {}`,
+  },
+]);
+
 function patchFile(relativePath, replacements) {
   const filePath = path.join(root, relativePath);
   if (!fs.existsSync(filePath)) {

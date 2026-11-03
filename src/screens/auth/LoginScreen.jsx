@@ -1,11 +1,21 @@
-import { Text, TextInput } from "../../components/common/FontText";
-import { View, TouchableOpacity, ImageBackground, Image, KeyboardAvoidingView, Platform, ActivityIndicator, Modal, Alert } from "react-native";
-import { useState } from "react";
+import { MAIN_BLUE } from "../../constants/colors";
+import TextInput from '../../components/common/AppInput';
+import AppBottomSheet from '../../components/common/AppBottomSheet';
+import { AppAlert as Alert } from '../../components/common/AppDialog';
+import { Text } from '../../components/common/FontText';
+import { View, TouchableOpacity, ImageBackground, Image, KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView, useWindowDimensions } from 'react-native';
+import { useRef, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { Feather } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { typography } from "../../theme/layout";
 import { authService } from "../../services/authService";
+import VistaProcessing from '../../components/common/VistaProcessing';
 
 export default function LoginScreen() {
+  const resetTrigger = useRef(null);
+  const { height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -99,24 +109,46 @@ export default function LoginScreen() {
   };
 
   return (
-    <ImageBackground
-      source={require("../../assets/login-illustration.png")}
-      className="flex-1"
-      resizeMode="cover"
-    >
+    <View className="flex-1 bg-white">
+      <ImageBackground
+        source={require("../../assets/login-illustration-hq.webp")}
+        resizeMode="cover"
+        style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }}
+        accessibilityIgnoresInvertColors
+      />
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        className="flex-1 justify-center px-6"
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        className="flex-1"
       >
-        <View className="items-center mb-8">
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ flexGrow: 1, paddingTop: Math.max(insets.top, 16) + Math.max(64, height * 0.23), paddingBottom: Math.max(insets.bottom, 24) }}
+        >
+          <View style={{ width: "80%", maxWidth: 340, alignSelf: "center" }}>
+          <View>
+        <View className="items-center mb-6">
           <Image
-            source={require("../../assets/logo.png")}
-            className="w-24 h-24"
+            source={require("../../assets/logo.webp")}
+            style={{ width: 92, height: 92 }}
             resizeMode="contain"
+            accessibilityLabel="VISTA Logo"
           />
+          <Text
+            style={{
+              fontFamily: "DMSans_800ExtraBold",
+              fontSize: 24,
+              letterSpacing: 2.5,
+              color: MAIN_BLUE,
+              marginTop: 6,
+            }}
+          >
+            VISTA
+          </Text>
         </View>
 
-        <View className="bg-white/90 rounded-full border border-vistaOrange px-5 py-4 mb-4">
+        <View className="bg-white rounded-full border border-[#F0B34B] px-4 mb-3"
+          style={{ minHeight: 48, justifyContent: "center" }}>
           <TextInput
             placeholder="youremail@gmail.com"
             placeholderTextColor="#9CA3AF"
@@ -125,11 +157,13 @@ export default function LoginScreen() {
             autoCapitalize="none"
             autoCorrect={false}
             keyboardType="email-address"
-            className="text-gray-700"
+            className="text-gray-700 text-sm"
+            style={{ flex: 1, minHeight: 48, paddingVertical: 10, borderWidth: 0, backgroundColor: "transparent", paddingHorizontal: 0, fontSize: 14 }}
           />
         </View>
 
-        <View className="bg-white/90 rounded-full border border-vistaOrange px-5 py-4 mb-3">
+        <View className="bg-white rounded-full border border-[#F0B34B] px-4 mb-3 flex-row items-center"
+          style={{ minHeight: 48 }}>
           <TextInput
             placeholder="password"
             placeholderTextColor="#9CA3AF"
@@ -139,11 +173,14 @@ export default function LoginScreen() {
             autoCapitalize="none"
             autoCorrect={false}
             textContentType="password"
-            className="text-gray-700"
+            className="text-gray-700 text-sm"
+            style={{ flex: 1, minHeight: 48, paddingVertical: 10, borderWidth: 0, backgroundColor: "transparent", paddingHorizontal: 0, fontSize: 14 }}
           />
           <TouchableOpacity
             onPress={() => setShowPassword(!showPassword)}
-            className="absolute top-7 right-6"
+            accessibilityLabel={showPassword ? "Hide password" : "Show password"}
+            accessibilityRole="button"
+            style={{ width: 48, minHeight: 48, alignItems: "center", justifyContent: "center", marginRight: -12 }}
           >
             <Feather
               name={showPassword ? "eye" : "eye-off"}
@@ -160,11 +197,13 @@ export default function LoginScreen() {
         ) : null}
 
         <TouchableOpacity
+          ref={resetTrigger}
           onPress={() => {
             setResetEmail(email);
             setIsForgotOpen(true);
           }}
-          className="self-end mb-5 px-2"
+          className="self-end mb-3 px-1"
+          style={{ minHeight: 48, justifyContent: "center" }}
         >
           <Text className="text-vistaNavy font-semibold text-sm">
             Forgot password?
@@ -174,30 +213,25 @@ export default function LoginScreen() {
         <TouchableOpacity
           onPress={handleSignIn}
           disabled={isSubmitting}
-          className={`bg-vistaOrange rounded-full py-4 items-center shadow-md ${
+          className={`bg-vistaOrange rounded-full py-3 items-center ${
             isSubmitting ? "opacity-70" : ""
           }`}
         >
           {isSubmitting ? (
             <ActivityIndicator color="white" />
           ) : (
-            <Text className="text-white font-bold text-base tracking-wide">
-              SIGN IN
+            <Text className="text-white"
+              style={[typography.section, { letterSpacing: 0 }]}>
+              Sign in
             </Text>
           )}
         </TouchableOpacity>
+          </View>
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
-      <Modal
-        visible={isForgotOpen}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setIsForgotOpen(false)}
-      >
-        <View className="flex-1 bg-black/40 justify-center px-6">
-          <View className="bg-white rounded-3xl p-6">
-            <Text className="text-vistaNavy text-xl font-bold mb-2">
-              Reset Password
-            </Text>
+      <AppBottomSheet returnFocusRef={resetTrigger} visible={isForgotOpen} title="Reset Password" onClose={() => setIsForgotOpen(false)} busy={isResetting}>
+
             {resetStep === "email" ? (
               <>
                 <Text className="text-gray-500 mb-5">
@@ -211,7 +245,7 @@ export default function LoginScreen() {
                   autoComplete="email"
                   autoCapitalize="none"
                   keyboardType="email-address"
-                  className="border border-gray-200 rounded-xl px-4 h-12 mb-5"
+                  className="border border-gray-200 rounded-xl px-4 min-h-[48px] mb-5"
                 />
                 <View className="flex-row">
                   <TouchableOpacity
@@ -245,7 +279,7 @@ export default function LoginScreen() {
                   placeholderTextColor="#9CA3AF"
                   keyboardType="number-pad"
                   maxLength={6}
-                  className="border border-gray-200 rounded-xl px-4 h-12 mb-3"
+                  className="border border-gray-200 rounded-xl px-4 min-h-[48px] mb-3"
                 />
                 <TextInput
                   value={resetPassword}
@@ -256,7 +290,7 @@ export default function LoginScreen() {
                   autoCorrect={false}
                   textContentType="newPassword"
                   secureTextEntry
-                  className="border border-gray-200 rounded-xl px-4 h-12 mb-5 text-gray-700"
+                  className="border border-gray-200 rounded-xl px-4 min-h-[48px] mb-5 text-gray-700"
                 />
                 <TextInput
                   value={confirmResetPassword}
@@ -267,7 +301,7 @@ export default function LoginScreen() {
                   autoCorrect={false}
                   textContentType="newPassword"
                   secureTextEntry
-                  className="border border-gray-200 rounded-xl px-4 h-12 mb-5 text-gray-700"
+                  className="border border-gray-200 rounded-xl px-4 min-h-[48px] mb-5 text-gray-700"
                 />
                 <View className="flex-row">
                   <TouchableOpacity
@@ -295,9 +329,8 @@ export default function LoginScreen() {
                 </View>
               </>
             )}
-          </View>
-        </View>
-      </Modal>
-    </ImageBackground>
+          </AppBottomSheet>
+      <VistaProcessing visible={isResetting} message={resetStep === 'email' ? 'Sending reset code…' : 'Resetting your password…'} />
+    </View>
   );
 }

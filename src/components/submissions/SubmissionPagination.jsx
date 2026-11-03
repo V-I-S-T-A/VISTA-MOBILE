@@ -1,91 +1,18 @@
-import { Text } from "../common/FontText";
-import { TouchableOpacity, View } from "react-native";
+import { ScrollView, TouchableOpacity, View } from 'react-native';
+import { Feather } from '@expo/vector-icons';
+import { Text } from '../common/FontText';
+import { colors, compact, radii, space, type } from '../../theme/tokens';
 
-function getPageNumbers(currentPage, totalPages) {
-  if (totalPages <= 5) {
-    return Array.from({ length: totalPages }, (_, index) => index + 1);
-  }
-
-  const pages = new Set([1, totalPages, currentPage]);
-  if (currentPage > 1) pages.add(currentPage - 1);
-  if (currentPage < totalPages) pages.add(currentPage + 1);
-  return Array.from(pages).sort((first, second) => first - second);
-}
-
-export default function SubmissionPagination({
-  currentPage = 1,
-  totalPages = 1,
-  onPageChange,
-  className = "mb-6",
-}) {
-  const safeTotalPages = Math.max(1, totalPages);
-  const safeCurrentPage = Math.min(Math.max(1, currentPage), safeTotalPages);
-  const canGoPrevious = safeCurrentPage > 1;
-  const canGoNext = safeCurrentPage < safeTotalPages;
-  const pageNumbers = getPageNumbers(safeCurrentPage, safeTotalPages);
-
-  const changePage = (page) => {
-    if (page !== safeCurrentPage) onPageChange?.(page);
-  };
-
-  return (
-    <View className={`bg-[#FFD740] rounded-full py-3 px-5 flex-row justify-between items-center ${className}`}>
-      <TouchableOpacity
-        className="px-2"
-        disabled={!canGoPrevious}
-        onPress={() => changePage(safeCurrentPage - 1)}
-      >
-        <Text
-          className={`font-semibold text-sm ${
-            canGoPrevious ? "text-gray-700" : "text-gray-400"
-          }`}
-        >
-          Previous
-        </Text>
-      </TouchableOpacity>
-
-      <View className="flex-row items-center gap-3">
-        {pageNumbers.map((page, index) => {
-          const previousPage = pageNumbers[index - 1];
-          const showGap = previousPage !== undefined && page - previousPage > 1;
-          const isCurrent = page === safeCurrentPage;
-
-          return (
-            <View key={page} className="flex-row items-center">
-              {showGap ? (
-                <Text className="text-gray-700 font-semibold text-sm px-1">
-                  ...
-                </Text>
-              ) : null}
-              <TouchableOpacity
-                disabled={isCurrent}
-                onPress={() => changePage(page)}
-              >
-                {isCurrent ? (
-                  <View className="bg-white w-8 h-8 rounded-full items-center justify-center shadow-sm">
-                    <Text className="text-gray-800 font-bold text-sm">
-                      {page}
-                    </Text>
-                  </View>
-                ) : (
-                  <Text className="text-gray-700 font-semibold text-sm">
-                    {page}
-                  </Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          );
-        })}
-      </View>
-
-      <TouchableOpacity
-        className="bg-white rounded-full py-1.5 px-4 shadow-sm"
-        disabled={!canGoNext}
-        onPress={() => changePage(safeCurrentPage + 1)}
-        style={{ opacity: canGoNext ? 1 : 0.5 }}
-      >
-        <Text className="text-gray-800 font-bold text-sm">Next</Text>
-      </TouchableOpacity>
-    </View>
-  );
+export default function SubmissionPagination({ currentPage = 1, totalPages = 1, onPageChange, className = 'mb-6', busy = false }) {
+  const total = Math.max(1, totalPages), page = Math.min(Math.max(1, currentPage), total);
+  const pages = total <= 5 ? Array.from({ length: total }, (_, index) => index + 1) : [...new Set([1, page - 1, page, page + 1, total])].filter(n => n > 0 && n <= total).sort((a, b) => a - b);
+  const change = n => { if (!busy && n !== page && n >= 1 && n <= total) onPageChange?.(n); };
+  const arrow = (direction, disabled, next) => <TouchableOpacity accessibilityRole="button" accessibilityLabel={`${direction} page`} accessibilityState={{ disabled: disabled || busy, busy }} disabled={disabled || busy} onPress={() => change(next)} style={{ width: compact.touch, minHeight: compact.touch, alignItems: 'center', justifyContent: 'center', opacity: disabled || busy ? 0.45 : 1 }}><Feather name={direction === 'Previous' ? 'chevron-left' : 'chevron-right'} size={18} color={colors.onYellow} /></TouchableOpacity>;
+  return <View className={className} accessibilityLabel={`Page ${page} of ${total}`} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.yellow, borderRadius: radii.field, paddingHorizontal: space.xs }}>
+    {arrow('Previous', page === 1, page - 1)}
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flex: 1 }} contentContainerStyle={{ alignItems: 'center' }} keyboardShouldPersistTaps="handled">
+      {pages.map(n => <TouchableOpacity key={n} accessibilityRole="button" accessibilityLabel={`Page ${n}`} accessibilityState={{ selected: page === n, disabled: busy || page === n, busy }} disabled={busy || page === n} onPress={() => change(n)} style={{ minWidth: compact.touch, minHeight: compact.touch, alignItems: 'center', justifyContent: 'center' }}><View style={{ borderRadius: radii.chip, padding: space.sm, backgroundColor: page === n ? colors.surface : 'transparent' }}><Text style={{ ...type.compactLabel, color: colors.onYellow, fontVariant: ['tabular-nums'] }}>{n}</Text></View></TouchableOpacity>)}
+    </ScrollView>
+    {arrow('Next', page === total, page + 1)}
+  </View>;
 }

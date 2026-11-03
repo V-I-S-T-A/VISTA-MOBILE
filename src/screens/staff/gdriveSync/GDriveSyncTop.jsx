@@ -1,15 +1,16 @@
+import { colors, radii, space, type } from '../../../theme/tokens';
+import PageHeading from "../../../components/common/PageHeading";
 import { Text } from "../../../components/common/FontText";
-import { View, TouchableOpacity } from "react-native";
+import { View } from "react-native";
 
 export default function GDriveSyncTop() {
   return (
-    <View className="mb-6">
-      <Text className="text-2xl font-extrabold text-vistaNavy">Google Drive Sync</Text>
-      <Text className="text-gray-600 text-sm mt-1 mb-5">Sync your google drive account.</Text>
+    <View className="mb-4">
+      <PageHeading title="Google Drive Sync" subtitle="Sync your google drive account." />
       
-      <TouchableOpacity className="bg-[#FFC342] rounded-2xl py-3.5 items-center justify-center shadow-sm">
-        <Text className="text-white font-extrabold text-xl tracking-wider">SECURE INTEGRATION</Text>
-      </TouchableOpacity>
+      <View style={{ backgroundColor: colors.yellow, borderRadius: radii.field, padding: space.sm, alignItems: 'center' }}>
+        <Text style={{ ...type.label, color: colors.onYellow }}>Secure integration</Text>
+      </View>
     </View>
   );
 }

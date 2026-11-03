@@ -1,7 +1,9 @@
+import { typography } from "../../theme/layout";
 import { ActivityIndicator, TouchableOpacity, View } from "react-native";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import VistaIcon from '../common/VistaIcon';
 import { Text } from "../common/FontText";
 import { MAIN_BLUE, MAIN_YELLOW } from "../../constants/colors";
+import { DashboardCardsSkeleton } from '../common/Skeleton';
 
 function DashboardCard({ onPress, className, style, children }) {
   const Card = onPress ? TouchableOpacity : View;
@@ -30,82 +32,60 @@ export default function SubmissionDashboardCards({
   approvedOnPress,
   showTotalLoader = false,
 }) {
+  if (isLoading) return <DashboardCardsSkeleton />;
   return (
     <>
       <DashboardCard
         onPress={totalOnPress}
-        className="rounded-3xl p-5 flex-row justify-between items-end mb-4"
-        style={{ backgroundColor: MAIN_BLUE }}
+        className="rounded-2xl p-3 flex-row justify-between items-end mb-3"
+        style={{ backgroundColor: MAIN_BLUE, borderRadius: 18, borderCurve: "continuous" }}
       >
-        <View>
-          <Text className="text-white/80 text-lg mb-1 font-bold">
+        <View className="flex-1 min-w-0">
+          <Text className="text-white text-sm mb-1 font-bold" style={{ color: '#FFFFFF' }}>
             {totalLabel}
           </Text>
           {isLoading && showTotalLoader ? (
             <ActivityIndicator color="white" />
           ) : (
-            <Text className="text-white text-5xl font-bold">
+            <Text className="text-white text-4xl font-bold" style={[typography.number, { color: '#FFFFFF' }]}>
               {isLoading ? "—" : total}
             </Text>
           )}
         </View>
-        <View
-          className="w-16 h-16 rounded-2xl items-center justify-center"
-          style={{ backgroundColor: "#073B78" }}
-        >
-          <Feather name="folder" size={40} color="#A9D0FF" />
-        </View>
+        <VistaIcon name="folder" size={24} color="#FFFFFF" style={{ marginBottom: 4, marginRight: 2 }} />
       </DashboardCard>
 
-      <View className="flex-row gap-3 mb-6">
+      <View className="flex-row gap-3 mb-4">
         <DashboardCard
           onPress={pendingOnPress}
-          className="flex-1 rounded-2xl p-4 flex-row justify-between items-end"
-          style={{ backgroundColor: MAIN_YELLOW }}
+          className="flex-1 rounded-2xl p-3 flex-row justify-between items-end"
+          style={{ backgroundColor: MAIN_YELLOW, borderRadius: 18, borderCurve: "continuous" }}
         >
-          <View>
-            <Text className="text-white/90 text-md mb-1 font-bold">
+          <View className="flex-1 min-w-0">
+            <Text className="text-white text-xs mb-1 font-bold" style={{ color: '#FFFFFF' }}>
               Pending
             </Text>
-            <Text className="text-white text-5xl font-bold">
+            <Text className="text-white text-4xl font-bold" style={[typography.number, { color: '#FFFFFF' }]}>
               {isLoading ? "—" : pending}
             </Text>
           </View>
-          <View
-            className="w-14 h-14 rounded-2xl items-center justify-center"
-            style={{ backgroundColor: "#E7A600" }}
-          >
-            <MaterialCommunityIcons
-              name="calendar-clock"
-              size={40}
-              color="#FFD900"
-            />
-          </View>
+          <VistaIcon name="clock" size={24} color="#FFFFFF" style={{ marginBottom: 4, marginRight: 2 }} />
         </DashboardCard>
 
         <DashboardCard
           onPress={approvedOnPress}
-          className="flex-1 rounded-2xl p-4 flex-row justify-between items-end"
-          style={{ backgroundColor: MAIN_YELLOW }}
+          className="flex-1 rounded-2xl p-3 flex-row justify-between items-end"
+          style={{ backgroundColor: '#52B764', borderRadius: 18, borderCurve: "continuous" }}
         >
-          <View>
-            <Text className="text-white/90 text-md mb-1 font-bold">
+          <View className="flex-1 min-w-0">
+            <Text className="text-white text-xs mb-1 font-bold" style={{ color: '#FFFFFF' }}>
               {approvedLabel}
             </Text>
-            <Text className="text-white text-5xl font-bold">
+            <Text className="text-white text-4xl font-bold" style={[typography.number, { color: '#FFFFFF' }]}>
               {isLoading ? "—" : approved}
             </Text>
           </View>
-          <View
-            className="w-14 h-14 rounded-2xl items-center justify-center"
-            style={{ backgroundColor: "#E7A600" }}
-          >
-            <MaterialCommunityIcons
-              name="clipboard-check-outline"
-              size={40}
-              color="#FFD900"
-            />
-          </View>
+          <VistaIcon name="check-square" size={24} color="#FFFFFF" style={{ marginBottom: 4, marginRight: 2 }} />
         </DashboardCard>
       </View>
     </>

@@ -1,16 +1,21 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { submissionsService } from "../services/submissionsService";
+import { useAuth } from "../context/AuthContext";
 
 export function useSubmissions(params = {}) {
+  const auth = useAuth() || {};
+  const userId = auth.user?.user_id || 'guest';
   return useQuery({
-    queryKey: ["submissions", "list", params],
+    queryKey: ["submissions", "list", userId, params],
     queryFn: () => submissionsService.listSubmissions(params),
   });
 }
 
 export function useSubmission(submissionId) {
+  const auth = useAuth() || {};
+  const userId = auth.user?.user_id || 'guest';
   return useQuery({
-    queryKey: ["submissions", submissionId],
+    queryKey: ["submissions", submissionId, userId],
     queryFn: () => submissionsService.getSubmission(submissionId),
     enabled: !!submissionId,
   });
@@ -35,10 +40,9 @@ export function useAutofillDocument() {
 export function useUpdateSubmissionStatus() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ submissionId, status, remarksText }) =>
+    mutationFn: ({ submissionId, ...payload }) =>
       submissionsService.updateSubmissionStatus(submissionId, {
-        status,
-        remarksText,
+        ...payload,
       }),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({

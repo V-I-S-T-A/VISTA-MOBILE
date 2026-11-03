@@ -64,6 +64,8 @@ export const submissionsService = {
         submission_id: submissionId,
         file_name: file.name || "document",
         file_url: cloudinary.secure_url,
+        cloudinary_public_id: cloudinary.public_id,
+        cloudinary_resource_type: cloudinary.resource_type,
         mime_type: file.type || "application/octet-stream",
         file_size_kb: Math.max(1, Math.round((file.size || 0) / 1024)),
       });
@@ -95,11 +97,28 @@ export const submissionsService = {
     }
   },
 
-  async updateSubmissionStatus(submissionId, { status, remarksText }) {
+  // Stage the asset only. The status endpoint associates it transactionally and
+  // records add/replace in review history, unlike the creation document endpoint.
+  async prepareStatusAttachment(file) {
+    const body = new FormData();
+    body.append('file', { uri: file.uri, name: file.name, type: file.type || 'application/octet-stream' });
+    body.append('upload_preset', 'vista_uploads');
+    const response = await fetch('https://api.cloudinary.com/v1_1/djtdar2ex/auto/upload', { method: 'POST', body });
+    const result = await response.json();
+    if (!response.ok || !result.secure_url || !result.public_id || !result.resource_type) {
+      throw new Error(result.error?.message || 'The attachment upload could not be confirmed.');
+    }
+    return { file_name: file.name, file_url: result.secure_url, cloudinary_public_id: result.public_id,
+      cloudinary_resource_type: result.resource_type, mime_type: file.type || 'application/octet-stream',
+      file_size_kb: Math.max(1, Math.round((result.bytes ?? file.size ?? 0) / 1024)) };
+  },
+
+  async updateSubmissionStatus(submissionId, { status, remarksText, priorityEscalation, attachmentAction, attachment }) {
     try {
       const { data } = await apiClient.patch(
         API_ENDPOINTS.SUBMISSIONS.STATUS(submissionId),
-        { status, remarks_text: remarksText },
+        { ...(status ? { status } : {}), remarks_text: remarksText, ...(priorityEscalation !== undefined ? { priority_escalation: priorityEscalation } : {}),
+          ...(attachment ? { attachment_action: attachmentAction, attachment } : {}) },
       );
       return data;
     } catch (error) {

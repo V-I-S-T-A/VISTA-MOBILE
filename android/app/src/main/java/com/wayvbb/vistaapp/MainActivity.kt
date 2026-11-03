@@ -2,21 +2,25 @@ package com.wayvbb.vistaapp
 
 import android.os.Build
 import android.os.Bundle
+import androidx.core.view.WindowCompat
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
 import com.facebook.react.defaults.DefaultReactActivityDelegate
 
+import expo.modules.splashscreen.SplashScreenManager
 import expo.modules.ReactActivityDelegateWrapper
 
 class MainActivity : ReactActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
-    // Set the theme to AppTheme BEFORE onCreate to support
-    // coloring the background, status bar, and navigation bar.
-    // This is required for expo-splash-screen.
-    setTheme(R.style.AppTheme);
+    // Install the native splash before React mounts; JS hides it after startup.
+    SplashScreenManager.registerOnActivity(this)
     super.onCreate(null)
+    // Enable consistent edge-to-edge window layout across system bars.
+    // The window coordinate space remains stable at full screen height,
+    // avoiding layout jumping on app resume, focus changes, overlays, and dialogs.
+    WindowCompat.setDecorFitsSystemWindows(window, false)
   }
 
   /**

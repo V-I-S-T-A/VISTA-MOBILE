@@ -1,7 +1,9 @@
+import UserAvatar from '../../../../components/common/UserAvatar';
 import { Text } from "../../../../components/common/FontText";
 import { ActivityIndicator, Image, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useReviewLogs } from "../../../../hooks/useReviewLogs";
+import { TimelineSkeleton } from '../../../../components/common/Skeleton';
 
 const formatDate = (value) => {
   if (!value) return "—";
@@ -24,14 +26,14 @@ export default function ReviewDetailsRemarks({ submissionId }) {
           STAFF REMARKS & FEEDBACKS
         </Text>
         <View className="bg-[#FFD400] rounded-xl px-3 py-2">
-          <Text className="text-vistaNavy text-[10px] font-extrabold">
+          <Text className="text-vistaNavy text-xs font-extrabold">
             {remarks.length} {remarks.length === 1 ? "UPDATE" : "UPDATES"}
           </Text>
         </View>
       </View>
       <View className="p-4">
         {isLoading ? (
-          <View className="py-5 items-center"><ActivityIndicator /></View>
+          <TimelineSkeleton />
         ) : isError ? (
           <Text className="text-gray-500 text-sm">Could not load staff remarks.</Text>
         ) : remarks.length === 0 ? (
@@ -42,16 +44,8 @@ export default function ReviewDetailsRemarks({ submissionId }) {
         ) : (
           remarks.map((log, index) => (
             <View key={log.log_id} className={`flex-row ${index < remarks.length - 1 ? "mb-4" : ""}`}>
-              <View className="w-10 h-10 rounded-lg bg-[#EAF0FA] items-center justify-center mr-3">
-                {log.changed_by_image_url ? (
-                  <Image
-                    source={{ uri: log.changed_by_image_url }}
-                    className="w-10 h-10 rounded-lg"
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <Feather name="user" size={18} color="#245EA9" />
-                )}
+              <View className="w-10 h-10 rounded-full bg-[#EAF0FA] items-center justify-center mr-3">
+                <UserAvatar uri={log.changed_by_image_url} size={40} />
               </View>
               <View className="flex-1 min-w-0">
                 <View className="flex-row items-start justify-between mb-2">
@@ -59,11 +53,11 @@ export default function ReviewDetailsRemarks({ submissionId }) {
                     <Text className="text-vistaNavy text-sm font-semibold" numberOfLines={1}>
                       {log.changed_by_name || "Staff member"}
                     </Text>
-                    <Text className="text-gray-600 text-[10px]">
+                    <Text className="text-gray-600 text-xs">
                       {log.new_status?.replace(/_/g, " ") || "Status update"}
                     </Text>
                   </View>
-                  <Text className="text-gray-600 text-[9px]">{formatDate(log.changed_at)}</Text>
+                  <Text className="text-gray-600 text-xs">{formatDate(log.changed_at)}</Text>
                 </View>
                 <View className="bg-[#F0F3FF] border border-gray-300 rounded-md p-3">
                   <Text className="text-gray-700 text-sm leading-6">{log.remarks_text}</Text>

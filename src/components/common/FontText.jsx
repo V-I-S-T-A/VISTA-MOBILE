@@ -1,13 +1,14 @@
 import { forwardRef } from "react";
 import { Text as NativeText, TextInput as NativeTextInput } from "react-native";
 import { cssInterop } from "nativewind";
+import { type } from '../../theme/tokens';
 
 const withDMSans = (Component) =>
   forwardRef(({ style, ...props }, ref) => (
     <Component
       {...props}
       ref={ref}
-      style={[{ fontFamily: "DMSans_400Regular" }, style]}
+      style={[{ fontFamily: type.regular, fontSize: type.body.fontSize }, style]}
     />
   ));
 

@@ -13,4 +13,15 @@ export const academicYearsService = {
       throw unwrapApiError(error);
     }
   },
+
+  async getAcademicYears() {
+    try {
+      const { data } = await apiClient.get(API_ENDPOINTS.ACADEMIC_YEARS.LIST, {
+        params: { ordering: "-year", page_size: 100 },
+      });
+      return data?.results ?? data ?? [];
+    } catch (error) {
+      throw unwrapApiError(error);
+    }
+  },
 };

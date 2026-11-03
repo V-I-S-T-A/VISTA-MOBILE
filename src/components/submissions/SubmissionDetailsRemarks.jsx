@@ -1,5 +1,6 @@
 import { Text } from "../common/FontText";
-import { ActivityIndicator, Image, View } from "react-native";
+import { ActivityIndicator, View } from "react-native";
+import UserAvatar from '../common/UserAvatar';
 import { Feather } from "@expo/vector-icons";
 import { useReviewLogs } from "../../hooks/useReviewLogs";
 
@@ -26,7 +27,7 @@ export default function SubmissionDetailsRemarks({ submissionId }) {
           STAFF REMARKS & FEEDBACKS
         </Text>
         <View className="bg-[#FFD400] rounded-xl px-3 py-2">
-          <Text className="text-vistaNavy text-[10px] font-extrabold">
+          <Text className="text-vistaNavy text-xs font-extrabold">
             {remarks.length} {remarks.length === 1 ? "UPDATE" : "UPDATES"}
           </Text>
         </View>
@@ -53,16 +54,8 @@ export default function SubmissionDetailsRemarks({ submissionId }) {
               key={log.log_id}
               className={`flex-row ${index < remarks.length - 1 ? "mb-4" : ""}`}
             >
-              <View className="w-10 h-10 rounded-lg bg-[#EAF0FA] items-center justify-center mr-3 overflow-hidden">
-                {log.changed_by_image_url ? (
-                  <Image
-                    source={{ uri: log.changed_by_image_url }}
-                    className="w-10 h-10"
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <Feather name="user" size={18} color="#245EA9" />
-                )}
+              <View className="w-10 h-10 rounded-full bg-[#EAF0FA] items-center justify-center mr-3 overflow-hidden">
+                <UserAvatar uri={log.changed_by_image_url} size={40} />
               </View>
               <View className="flex-1 min-w-0">
                 <View className="flex-row items-start justify-between mb-2">
@@ -73,11 +66,11 @@ export default function SubmissionDetailsRemarks({ submissionId }) {
                     >
                       {log.changed_by_name || "Staff member"}
                     </Text>
-                    <Text className="text-gray-600 text-[10px]">
+                    <Text className="text-gray-600 text-xs">
                       {log.new_status?.replace(/_/g, " ") || "Status update"}
                     </Text>
                   </View>
-                  <Text className="text-gray-600 text-[9px]">
+                  <Text className="text-gray-600 text-xs">
                     {formatDate(log.changed_at)}
                   </Text>
                 </View>

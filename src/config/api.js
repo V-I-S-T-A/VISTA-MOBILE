@@ -1,7 +1,6 @@
+import { resolveApiUrl } from './apiUrl.cjs';
 export const API_CONFIG = {
-  BASE_URL: (
-    process.env.EXPO_PUBLIC_API_URL || "http://localhost:8000/api"
-  ).replace(/\/$/, ""),
+  BASE_URL: resolveApiUrl({ development: __DEV__, override: process.env.EXPO_PUBLIC_API_URL }),
   ENDPOINTS: {
     AUTH: "/auth",
   },

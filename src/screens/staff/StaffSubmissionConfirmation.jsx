@@ -1,13 +1,18 @@
+import { AppAlert as Alert } from '../../components/common/AppDialog';
 import { Text } from "../../components/common/FontText";
 import { useState } from "react";
-import { ActivityIndicator, Alert, ScrollView, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, ScrollView, TouchableOpacity, View } from 'react-native';
 import { Feather } from "@expo/vector-icons";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { panelStyles, useStaffLayout } from "../../theme/layout";
 import { submissionsService } from "../../services/submissionsService";
+import DraftAttachmentPreview from '../../components/submissions/DraftAttachmentPreview';
+import { type } from '../../theme/tokens';
+import VistaProcessing from '../../components/common/VistaProcessing';
 
 export default function StaffSubmissionConfirmation({ navigation, route }) {
-  const insets = useSafeAreaInsets();
-  const { draft, file, labels = {} } = route.params || {};
+  const screenLayout = useStaffLayout();
+  const { draft, file: initialFile, labels = {} } = route.params || {};
+  const [file, setFile] = useState(initialFile);
   const [busy, setBusy] = useState(false);
   const [createdSubmission, setCreatedSubmission] = useState(null);
   const [error, setError] = useState("");
@@ -51,19 +56,21 @@ export default function StaffSubmissionConfirmation({ navigation, route }) {
     ["Category", labels.category],
     ["Academic year", labels.academicYear],
     ["Submitted by", labels.submittedBy],
+    ["Priority", draft?.priority_escalation ? 'Priority review' : 'Standard review'],
     ...(draft?.description ? [["Description", draft.description]] : []),
   ];
   return (
-    <View className="flex-1 bg-[#F4F6FA]" style={{ paddingTop: insets.top }}>
+    <View className="flex-1 bg-[#F4F6FA]" style={screenLayout.top}>
       <ScrollView
-        className="flex-1 px-5"
+        className="flex-1"
+        style={screenLayout.horizontal}
         contentContainerStyle={{ paddingTop: 12, paddingBottom: 36 }}
         showsVerticalScrollIndicator={false}
       >
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           disabled={busy}
-          className="flex-row items-center self-start rounded-full bg-white border border-slate-200 px-4 py-2 mb-6"
+          className="flex-row items-center self-start rounded-full bg-white border border-slate-200 px-4 py-2 min-h-[48px] mb-3"
         >
           <Feather name="arrow-left" size={16} color="#1E3A68" />
           <Text className="text-vistaNavy font-bold ml-2">Edit entry</Text>
@@ -73,10 +80,10 @@ export default function StaffSubmissionConfirmation({ navigation, route }) {
             <Feather name="clipboard" size={19} color="#245EA9" />
           </View>
           <View className="flex-1">
-            <Text className="text-slate-500 text-xs font-bold uppercase tracking-wider">
+            <Text className="text-slate-500 text-xs font-medium">
               Final check
             </Text>
-            <Text className="text-2xl font-extrabold text-vistaNavy">
+            <Text style={type.title} className="text-vistaNavy">
               Review submission
             </Text>
           </View>
@@ -85,43 +92,24 @@ export default function StaffSubmissionConfirmation({ navigation, route }) {
           Confirm the details below. Your submission is created only after you tap the button.
         </Text>
 
-        <View className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
-          <Text className="text-vistaNavy text-base font-extrabold mb-4">
+        <View style={panelStyles.card} className="bg-white border border-slate-200 shadow-sm">
+          <Text style={type.sectionTitle} className="text-vistaNavy mb-2">
             Submission details
           </Text>
           {rows.map(([label, value], index) => (
             <View
               key={label}
-              className={`py-3 ${index < rows.length - 1 ? "border-b border-slate-100" : ""}`}
+              className={`py-2 ${index < rows.length - 1 ? "border-b border-slate-100" : ""}`}
             >
-              <Text className="text-slate-500 text-[11px] font-extrabold uppercase tracking-wider">
+              <Text className="text-slate-500 text-xs font-medium">
                 {label}
               </Text>
-              <Text className="text-vistaNavy text-sm font-semibold mt-1">
+              <Text className="text-vistaNavy text-[13px] font-medium mt-1">
                 {value || "—"}
               </Text>
             </View>
           ))}
-          <View className="mt-4 rounded-2xl bg-slate-50 border border-slate-100 p-4 flex-row items-center">
-            <View className="w-10 h-10 rounded-xl bg-white items-center justify-center border border-slate-200">
-              <Feather
-                name={file ? (file.type?.includes("pdf") ? "file-text" : "image") : "paperclip"}
-                size={18}
-                color={file ? "#245EA9" : "#94A3B8"}
-              />
-            </View>
-            <View className="flex-1 ml-3">
-              <Text className="text-slate-500 text-[11px] font-extrabold uppercase tracking-wider">
-                Attachment
-              </Text>
-              <Text numberOfLines={2} className="text-vistaNavy text-sm font-semibold mt-1">
-                {file?.name || "No file attached"}
-              </Text>
-            </View>
-            <Text className={`text-xs font-bold ${file ? "text-green-700" : "text-slate-500"}`}>
-              {file ? "Attached" : "Optional"}
-            </Text>
-          </View>
+          <DraftAttachmentPreview file={file} onRemove={!busy && !createdSubmission ? () => setFile(null) : undefined} />
         </View>
         {error ? (
           <View className="mt-4 bg-red-50 border border-red-200 rounded-2xl p-4">
@@ -184,16 +172,16 @@ export default function StaffSubmissionConfirmation({ navigation, route }) {
           <TouchableOpacity
             onPress={confirm}
             disabled={busy}
-            className={`rounded-2xl p-4 mt-5 items-center shadow-sm ${busy ? "bg-[#D6A83B]" : "bg-[#FFC342]"}`}
+            className={`rounded-xl min-h-[48px] px-3 py-2 mt-3 items-center shadow-sm ${busy ? "bg-[#D6A83B]" : "bg-[#FFC342]"}`}
           >
             {busy ? (
               <View className="flex-row items-center">
                 <ActivityIndicator color="#142D55" />
-                <Text className="text-[#142D55] font-extrabold ml-2">Creating submission…</Text>
+                <Text className="text-[#142D55] font-medium ml-2">Creating submission…</Text>
               </View>
             ) : (
               <View className="flex-row items-center">
-                <Text className="text-[#142D55] font-extrabold text-base">Confirm and submit</Text>
+                <Text className="text-[#142D55] font-medium text-[13px]">Confirm and submit</Text>
                 <Feather name="arrow-right" size={17} color="#142D55" style={{ marginLeft: 8 }} />
               </View>
             )}
@@ -205,6 +193,7 @@ export default function StaffSubmissionConfirmation({ navigation, route }) {
           </Text>
         ) : null}
       </ScrollView>
+      <VistaProcessing visible={busy} />
     </View>
   );
 }

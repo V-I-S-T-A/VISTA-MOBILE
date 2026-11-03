@@ -6,6 +6,14 @@ const REFRESH_TOKEN_KEY = "vista.refreshToken";
 
 let accessToken = null;
 let refreshToken = null;
+const listeners = new Set();
+const notify = () => listeners.forEach(listener => { try { listener(); } catch {} });
+let writeQueue = Promise.resolve();
+const serialized = operation => {
+  const result = writeQueue.then(operation);
+  writeQueue = result.catch(() => {});
+  return result;
+};
 
 async function readToken(key) {
   if (Platform.OS === "web") {
@@ -31,6 +39,7 @@ async function writeToken(key, token) {
 }
 
 export const tokenStore = {
+  subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },
   getAccessToken: () => accessToken,
   getRefreshToken: () => refreshToken,
   getTokens: () => ({ access: accessToken, refresh: refreshToken }),
@@ -43,26 +52,33 @@ export const tokenStore = {
     refreshToken = storedRefreshToken;
     return this.getTokens();
   },
-  async setTokens(tokens) {
-    const nextAccessToken = tokens?.access ?? null;
-    const nextRefreshToken = tokens?.refresh ?? refreshToken;
+  setTokens(tokens, { expectedRefreshToken } = {}) {
+    return serialized(async () => {
+      if (expectedRefreshToken !== undefined && refreshToken !== expectedRefreshToken) throw new Error('Authentication session changed.');
+      const nextAccessToken = tokens?.access ?? null;
+      const nextRefreshToken = tokens?.refresh ?? refreshToken;
 
-    await Promise.all([
-      writeToken(ACCESS_TOKEN_KEY, nextAccessToken),
-      writeToken(REFRESH_TOKEN_KEY, nextRefreshToken),
-    ]);
-    accessToken = nextAccessToken;
-    refreshToken = nextRefreshToken;
+      await Promise.all([
+        writeToken(ACCESS_TOKEN_KEY, nextAccessToken),
+        writeToken(REFRESH_TOKEN_KEY, nextRefreshToken),
+      ]);
+      accessToken = nextAccessToken;
+      refreshToken = nextRefreshToken;
+      notify();
+    });
   },
   async setAccessToken(token) {
     await this.setTokens({ access: token });
   },
-  async clear() {
-    accessToken = null;
-    refreshToken = null;
-    await Promise.all([
-      writeToken(ACCESS_TOKEN_KEY, null),
-      writeToken(REFRESH_TOKEN_KEY, null),
-    ]);
+  clear() {
+    return serialized(async () => {
+      accessToken = null;
+      refreshToken = null;
+      await Promise.all([
+        writeToken(ACCESS_TOKEN_KEY, null),
+        writeToken(REFRESH_TOKEN_KEY, null),
+      ]);
+      notify();
+    });
   },
 };
