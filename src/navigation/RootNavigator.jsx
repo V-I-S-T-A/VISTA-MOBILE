@@ -1,3 +1,5 @@
+import { View } from "react-native";
+import * as NativeSplash from "expo-splash-screen";
 import { useAuth } from "../context/AuthContext";
 import { ROLES } from "../constants/roles";
 import SplashScreen from "../screens/SplashScreen";
@@ -8,15 +10,22 @@ import StaffNavigator from "./StaffNavigator";
 export default function RootNavigator() {
   const { user, role, isRestoring, restoreError, retryRestore } = useAuth();
 
-  if (isRestoring) return <SplashScreen />;
+  if (isRestoring) return null;
+  let screen;
   if (restoreError) {
-    return <SplashScreen error={restoreError.message} onRetry={retryRestore} />;
+    screen = <SplashScreen error={restoreError.message} onRetry={retryRestore} />;
+  } else if (!user) {
+    screen = <AuthNavigator />;
+  } else if (role === ROLES.STAFF || role === ROLES.ADMIN) {
+    screen = <StaffNavigator />;
+  } else {
+    screen = <StudentNavigator />;
   }
-  if (!user) return <AuthNavigator />;
 
-  if (role === ROLES.STAFF || role === ROLES.ADMIN) {
-    return <StaffNavigator />;
-  }
-
-  return <StudentNavigator />;
+  // Hide only once real content (including the recoverable error state) lays out.
+  return (
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF' }} onLayout={() => { NativeSplash.hideAsync().catch(() => {}); }}>
+      {screen}
+    </View>
+  );
 }

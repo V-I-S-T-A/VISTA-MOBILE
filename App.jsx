@@ -1,5 +1,7 @@
 import "./global.css";
-import { Image, Text, TextInput, View } from "react-native";
+import { useRef } from 'react';
+import NotificationRuntime from './src/components/common/NotificationRuntime';
+import { Text, TextInput } from "react-native";
 import { useFonts } from "@expo-google-fonts/dm-sans";
 import {
   DMSans_100Thin,
@@ -20,11 +22,19 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./src/lib/queryClient";
 import { ToastProvider } from "./src/components/common/Toast";
 import RootNavigator from "./src/navigation/RootNavigator";
-import SplashScreen from "./src/screens/SplashScreen";
+import { DialogProvider } from './src/components/common/AppDialog';
+import VistaLoader from './src/components/common/VistaLoader';
+import { OverlayProvider } from './src/components/common/OverlayPortal';
+import * as NativeSplash from "expo-splash-screen";
+
+// Hand off the OS splash only after the loader or routed content has laid out.
+NativeSplash.preventAutoHideAsync().catch(() => {});
+NativeSplash.setOptions({ duration: 0, fade: false });
 
 let globalFontApplied = false;
 
 export default function App() {
+  const navigationRef = useRef(null);
   const [fontsLoaded, fontError] = useFonts({
     DMSans_100Thin,
     DMSans_200ExtraLight,
@@ -38,7 +48,7 @@ export default function App() {
   });
 
    if (!fontsLoaded && !fontError) {
-     return <SplashScreen />;
+     return null;
    }
 
   if (fontsLoaded && !globalFontApplied) {
@@ -59,9 +69,10 @@ export default function App() {
       <SafeAreaProvider>
         <ToastProvider>
           <AuthProvider>
-            <NavigationContainer>
+            <NavigationContainer ref={navigationRef}>
+              <NotificationRuntime navigationRef={navigationRef} />
               <StatusBar style="dark" />
-              <RootNavigator />
+              <OverlayProvider><DialogProvider><RootNavigator /></DialogProvider></OverlayProvider>
             </NavigationContainer>
           </AuthProvider>
         </ToastProvider>
