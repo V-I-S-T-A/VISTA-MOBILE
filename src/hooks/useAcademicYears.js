@@ -8,3 +8,11 @@ export function useActiveAcademicYear() {
     staleTime: 5 * 60 * 1000,
   });
 }
+
+export function useAcademicYears() {
+  return useQuery({
+    queryKey: ["academic-years", "list"],
+    queryFn: academicYearsService.getAcademicYears,
+    staleTime: 5 * 60 * 1000,
+  });
+}
