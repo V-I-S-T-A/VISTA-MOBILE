@@ -3,15 +3,15 @@
     "name": "VISTA",
     "scheme": "vista-app",
     "slug": "vista-app",
-    "version": "1.0.0",
+    "version": "1.0.4",
     "orientation": "portrait",
-    "icon": "./src/assets/vista-logo.png",
+    "icon": "./assets/native/app-icon.png",
     "userInterfaceStyle": "light",
     "sdkVersion": "54.0.0",
     "newArchEnabled": true,
     "splash": {
-      "image": "./src/assets/vista-logo.png",
-      "resizeMode": "cover",
+      "image": "./assets/native/splash.png",
+      "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "assetBundlePatterns": [
@@ -22,19 +22,29 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./src/assets/vista-logo.png",
+        "foregroundImage": "./assets/native/app-icon.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.wayvbb.vistaapp"
     },
     "web": {
-      "favicon": "./src/assets/logo.png"
+      "favicon": "./src/assets/logo.webp"
     },
     "plugins": [
+      "expo-notifications",
       "react-native-document-scanner-plugin",
       "expo-web-browser",
       "@react-native-vector-icons/ionicons",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/native/splash.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff"
+        }
+      ]
     ],
     "extra": {
       "eas": {
