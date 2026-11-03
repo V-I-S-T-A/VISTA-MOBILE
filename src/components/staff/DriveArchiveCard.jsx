@@ -1,6 +1,8 @@
-import { Text, TextInput } from "../common/FontText";
+import TextInput from '../common/AppInput';
+import { surfaces } from "../../theme/layout";
+import { Text } from '../common/FontText';
 import { useEffect, useState } from "react";
-import { View, TouchableOpacity, ActivityIndicator } from "react-native";
+import { View, TouchableOpacity, ActivityIndicator, StyleSheet } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useQueryClient } from "@tanstack/react-query";
@@ -14,6 +16,10 @@ import {
   useDriveUploadStatus,
 } from "../../hooks/useDrive";
 import { useToast } from "../common/Toast";
+import { DriveSkeleton, Skeleton } from '../common/Skeleton';
+import AppButton from '../common/AppButton';
+import { colors, radii, reviewControls } from '../../theme/tokens';
+import VistaProcessing from '../common/VistaProcessing';
 
 export default function DriveArchiveCard({ submission }) {
   const navigation = useNavigation();
@@ -23,6 +29,7 @@ export default function DriveArchiveCard({ submission }) {
   const [useAutoFolder, setUseAutoFolder] = useState(true);
   const [manualFolder, setManualFolder] = useState(null);
   const [fileName, setFileName] = useState(submission?.title || "");
+  const [fileSelection, setFileSelection] = useState({ start: 0, end: 0 });
   const [pendingFile, setPendingFile] = useState(null);
   const [uploadKind, setUploadKind] = useState("approved");
   const [activeTaskId, setActiveTaskId] = useState(null);
@@ -77,24 +84,22 @@ export default function DriveArchiveCard({ submission }) {
 
   if (loadingConnection) {
     return (
-      <View className="bg-white rounded-3xl p-6 mb-6 shadow-sm items-center">
-        <ActivityIndicator />
-      </View>
+        <DriveSkeleton />
     );
   }
 
   if (connectionError || !isConnected || !hasFolder) {
     return (
-      <View className="bg-white rounded-3xl p-6 mb-6 shadow-sm">
+      <View className="bg-white rounded-3xl p-2 mb-2 " style={surfaces.card}>
         <View className="flex-row items-center mb-3">
-          <View className="bg-[#fff4e5] w-10 h-10 rounded-xl items-center justify-center mr-3">
+          <View className="bg-[#fff4e5] w-10 min-h-[44px] rounded-xl items-center justify-center mr-3">
             <Feather name="alert-triangle" size={18} color="#b45309" />
           </View>
-          <Text className="text-vistaNavy font-extrabold text-sm flex-1">
+          <Text className="text-vistaNavy font-medium text-sm flex-1">
             Google Drive not connected
           </Text>
         </View>
-        <Text className="text-gray-500 text-xs leading-5 mb-4">
+        <Text className="text-gray-500 text-xs leading-5 mb-2">
           {connectionError
             ? "Could not check your Google Drive connection. Please try again."
             : !isConnected
@@ -103,9 +108,9 @@ export default function DriveArchiveCard({ submission }) {
         </Text>
         <TouchableOpacity
           onPress={() => navigation.navigate("GDriveSync")}
-          className="bg-vistaNavy rounded-xl py-3 items-center justify-center"
+          className="bg-vistaNavy rounded-xl min-h-[48px] py-1 flex-row justify-center items-center gap-1 justify-center"
         >
-          <Text className="text-white font-extrabold text-sm">
+          <Text className="text-white font-medium text-[13px]">
             Go to Google Drive Sync
           </Text>
         </TouchableOpacity>
@@ -172,178 +177,63 @@ export default function DriveArchiveCard({ submission }) {
   };
 
   return (
-    <View className="bg-white rounded-3xl p-6 mb-6 shadow-sm">
-      <View className="flex-row items-center mb-4">
-        <View className="bg-[#eef2ff] w-10 h-10 rounded-xl items-center justify-center mr-3">
-          <Feather name="hard-drive" size={18} color="#1e5aa0" />
-        </View>
-        <Text className="text-vistaNavy font-extrabold text-sm">
-          Archive to Google Drive
-        </Text>
+    <View style={[surfaces.card, styles.panel]}>
+      <View style={styles.headingRow}><Feather name="hard-drive" size={reviewControls.icon} color={colors.blue} /><Text style={styles.heading}>Archive to Google Drive</Text></View>
+      <View style={styles.actions}>
+        <ArchiveAction label="Take Photo" icon="camera" onPress={handlePick("camera")} />
+        <ArchiveAction label="Upload File" icon="upload" onPress={handlePick("file")} />
       </View>
-
-      <View className="flex-row mb-4">
-        <TouchableOpacity
-          onPress={handlePick("camera")}
-          className="flex-1 border border-slate-200 rounded-xl py-3 items-center mr-2"
-        >
-          <Feather name="camera" size={20} color="#1e5aa0" />
-          <Text className="text-vistaNavy text-xs font-bold mt-1">
-            Take Photo
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={handlePick("file")}
-          className="flex-1 border border-slate-200 rounded-xl py-3 items-center ml-2"
-        >
-          <Feather name="upload" size={20} color="#1e5aa0" />
-          <Text className="text-vistaNavy text-xs font-bold mt-1">
-            Upload File
-          </Text>
-        </TouchableOpacity>
+      {isAccomplishmentReport ? <View style={styles.group}>
+        <Text style={styles.label}>File destination</Text>
+        <View style={styles.actions}>
+          <ArchiveAction segment label="Approved copy" selected={uploadKind === 'approved'} disabled={!!activeTaskId || uploadMutation.isPending} onPress={() => setUploadKind('approved')} />
+          <ArchiveAction segment label="Accomplishment Report" selected={uploadKind === 'report'} disabled={!!activeTaskId || uploadMutation.isPending} onPress={() => setUploadKind('report')} />
+        </View>
+        <Text style={styles.support}>{uploadKind === 'approved' ? 'Uploads into the Approved subfolder.' : 'Uploads into the Accomplishment Report folder.'}</Text>
+      </View> : null}
+      {pendingFile ? <View style={styles.fileRow}>
+        <Text style={[styles.support, { flex: 1 }]} numberOfLines={1}>{pendingFile.name}</Text>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Remove selected file" style={styles.remove} onPress={() => setPendingFile(null)}><Feather name="x" size={reviewControls.icon} color={colors.muted} /></TouchableOpacity>
+      </View> : null}
+      {activeTaskId ? <View style={styles.fileRow}><ActivityIndicator size="small" /><Text style={[styles.support, { flex: 1 }]}>{uploadKind === 'report' ? 'Archiving the Accomplishment Report in the background.' : 'Archiving the approved copy in the background — feel free to keep working.'}</Text></View> : null}
+      <View style={styles.group}>
+        <Text style={styles.label}>File name</Text>
+        <TextInput size="compact" accessibilityLabel="File name" value={fileName} onChangeText={setFileName}
+          selection={fileSelection} onFocus={() => setFileSelection(undefined)} onBlur={() => setFileSelection({ start: 0, end: 0 })}
+          placeholder="Document name" />
       </View>
-
-      {isAccomplishmentReport ? (
-        <View className="mb-4">
-          <Text className="text-vistaNavy text-xs font-extrabold mb-2">
-            FILE DESTINATION
-          </Text>
-          <View className="flex-row mb-2">
-            <TouchableOpacity
-              onPress={() => setUploadKind("approved")}
-              disabled={!!activeTaskId || uploadMutation.isPending}
-              className={`flex-1 rounded-lg py-2 justify-center items-center mr-2 ${uploadKind === "approved" ? "bg-vistaNavy" : "bg-slate-100"}`}
-            >
-              <Text
-                className={`text-xs text-center font-bold ${uploadKind === "approved" ? "text-white" : "text-slate-500"}`}
-              >
-                Approved copy
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => setUploadKind("report")}
-              disabled={!!activeTaskId || uploadMutation.isPending}
-              className={`flex-1 rounded-lg py-2 justify-center items-center ml-2 ${uploadKind === "report" ? "bg-vistaNavy" : "bg-slate-100"}`}
-            >
-              <Text
-                className={`text-xs text-center font-bold ${uploadKind === "report" ? "text-white" : "text-slate-500"}`}
-              >
-                Accomplishment Report
-              </Text>
-            </TouchableOpacity>
-          </View>
-          <Text className="text-slate-500 text-xs">
-            {uploadKind === "approved"
-              ? "Uploads into the Approved subfolder."
-              : "Uploads into the Accomplishment Report folder."}
-          </Text>
-        </View>
-      ) : null}
-
-      {pendingFile ? (
-        <View className="bg-slate-50 rounded-lg px-3 py-2 mb-4 flex-row items-center justify-between">
-          <Text
-            className="text-vistaNavy text-xs font-semibold flex-1"
-            numberOfLines={1}
-          >
-            {pendingFile.name}
-          </Text>
-          <TouchableOpacity onPress={() => setPendingFile(null)}>
-            <Feather name="x" size={16} color="#94A3B8" />
-          </TouchableOpacity>
-        </View>
-      ) : null}
-
-      {activeTaskId ? (
-        <View className="bg-blue-50 rounded-lg px-3 py-2 mb-4 flex-row items-center">
-          <ActivityIndicator size="small" />
-          <Text className="text-[#1e5aa0] text-xs font-semibold ml-2">
-            {uploadKind === "report"
-              ? "Archiving the Accomplishment Report in the background."
-              : "Archiving the approved copy in the background — feel free to keep working."}
-          </Text>
-        </View>
-      ) : null}
-
-      <Text className="text-vistaNavy text-xs font-extrabold mb-2">
-        FILE NAME
-      </Text>
-      <TextInput
-        value={fileName}
-        onChangeText={setFileName}
-        placeholder="Document name"
-        placeholderTextColor="#94A3B8"
-        className="h-10 border border-slate-200 rounded-lg px-3 mb-4 text-xs font-semibold text-vistaNavy"
-      />
-
-      <View className="flex-row mb-3">
-        <TouchableOpacity
-          onPress={() => setUseAutoFolder(true)}
-          className={`flex-1 rounded-lg py-2 items-center mr-2 ${
-            useAutoFolder ? "bg-vistaNavy" : "bg-slate-100"
-          }`}
-        >
-          <Text
-            className={`text-xs font-bold ${useAutoFolder ? "text-white" : "text-slate-500"}`}
-          >
-            Automated Folder
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => setUseAutoFolder(false)}
-          className={`flex-1 rounded-lg py-2 items-center ml-2 ${
-            !useAutoFolder ? "bg-vistaNavy" : "bg-slate-100"
-          }`}
-        >
-          <Text
-            className={`text-xs font-bold ${!useAutoFolder ? "text-white" : "text-slate-500"}`}
-          >
-            Choose Folder
-          </Text>
-        </TouchableOpacity>
+      <View style={styles.actions}>
+        <ArchiveAction segment label="Automated Folder" selected={useAutoFolder} onPress={() => setUseAutoFolder(true)} />
+        <ArchiveAction segment label="Choose Folder" selected={!useAutoFolder} onPress={() => setUseAutoFolder(false)} />
       </View>
-
-      {useAutoFolder ? (
-        <View className="bg-slate-50 rounded-lg p-3 mb-4">
-          {loadingPreview ? (
-            <ActivityIndicator size="small" />
-          ) : (
-            <Text className="text-slate-500 text-xs font-semibold">
-              {destinationPathSegments.join(" › ") ||
-                "Academic Year › Organization › Title"}
-            </Text>
-          )}
-        </View>
-      ) : (
-        <View className="mb-4">
-          <SelectField
-            label="DRIVE FOLDER"
-            placeholder="Select a folder..."
-            value={manualFolder}
-            options={folderOptions}
-            isLoading={loadingFolders}
-            onChange={setManualFolder}
-          />
-        </View>
-      )}
-
-      <TouchableOpacity
-        onPress={handleUpload}
-        disabled={uploadMutation.isPending}
-        className={`bg-[#FFC342] rounded-xl py-3.5 items-center justify-center ${
-          uploadMutation.isPending ? "opacity-70" : ""
-        }`}
-      >
-        {uploadMutation.isPending ? (
-          <ActivityIndicator color="white" />
-        ) : (
-          <Text className="text-white font-extrabold text-sm">
-            {uploadKind === "report"
-              ? "Archive Accomplishment Report"
-              : "Archive Approved Copy"}
-          </Text>
-        )}
-      </TouchableOpacity>
+      {useAutoFolder ? <View style={styles.preview}>{loadingPreview ? <Skeleton height={14} /> : <Text style={styles.support}>{destinationPathSegments.join(' › ') || 'Academic Year › Organization › Title'}</Text>}</View> :
+        <SelectField size="compact" style={{ marginBottom: 0 }} label="Drive folder" placeholder="Select a folder..." value={manualFolder} options={folderOptions} isLoading={loadingFolders} onChange={setManualFolder} />}
+      <AppButton size="compact" variant="accent" label={uploadKind === 'report' ? 'Archive Accomplishment Report' : 'Archive Approved Copy'} onPress={handleUpload} busy={uploadMutation.isPending} />
+      <VistaProcessing visible={uploadMutation.isPending} message="Preparing your Drive upload…" />
     </View>
   );
 }
+
+function ArchiveAction({ label, icon, segment = false, selected, disabled, onPress }) {
+  return <AppButton size="compact" label={label} variant="secondary" onPress={onPress} disabled={disabled}
+    accessibilityRole={segment ? 'radio' : 'button'} accessibilityState={{ disabled: !!disabled, ...(segment ? { checked: !!selected } : {}) }}
+    style={{ flex: 1 }} surfaceStyle={[styles.actionSurface, segment && styles.segment, selected && styles.selected]}>
+    <View style={styles.actionContent}>{icon ? <Feather name={icon} size={reviewControls.icon} color={colors.blue} /> : null}<Text style={[styles.actionLabel, selected && { color: colors.blue }]}>{label}</Text></View>
+  </AppButton>;
+}
+const styles = StyleSheet.create({
+  panel: { padding: reviewControls.padding, gap: 0, marginBottom: reviewControls.gap },
+  headingRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  heading: { ...reviewControls.heading, color: colors.text, flexShrink: 1 },
+  actions: { flexDirection: 'row', gap: 8 }, group: { gap: 0 },
+  label: { ...reviewControls.label, color: colors.text, marginTop: 4 },
+  support: { ...reviewControls.label, fontFamily: 'DMSans_400Regular', lineHeight: 14, color: colors.muted },
+  actionSurface: { minHeight: reviewControls.attachmentHeight, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.field },
+  actionContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4 },
+  actionLabel: { ...reviewControls.action, color: colors.text, textAlign: 'center', flexShrink: 1 },
+  segment: { minHeight: reviewControls.segmentHeight, borderRadius: radii.chip },
+  selected: { backgroundColor: colors.selectedSurface, borderColor: colors.blue },
+  preview: { marginBottom: 4, padding: 8, borderRadius: radii.chip, backgroundColor: colors.field },
+  fileRow: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.field, borderRadius: radii.chip, paddingHorizontal: 8 },
+  remove: { minWidth: reviewControls.touch, minHeight: reviewControls.touch, alignItems: 'center', justifyContent: 'center' },
+});

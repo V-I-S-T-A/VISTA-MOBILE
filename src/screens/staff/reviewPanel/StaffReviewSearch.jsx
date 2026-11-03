@@ -1,78 +1,135 @@
-import { Text, TextInput } from "../../../components/common/FontText";
-import { useState } from "react";
-import { View, TouchableOpacity, Modal, TouchableWithoutFeedback } from "react-native";
-import { Feather, Ionicons } from "@expo/vector-icons";
-
-const STATUS_OPTIONS = [
-  "All Status",
-  "Pending",
-  "Under Review",
-  "Approved",
-  "Rejected",
-  "Resubmission Required",
-];
+import { TextInput, Text } from '../../../components/common/FontText';
+import { View, Pressable, TouchableOpacity } from 'react-native';
+import { useRef } from 'react';
+import { Feather } from '@expo/vector-icons';
+import { colors, compact, radii, type } from '../../../theme/tokens';
 
 export default function StaffReviewSearch({
   searchQuery,
   setSearchQuery,
-  statusFilter,
-  setStatusFilter,
+  onFilterPress,
+  isFilterActive = false,
+  activeFilterLabel = null,
+  filterButtonRef = null,
+  filterButtonVariant = 'yellow',
+  filterButtonColor = null,
 }) {
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const input = useRef(null);
+  const isBlue = filterButtonVariant === 'blue' || filterButtonColor === 'blue';
+  const buttonBg = isBlue ? colors.blue : colors.yellow;
+  const buttonFg = isBlue ? '#FFFFFF' : colors.navy;
 
   return (
-    <View className="mb-6 z-50">
-      <View className="flex-row items-center justify-between z-50 relative">
-        <View className="flex-row items-center bg-[#eef0f3] border border-gray-200 rounded-lg px-3 py-2.5 flex-1 mr-3 h-[42px]">
-          <Feather name="search" size={16} color="#9ca3af" className="mr-2" />
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginBottom: compact.gutter,
+        minHeight: compact.touch,
+      }}
+    >
+      <Pressable
+        accessible={false}
+        onPress={() => input.current?.focus()}
+        style={{
+          flex: 1,
+          minWidth: 0,
+          minHeight: compact.touch,
+          justifyContent: 'center',
+        }}
+      >
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: colors.field,
+            borderWidth: 1,
+            borderColor: colors.border,
+            borderRadius: radii.field,
+            paddingHorizontal: compact.leadingInset,
+            minHeight: compact.inputHeight,
+          }}
+        >
+          <Feather name="search" size={14} color={colors.muted} />
           <TextInput
+            ref={input}
+            accessibilityLabel="Search submissions"
+            accessibilityHint="Filters the submission list by search text"
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholder="Search submissions..."
-            placeholderTextColor="#9ca3af"
-            className="flex-1 text-[13px] text-gray-700 ml-1 h-full p-0"
+            placeholderTextColor={colors.muted}
+            style={{
+              ...type.listMeta,
+              flex: 1,
+              minWidth: 0,
+              minHeight: compact.inputHeight,
+              color: colors.text,
+              marginLeft: compact.inset,
+              paddingVertical: compact.inset,
+              includeFontPadding: false,
+            }}
           />
         </View>
-        <TouchableOpacity
-          onPress={() => setIsFilterOpen(true)}
-          className="bg-[#FFC342] flex-row items-center justify-center rounded-lg px-4 h-[42px] shadow-sm relative z-50 ml-3"
-        >
-          <Ionicons name="filter" size={16} color="white" className="mr-2 mt-0.5" />
-          <Text className="text-white font-bold text-sm ml-0.5">Filter</Text>
-        </TouchableOpacity>
-      </View>
+      </Pressable>
 
-      <Modal
-        visible={isFilterOpen}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setIsFilterOpen(false)}
-      >
+      {onFilterPress ? (
         <TouchableOpacity
-          style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.1)" }}
-          activeOpacity={1}
-          onPressOut={() => setIsFilterOpen(false)}
+          ref={filterButtonRef}
+          accessibilityRole="button"
+          accessibilityLabel={
+            activeFilterLabel
+              ? `Filter submissions, active: ${activeFilterLabel}`
+              : 'Filter submissions'
+          }
+          accessibilityState={{ selected: isFilterActive }}
+          onPress={onFilterPress}
+          style={{
+            minHeight: compact.touch,
+            minWidth: compact.touch,
+            flexShrink: 0,
+            justifyContent: 'center',
+          }}
         >
-          <TouchableWithoutFeedback>
-            <View className="absolute top-[230px] right-[20px] bg-white rounded-xl shadow-md border border-gray-100 p-2 w-[180px]">
-              {STATUS_OPTIONS.map((option) => (
-                <TouchableOpacity
-                  key={option}
-                  onPress={() => {
-                    setStatusFilter(option);
-                    setIsFilterOpen(false);
-                  }}
-                  className={`py-2.5 px-3 rounded-lg ${statusFilter === option ? "bg-[#f8f9fa]" : ""}`}
-                >
-                  <Text className={`text-[13px] ${statusFilter === option ? "text-vistaNavy font-bold" : "text-gray-700 font-medium"}`}>
-                    {option}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </TouchableWithoutFeedback>
+          <View
+            style={{
+              minHeight: compact.inputHeight,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 4,
+              paddingHorizontal: 12,
+              borderRadius: radii.field,
+              backgroundColor: buttonBg,
+              borderWidth: isFilterActive ? 1.5 : 0,
+              borderColor: colors.navy,
+            }}
+          >
+            <Feather name="filter" size={13} color={buttonFg} />
+            <Text
+              style={{
+                ...type.compactLabel,
+                fontFamily: 'DMSans_700Bold',
+                color: buttonFg,
+              }}
+            >
+              Filter
+            </Text>
+            {isFilterActive ? (
+              <View
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: 3,
+                  backgroundColor: buttonFg,
+                  marginLeft: 1,
+                }}
+              />
+            ) : null}
+          </View>
         </TouchableOpacity>
-      </Modal>
+      ) : null}
     </View>
   );
 }

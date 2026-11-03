@@ -1,21 +1,17 @@
 import { View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useStaffLayout } from "../../theme/layout";
 import StaffBottomNav from "../../components/staff/StaffBottomNav";
 import StaffDocumentEntryContent from "./docEntry/StaffDocumentEntryContent";
-import {PADDING_HORIZONTAL} from "../../constants/spacing";
 import { openDocumentEntryWithAttachment } from "../../utils/openDocumentEntryWithAttachment";
 
 export default function StaffDocumentEntry({ navigation, route }) {
-  const insets = useSafeAreaInsets();
+  const screenLayout = useStaffLayout();
 
   return (
     <View className="flex-1 bg-[#F3F3F3]">
       <View
         className="flex-1 bg-[#F3F3F3]"
-        style={{
-          paddingTop: insets.top,
-          paddingHorizontal: PADDING_HORIZONTAL,
-        }}
+        style={screenLayout.body}
       >
         <StaffDocumentEntryContent
           navigation={navigation}

@@ -1,10 +1,12 @@
+import { sizes, nav } from '../../theme/tokens';
+import BottomNavFrame from '../common/BottomNavFrame';
 import { View, TouchableOpacity } from "react-native";
-import { Ionicons, Feather } from "@expo/vector-icons";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import {MAIN_BLUE, MAIN_YELLOW} from "../../constants/colors";
+import VistaIcon from '../common/VistaIcon';
+import { navigationStyles } from '../../theme/layout';
 
-const ACTIVE_COLOR = "#F5A623";
-const INACTIVE_COLOR = "white";
+const ACTIVE_COLOR = nav.selected;
+const INACTIVE_COLOR = nav.inactive;
+const tabStyle = navigationStyles.item;
 
 export default function StaffBottomNav({
   activeTab = "home",
@@ -13,52 +15,52 @@ export default function StaffBottomNav({
   onScanPress,
   onReportsPress,
   onCloudPress,
+  docked = false,
 }) {
-  const insets = useSafeAreaInsets();
-
   return (
-    <View
-      className="flex-row justify-between items-center px-8 py-4 rounded-t-2xl"
-      style={{ paddingBottom: insets.bottom + 20, backgroundColor: MAIN_BLUE }}
-    >
-      <TouchableOpacity onPress={onHomePress}>
-        <Ionicons
-          name="home-outline"
-          size={28}
+    <BottomNavFrame docked={docked}>
+    <View style={navigationStyles.shell}>
+      <TouchableOpacity accessibilityLabel="Home" accessibilityRole="button" accessibilityState={{ selected: activeTab === "home" }} style={[tabStyle, activeTab === "home" && navigationStyles.selected]} onPress={onHomePress}>
+        <VistaIcon
+          name="home"
+          size={sizes.navIcon}
           color={activeTab === "home" ? ACTIVE_COLOR : INACTIVE_COLOR}
         />
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={onProfilePress}>
-        <Feather
+      <TouchableOpacity accessibilityLabel="Document entry" accessibilityRole="button" accessibilityState={{ selected: activeTab === "profile" }} style={[tabStyle, activeTab === "profile" && navigationStyles.selected]} onPress={onProfilePress}>
+        <VistaIcon
           name="edit"
-          size={28}
+          size={sizes.navIcon}
           color={activeTab === "profile" ? ACTIVE_COLOR : INACTIVE_COLOR}
         />
       </TouchableOpacity>
 
       <TouchableOpacity
         onPress={onScanPress}
-        className="bg-vistaNavy border-2 border-white rounded-full p-3 -mt-6"
+        accessibilityLabel="Scan document"
+        accessibilityRole="button"
+        style={tabStyle}
       >
-        <Feather name="maximize" size={35} color="white" />
+        <VistaIcon name="maximize" size={sizes.navIcon} color="white" />
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={onReportsPress}>
-        <Ionicons
-          name="document-text-outline"
-          size={28}
+      <TouchableOpacity accessibilityLabel="Submissions" accessibilityRole="button" accessibilityState={{ selected: activeTab === "reports" }} style={[tabStyle, activeTab === "reports" && navigationStyles.selected]} onPress={onReportsPress}>
+        <VistaIcon
+          name="file-text"
+          size={sizes.navIcon}
           color={activeTab === "reports" ? ACTIVE_COLOR : INACTIVE_COLOR}
         />
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={onCloudPress}>
-        <Feather
+      <TouchableOpacity accessibilityLabel="Google Drive" accessibilityRole="button" accessibilityState={{ selected: activeTab === "cloud" }} style={[tabStyle, activeTab === "cloud" && navigationStyles.selected]} onPress={onCloudPress}>
+        <VistaIcon
           name="cloud"
-          size={28}
+          size={sizes.navIcon}
           color={activeTab === "cloud" ? ACTIVE_COLOR : INACTIVE_COLOR}
         />
       </TouchableOpacity>
     </View>
+    </BottomNavFrame>
   );
 }

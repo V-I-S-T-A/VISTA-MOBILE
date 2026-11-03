@@ -1,31 +1,29 @@
+import { useBottomNavClearance } from '../../theme/layout';
 import { View, ScrollView, RefreshControl } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useStaffLayout } from "../../theme/layout";
 import StaffBottomNav from "../../components/staff/StaffBottomNav";
 import StaffReviewHeader from "./reviewPanel/StaffReviewHeader";
 import GDriveSyncTop from "./gdriveSync/GDriveSyncTop";
 import GDriveSyncFeatures from "./gdriveSync/GDriveSyncFeatures";
 import GDriveSyncLoginCard from "./gdriveSync/GDriveSyncLoginCard";
-import { PADDING_HORIZONTAL } from "../../constants/spacing";
 import { openDocumentEntryWithAttachment } from "../../utils/openDocumentEntryWithAttachment";
 import { useScreenRefresh } from "../../hooks/useScreenRefresh";
 
 export default function GDriveSync({ navigation }) {
-  const insets = useSafeAreaInsets();
+  const footerClearance = useBottomNavClearance();
+  const screenLayout = useStaffLayout();
   const { refreshing, onRefresh } = useScreenRefresh([["drive"]]);
 
   return (
     <View className="flex-1 bg-[#F3F3F3]">
       <View
         className="flex-1 bg-[#F3F3F3]"
-        style={{
-          paddingTop: insets.top,
-          paddingHorizontal: PADDING_HORIZONTAL,
-        }}
+        style={screenLayout.body}
       >
         <ScrollView
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-          className="flex-1 pt-4"
-          contentContainerStyle={{ paddingBottom: 20 }}
+          className="flex-1 pt-2"
+          contentContainerStyle={{ paddingBottom: footerClearance }}
           showsVerticalScrollIndicator={false}
         >
           <StaffReviewHeader />

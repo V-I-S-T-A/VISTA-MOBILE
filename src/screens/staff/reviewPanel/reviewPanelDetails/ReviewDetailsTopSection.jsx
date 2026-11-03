@@ -1,3 +1,4 @@
+import PageHeading from "../../../../components/common/PageHeading";
 import { Text } from "../../../../components/common/FontText";
 import { View, TouchableOpacity } from "react-native";
 import { Feather } from "@expo/vector-icons";
@@ -7,9 +8,8 @@ export default function ReviewDetailsTopSection() {
   const navigation = useNavigation();
 
   return (
-    <View className="mb-6">
-      <Text className="text-2xl font-extrabold text-vistaNavy">Track Details</Text>
-      <Text className="text-vistaNavy text-sm mt-1 mb-5">Reviewing processing status.</Text>
+    <View className="mb-4">
+      <PageHeading title="Track Details" subtitle="Reviewing processing status." />
       
       <View className="flex-row items-center">
         <TouchableOpacity 

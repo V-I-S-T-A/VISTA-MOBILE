@@ -1,3 +1,5 @@
+import { type } from '../../../theme/tokens';
+import UserAvatar from '../../../components/common/UserAvatar';
 import { Text } from "../../../components/common/FontText";
 import { View, Image, TouchableOpacity } from "react-native";
 import { Feather } from "@expo/vector-icons";
@@ -8,41 +10,36 @@ export default function AnalysisResultsHeader({ onBackPress }) {
   const navigation = useNavigation();
   const { user } = useAuth();
   
-  const avatarUrl = user?.image_url 
-    ? { uri: user.image_url }
-    : require("../../../assets/default_user.jpg");
+
 
   return (
     <>
       <View className="flex-row items-center justify-between mb-4">
-        <TouchableOpacity onPress={() => navigation.navigate("StaffProfile")}>
-          <Image
-            source={avatarUrl}
-            className="w-10 h-10 rounded-full bg-gray-200"
-          />
+        <TouchableOpacity style={{ minWidth: 48, minHeight: 48, justifyContent: 'center' }} onPress={() => navigation.navigate("StaffProfile")}>
+          <UserAvatar uri={user?.image_url} size={34} />
         </TouchableOpacity>
         <Image
-          source={require("../../../assets/logo.png")}
+          source={require("../../../assets/logo.webp")}
           className="w-14 h-14"
           resizeMode="contain"
         />
         <TouchableOpacity>
-          <Feather name="sliders" size={23} color="#111827" />
+          <Feather name="sliders" size={18} color="#111827" />
         </TouchableOpacity>
       </View>
 
-      <Text className="text-2xl font-extrabold text-vistaNavy">
+      <Text style={type.title} className="text-vistaNavy">
         Analysis Results
       </Text>
-      <Text className="text-vistaNavy text-sm font-semibold leading-4 mb-4">
+      <Text className="text-vistaNavy text-[13px] leading-5 mb-4">
         Reviewing extracted entities and document classification metrics.
       </Text>
 
       <TouchableOpacity
         onPress={onBackPress}
-        className="self-start bg-[#FFE45C] rounded-full px-3 py-1 mb-4 flex-row items-center"
+        className="self-start bg-[#FFE45C] rounded-full min-h-[48px] px-3 py-1 mb-3 flex-row items-center"
       >
-        <Feather name="chevron-left" size={13} color="#8A7A1C" />
+        <Feather name="chevron-left" size={18} color="#8A7A1C" />
         <Text className="text-[#8A7A1C] text-xs font-bold">Back</Text>
       </TouchableOpacity>
     </>

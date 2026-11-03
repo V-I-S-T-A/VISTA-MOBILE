@@ -1,5 +1,11 @@
+import { useBottomNavClearance } from '../../../theme/layout';
+import RecentSubmissionsHeading from '../../../components/submissions/RecentSubmissionsHeading';
+import UserAvatar from '../../../components/common/UserAvatar';
+import { typography, panelStyles } from "../../../theme/layout";
+import PageHeading from "../../../components/common/PageHeading";
 import { Text } from "../../../components/common/FontText";
 import { View, Image, TouchableOpacity, ScrollView, ActivityIndicator, RefreshControl } from "react-native";
+import { SubmissionListSkeleton } from '../../../components/common/Skeleton';
 import { Feather, FontAwesome6, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useQueries } from "@tanstack/react-query";
@@ -11,25 +17,19 @@ import SubmissionListCard from "../../../components/submissions/SubmissionListCa
 import SubmissionDashboardCards from "../../../components/submissions/SubmissionDashboardCards";
 import { MAIN_BLACK } from "../../../constants/colors";
 import { useScreenRefresh } from "../../../hooks/useScreenRefresh";
+import StaleWarningBanner from '../../../components/common/StaleWarningBanner';
 
 function StaffHomeHeader() {
   const navigation = useNavigation();
   const { user } = useAuth();
 
-  const avatarUrl = user?.image_url
-    ? { uri: user.image_url }
-    : require("../../../assets/default_user.jpg");
-
   return (
     <View className="flex-row items-center justify-between mb-4">
       <TouchableOpacity onPress={() => navigation.navigate("StaffProfile")}>
-        <Image
-          source={avatarUrl}
-          className="w-10 h-10 rounded-full bg-gray-200"
-        />
+        <UserAvatar uri={user?.image_url} size={34} />
       </TouchableOpacity>
       <Image
-        source={require("../../../assets/logo.png")}
+        source={require("../../../assets/logo.webp")}
         className="w-14 h-14"
         resizeMode="contain"
       />
@@ -41,33 +41,38 @@ function StaffHomeHeader() {
 }
 
 function useSubmissionCounts() {
+  const { user } = useAuth();
+  const userId = user?.user_id || 'guest';
   const results = useQueries({
     queries: [
       {
-        queryKey: ["submissions", "count", "all"],
+        queryKey: ["submissions", "count", userId, "all"],
         queryFn: () => submissionsService.listSubmissions({ page_size: 1 }),
+        enabled: !!user,
       },
       {
-        queryKey: ["submissions", "count", "pending"],
+        queryKey: ["submissions", "count", userId, "pending"],
         queryFn: () =>
           submissionsService.listSubmissions({
             page_size: 1,
             status: "pending",
           }),
+        enabled: !!user,
       },
       {
-        queryKey: ["submissions", "count", "approved"],
+        queryKey: ["submissions", "count", userId, "approved"],
         queryFn: () =>
           submissionsService.listSubmissions({
             page_size: 1,
             status: "approved",
           }),
+        enabled: !!user,
       },
     ],
   });
 
   const [all, pending, approved] = results;
-  const isLoading = results.some((r) => r.isLoading);
+  const isLoading = results.some((r) => r.isLoading && !r.data);
 
   return {
     isLoading,
@@ -82,7 +87,7 @@ function SubmissionSummary() {
   const { isLoading, total, pending, approved } = useSubmissionCounts();
 
   const openReviews = (statusFilter) =>
-    navigation.navigate("StaffReviewPanel", { statusFilter });
+    navigation.navigate("StaffSubmissionHistory", { statusFilter });
 
   return (
     <SubmissionDashboardCards
@@ -100,60 +105,58 @@ function SubmissionSummary() {
 
 function RecentSubmissions() {
   const navigation = useNavigation();
-  const { data, isLoading, isError } = useSubmissions({ page_size: 3 });
+  const { data, isLoading, isError, error } = useSubmissions({ page_size: 5 });
   const submissions = data?.results ?? [];
+  const hasData = submissions.length > 0;
+  const isAuthError = [401, 403].includes(error?.status || error?.response?.status);
 
   return (
     <>
-      <View className="flex-row justify-between items-center mb-3">
-        <Text className="font-bold text-base" style={{ color: MAIN_BLACK }}>
-          Recent Submissions
-        </Text>
-        <TouchableOpacity
-          onPress={() => navigation.navigate("StaffReviewPanel")}
-        >
-          <Text className="text-vistaNavy text-sm">View All</Text>
-        </TouchableOpacity>
-      </View>
+      <RecentSubmissionsHeading onViewAll={() => navigation.navigate("StaffReviewPanel")} />
 
-      {isLoading ? (
-        <ActivityIndicator />
-      ) : isError ? (
-        <Text className="text-gray-500 text-sm">
+      {isLoading && !hasData ? (
+        <SubmissionListSkeleton compact />
+      ) : isError && (!hasData || isAuthError) ? (
+        <Text style={[typography.body, panelStyles.inlineState]}>
           Could not load recent submissions.
         </Text>
       ) : submissions.length === 0 ? (
-        <Text className="text-gray-500 text-sm">No submissions yet.</Text>
+        <Text style={[typography.body, panelStyles.inlineState]}>No submissions yet.</Text>
       ) : (
-        submissions.map((submission) => (
-          <SubmissionListCard
-            key={submission.submission_id}
-            submission={submission}
-            compact
-            showSubmitterEmail
-            onPress={() =>
-              navigation.navigate("ReviewPanelDetails", { submission })
-            }
-          />
-        ))
+        <>
+          {isError && hasData && !isAuthError ? <StaleWarningBanner /> : null}
+          {submissions.slice(0, 5).map((submission) => (
+            <SubmissionListCard
+              key={submission.submission_id}
+              submission={submission}
+              compact
+              showSubmitterEmail
+              onPress={() =>
+                navigation.navigate("ReviewPanelDetails", { submission })
+              }
+            />
+          ))}
+        </>
       )}
     </>
   );
 }
 
 export default function StaffHomeContent() {
+  const footerClearance = useBottomNavClearance();
+  const { user } = useAuth();
+  const firstName = user?.first_name?.trim();
   const { refreshing, onRefresh } = useScreenRefresh([["submissions"]]);
   return (
     <ScrollView
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      className="flex-1 pt-4"
-      contentContainerStyle={{ paddingBottom: 18 }}
+      className="flex-1 pt-2"
+      contentContainerStyle={{ paddingBottom: footerClearance }}
       showsVerticalScrollIndicator={false}
     >
       <AccountHeader profileRoute="StaffProfile" />
 
-      <Text className="text-2xl font-bold" style={{ color: MAIN_BLACK }}>Staff Dashboard</Text>
-      <Text className="mb-6" style={{ color: MAIN_BLACK }}>Welcome back!</Text>
+      <PageHeading title="Staff Dashboard" subtitle={firstName ? `Welcome back, ${firstName}` : 'Welcome back!'} />
 
       <SubmissionSummary />
       <RecentSubmissions />
