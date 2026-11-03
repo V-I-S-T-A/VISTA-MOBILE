@@ -1,20 +1,14 @@
 import { Text } from "../common/FontText";
-import { View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import { type, radii, statusTones } from "../../theme/tokens";
+import { Feather } from '@expo/vector-icons';
 
 export const SUBMISSION_STATUS = {
-  pending: { label: "Pending", background: "#FFF0C2", foreground: "#A66500" },
-  under_review: {
-    label: "Under Review",
-    background: "#DBEAFE",
-    foreground: "#1D4ED8",
-  },
-  approved: { label: "Approved", background: "#DCFCE7", foreground: "#15803D" },
-  rejected: { label: "Rejected", background: "#FEE2E2", foreground: "#B91C1C" },
-  resubmission_required: {
-    label: "Resubmission Required",
-    background: "#FFEDD5",
-    foreground: "#C2410C",
-  },
+  pending: { label: "Pending", ...statusTones.pending },
+  under_review: { label: "Under Review", ...statusTones.under_review },
+  approved: { label: "Approved", ...statusTones.approved },
+  rejected: { label: "Rejected", ...statusTones.rejected },
+  resubmission_required: { label: "Resubmission Required", ...statusTones.resubmission_required },
 };
 
 export function getSubmissionStatus(status) {
@@ -22,28 +16,53 @@ export function getSubmissionStatus(status) {
   return (
     SUBMISSION_STATUS[key] || {
       label: status ? "Unknown status" : "Status unavailable",
-      background: "#F3F4F6",
-      foreground: "#4B5563",
+      ...statusTones.default,
     }
   );
 }
 
-export default function SubmissionStatusBadge({ status, size = "regular" }) {
-  const style = getSubmissionStatus(status);
-  const compact = size === "small";
-  const isResubmission = status?.toLowerCase() === "resubmission_required";
-
+export default function SubmissionStatusBadge({ status, size = "regular", showIcon = false }) {
+  const statusStyle = getSubmissionStatus(status);
+  const mini = size === 'mini';
+  const compact = size === "small" || mini;
   return (
     <View
-      className={`self-start shrink rounded-full ${compact ? "px-2.5 py-1" : "px-3.5 py-2"}`}
-      style={{ backgroundColor: style.background }}
+      accessible
+      accessibilityLabel={statusStyle.label}
+      style={[
+        styles.badge,
+        {
+          backgroundColor: statusStyle.background,
+          paddingHorizontal: mini ? 6 : compact ? 6 : 12,
+          paddingVertical: mini ? 2 : compact ? 2 : 6,
+          borderRadius: mini ? 8 : radii.pill,
+        },
+        showIcon && { flexDirection: 'row', alignItems: 'center', gap: 3 },
+      ]}
     >
+      {showIcon ? (
+        <Feather
+          name={{ approved: 'check', rejected: 'x', under_review: 'clock', pending: 'clock', resubmission_required: 'rotate-ccw' }[status] || 'info'}
+          size={mini ? 9 : 11}
+          color={statusStyle.foreground}
+        />
+      ) : null}
       <Text
-        className={`font-bold ${isResubmission ? "text-xs text-center" : compact ? "text-xs" : "text-sm"}`}
-        style={{ color: style.foreground }}
+        style={[
+          styles.label,
+          { color: statusStyle.foreground },
+          mini
+            ? { fontFamily: type.medium, fontSize: 9.5, lineHeight: 13, includeFontPadding: false }
+            : compact && { ...type.badge },
+        ]}
       >
-        {style.label}
+        {statusStyle.label}
       </Text>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  badge: { alignSelf: 'flex-start', flexShrink: 1, maxWidth: '100%', minWidth: 0, borderRadius: radii.pill },
+  label: { ...type.label, textAlign: 'center', flexShrink: 1 },
+});
