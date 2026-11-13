@@ -3,7 +3,7 @@
     "name": "VISTA",
     "scheme": "vista-app",
     "slug": "vista-app",
-    "version": "1.0.4",
+    "version": "1.0.8",
     "orientation": "portrait",
     "icon": "./assets/native/app-icon.png",
     "userInterfaceStyle": "light",
@@ -14,13 +14,12 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true
     },
     "android": {
+      "permissions": ["android.permission.REQUEST_INSTALL_PACKAGES"],
       "adaptiveIcon": {
         "foregroundImage": "./assets/native/app-icon.png",
         "backgroundColor": "#ffffff"

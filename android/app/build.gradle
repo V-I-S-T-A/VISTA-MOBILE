@@ -26,6 +26,7 @@ gradle.taskGraph.whenReady { graph ->
 }
 
 def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
+def vistaAppConfig = new groovy.json.JsonSlurper().parse(new File(projectRoot, 'app.json'))
 
 /**
  * This is the configuration block to customize your React Native Android app.
@@ -116,7 +117,7 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "1.0.4"
+        versionName vistaAppConfig.expo.version
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }
@@ -148,6 +149,17 @@ android {
         jniLibs {
             def enableLegacyPackaging = findProperty('expo.useLegacyPackaging') ?: 'false'
             useLegacyPackaging enableLegacyPackaging.toBoolean()
+        }
+    }
+    externalNativeBuild {
+        cmake {
+            path file("src/main/jni/CMakeLists.txt")
+            // Windows needs the newer bundled Ninja to avoid long generated paths.
+            // EAS builds run on Linux, where pinning this version fails because it
+            // is not installed; let the Android Gradle Plugin choose its default.
+            if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+                version "3.31.6"
+            }
         }
     }
     androidResources {

@@ -61,7 +61,7 @@ function ReplyButton({ onPress, label = 'Reply', compact }) {
   </TouchableOpacity>;
 }
 
-export default function ConversationEntry({ log, latest, submissionId, scope, access, onReply, onAccessLost }) {
+export default function ConversationEntry({ log, latest, submissionId, scope, access, conversation, onAccessLost }) {
   const [expanded, setExpanded] = useState(false);
   // Old deployments do not advertise reply_count/can_reply. Keep history readable
   // without calling endpoints that have not been deployed there.
@@ -88,13 +88,13 @@ export default function ConversationEntry({ log, latest, submissionId, scope, ac
       {log.remarks_text ? <MessageText message={log.remarks_text} /> : <Text style={styles.context}>Status recorded by OSA.</Text>}
       {log.attachment_change?.action ? <Text style={styles.context}>Attachment {log.attachment_change.action}{log.attachment_change.new_files?.length ? ` · ${log.attachment_change.new_files.join(', ')}` : ''}</Text> : null}
       <View style={styles.actions}>
-        {permission ? <ReplyButton onPress={() => { setExpanded(true); onReply(log); }} /> : null}
+        {permission ? <ReplyButton onPress={() => { setExpanded(true); conversation.selectTarget(log); }} /> : null}
         {supportsReplies && (count > 0 || expanded) ? <TouchableOpacity accessibilityRole="button" accessibilityState={{ expanded }} onPress={() => setExpanded(!expanded)} style={styles.replyButton}><Text style={styles.link}>{expanded ? 'Hide replies' : `View replies (${count})`}</Text><Feather name={expanded ? 'chevron-up' : 'chevron-down'} size={15} color="#536C92" /></TouchableOpacity> : null}
       </View>
       {expanded ? <View style={styles.thread}>
         {replies.isPending ? <ActivityIndicator color="#0863E8" /> : null}
         {replies.isError ? <TouchableOpacity accessibilityRole="button" onPress={() => replies.refetch()} style={styles.retry}><Text style={styles.error}>Could not load replies. Tap to retry.</Text></TouchableOpacity> : null}
-        {rows.map(reply => <ThreadedReply key={reply.reply_id} reply={reply} canReply={permission} onReply={target => onReply(log, target)} />)}
+        {rows.map(reply => <ThreadedReply key={reply.reply_id} reply={reply} canReply={permission} onReply={parent => conversation.selectTarget(log, parent)} />)}
         {!replies.isPending && !replies.isError && !rows.length ? <Text style={styles.context}>No replies yet.</Text> : null}
         {replies.hasNextPage ? <TouchableOpacity disabled={replies.isFetchingNextPage} onPress={() => replies.fetchNextPage()} style={styles.retry}><Text style={styles.link}>{replies.isFetchingNextPage ? 'Loading…' : 'Load more replies'}</Text></TouchableOpacity> : null}
       </View> : null}

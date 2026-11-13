@@ -1,6 +1,9 @@
-import { resolveApiUrl } from './apiUrl.cjs';
+import { resolveApiUrl } from "./apiUrl.cjs";
 export const API_CONFIG = {
-  BASE_URL: resolveApiUrl({ development: __DEV__, override: process.env.EXPO_PUBLIC_API_URL }),
+  BASE_URL: resolveApiUrl({
+    development: __DEV__,
+    override: process.env.EXPO_PUBLIC_API_URL,
+  }),
   ENDPOINTS: {
     AUTH: "/auth",
   },
@@ -58,5 +61,8 @@ export const API_ENDPOINTS = {
     FOLDER_PATH_PREVIEW: "/drive/folder-path-preview/",
     UPLOAD: "/drive/upload/",
     UPLOAD_STATUS: (taskId) => `/drive/upload/status/${taskId}/`,
+  },
+  APP: {
+    LATEST: "/app/latest/",
   },
 };

@@ -41,11 +41,11 @@ export default function useSubmissionConversation({ submissionId, scope, access,
     const updated = { ...drafts, [targetKey]: { ...drafts[targetKey], message } };
     setDrafts(updated); client.setQueryData(draftKey, updated); setNotice('');
   }
-  async function send() {
+  async function send(link = '') {
     if (pending.current || !target || !canReplyTo(target.log, access) || !enabled) return;
     let payload;
     const requests = { ...drafts[targetKey]?.requests };
-    try { payload = prepareReply(draft, target.log.log_id, target.parentId, requests, () => uuid.v4()); }
+    try { payload = prepareReply(draft, link, target.log.log_id, target.parentId, requests, () => uuid.v4()); }
     catch (err) { setError(err.message); return; }
     const updated = { ...drafts, [targetKey]: { message: draft, requests } };
     setDrafts(updated); client.setQueryData(draftKey, updated);

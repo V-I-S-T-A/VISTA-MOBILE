@@ -14,6 +14,8 @@ import { authService } from '../../services/authService';
 import { queryClient } from '../../lib/queryClient';
 import { ROLES } from '../../constants/roles';
 import { CONTACT_EMAIL, APP_VERSION } from '../../data/legalContent';
+import { useUpdateManager } from '../../components/common/UpdateManager';
+import { useToast } from '../../components/common/Toast';
 
 const PROFILE_BLUE = '#245EA9';
 
@@ -44,6 +46,22 @@ export default function SettingsScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const { user, role, updateUser } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
+  const [checkingUpdates, setCheckingUpdates] = useState(false);
+  const updateManager = useUpdateManager();
+  const toast = useToast();
+
+  const handleCheckForUpdates = async () => {
+    if (checkingUpdates) return;
+    setCheckingUpdates(true);
+    try {
+      const release = await updateManager?.checkNow();
+      if (!release) toast.info('VISTA is up to date.');
+    } catch (error) {
+      toast.error(error?.message || 'Could not check for updates. Try again later.');
+    } finally {
+      setCheckingUpdates(false);
+    }
+  };
 
   const handleRefresh = async () => {
     if (refreshing) return;
@@ -133,6 +151,15 @@ export default function SettingsScreen({ navigation }) {
             label="Notifications"
             description="Push and in-app alerts"
             onPress={() => navigation.navigate('NotificationPreferences')}
+          />
+        </SettingsSection>
+
+        <SettingsSection title="APP UPDATE">
+          <SettingsRow
+            icon="download"
+            label={checkingUpdates ? 'Checking for updates…' : 'Check for updates'}
+            description="Get the latest version of VISTA Mobile"
+            onPress={handleCheckForUpdates}
           />
         </SettingsSection>
 

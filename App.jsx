@@ -16,6 +16,7 @@ import {
 } from "@expo-google-fonts/dm-sans";
 import { NavigationContainer } from "@react-navigation/native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { KeyboardProvider } from "react-native-keyboard-controller";
 import { StatusBar } from "expo-status-bar";
 import { AuthProvider } from "./src/context/AuthContext";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -25,6 +26,7 @@ import RootNavigator from "./src/navigation/RootNavigator";
 import { DialogProvider } from './src/components/common/AppDialog';
 import VistaLoader from './src/components/common/VistaLoader';
 import { OverlayProvider } from './src/components/common/OverlayPortal';
+import UpdateManager from './src/components/common/UpdateManager';
 import * as NativeSplash from "expo-splash-screen";
 
 // Hand off the OS splash only after the loader or routed content has laid out.
@@ -67,15 +69,22 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
-        <ToastProvider>
-          <AuthProvider>
-            <NavigationContainer ref={navigationRef}>
-              <NotificationRuntime navigationRef={navigationRef} />
-              <StatusBar style="dark" />
-              <OverlayProvider><DialogProvider><RootNavigator /></DialogProvider></OverlayProvider>
-            </NavigationContainer>
-          </AuthProvider>
-        </ToastProvider>
+        <KeyboardProvider>
+          <ToastProvider>
+            <AuthProvider>
+              <NavigationContainer ref={navigationRef}>
+                <NotificationRuntime navigationRef={navigationRef} />
+                <StatusBar style="dark" />
+                <OverlayProvider>
+                  <DialogProvider>
+                    <RootNavigator />
+                    <UpdateManager />
+                  </DialogProvider>
+                </OverlayProvider>
+              </NavigationContainer>
+            </AuthProvider>
+          </ToastProvider>
+        </KeyboardProvider>
       </SafeAreaProvider>
     </QueryClientProvider>
   );
