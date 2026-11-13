@@ -1,5 +1,6 @@
 // Presentation guards complement server authorization; membership is never inferred locally.
-const REPLY_MAX_LENGTH = 4000;
+const REPLY_MAX_LENGTH = 50;
+const REPLY_LINK_MAX_LENGTH = 150;
 const STATUS_TRANSITIONS = {
   pending: ['under_review', 'approved', 'rejected', 'resubmission_required'],
   under_review: ['approved', 'rejected', 'resubmission_required'],
@@ -33,11 +34,16 @@ function uniqueRows(pages, field) {
 }
 // Retain each unchanged request's token across ambiguous failures, even if the user
 // temporarily edits another draft/target. These identifiers are not credentials.
-function prepareReply(draft, logId, parentId, requests, createId) {
+function prepareReply(draft, link, logId, parentId, requests, createId) {
   const message = draft.trim();
-  if (!message || [...message].length > REPLY_MAX_LENGTH) throw new Error('Enter a reply of 1–4,000 characters.');
-  const signature = JSON.stringify([logId, parentId || null, message]);
+  const url = link.trim();
+  if (!message && !url) throw new Error('Enter a reply or add a link.');
+  if ([...message].length > REPLY_MAX_LENGTH) throw new Error('Keep your reply to 50 characters or fewer.');
+  if ([...url].length > REPLY_LINK_MAX_LENGTH) throw new Error('Keep the link to 150 characters or fewer.');
+  if (url && !safeWebUrl(url)) throw new Error('Enter a valid HTTP or HTTPS link.');
+  const submittedMessage = message && url ? `${message}\n${url}` : message || url;
+  const signature = JSON.stringify([logId, parentId || null, submittedMessage]);
   if (!requests[signature]) requests[signature] = createId();
-  return { message, parent_reply: parentId || null, client_request_id: requests[signature] };
+  return { message: submittedMessage, parent_reply: parentId || null, client_request_id: requests[signature] };
 }
-module.exports = { REPLY_MAX_LENGTH, STATUS_TRANSITIONS, viewerScope, capabilities, canReplyTo, safeWebUrl, nextPage, uniqueRows, prepareReply };
+module.exports = { REPLY_MAX_LENGTH, REPLY_LINK_MAX_LENGTH, STATUS_TRANSITIONS, viewerScope, capabilities, canReplyTo, safeWebUrl, nextPage, uniqueRows, prepareReply };

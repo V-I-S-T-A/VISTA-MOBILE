@@ -1,6 +1,18 @@
 pluginManagement {
   def autolinkingCacheDir = new File(rootDir, "build/generated/autolinking")
-  if (!System.getProperty("os.name").toLowerCase().contains("windows")) {
+  def autolinkingCacheFile = new File(autolinkingCacheDir, "autolinking.json")
+  def cachedProjectRoot = null
+  if (autolinkingCacheFile.exists()) {
+    try {
+      cachedProjectRoot = new groovy.json.JsonSlurper().parse(autolinkingCacheFile).root
+    } catch (Exception ignored) {
+      // Regenerate an incomplete or invalid cache below.
+    }
+  }
+  def currentProjectRoot = rootDir.parentFile.canonicalPath
+  if (!System.getProperty("os.name").toLowerCase().contains("windows") ||
+      cachedProjectRoot == null ||
+      new File(cachedProjectRoot).canonicalPath != currentProjectRoot) {
     autolinkingCacheDir.deleteDir()
   }
 

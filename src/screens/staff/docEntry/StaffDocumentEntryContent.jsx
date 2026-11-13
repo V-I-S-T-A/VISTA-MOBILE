@@ -21,6 +21,7 @@ import { useOrganizations, useOrganizationUsers } from "../../../hooks/useOrgani
 import { useCategories } from "../../../hooks/useCategories";
 import { useDocumentTypes } from "../../../hooks/useDocumentTypes";
 import AccountHeader from "../../../components/common/AccountHeader";
+import { normalizeDocumentCode } from "../../../utils/documentCode.cjs";
 function toOption(row, idField, labelFn) {
   return { id: row[idField], label: labelFn(row) };
 }
@@ -168,8 +169,10 @@ export default function StaffDocumentEntryContent({ navigation, initialAttachmen
 
       // --- Description: populate from any other OCR field text, purely
       // as a starting point staff can edit/clear before submitting ---
-      const documentCode = draft.fields?.document_code?.value;
-      if (documentCode) {
+      const documentCode = normalizeDocumentCode(
+        draft.fields?.document_code?.value,
+      );
+      if (documentCode && !draft.fields?.document_code?.needs_review) {
         setDescription((prev) => prev || `Document code: ${documentCode}`);
       }
 

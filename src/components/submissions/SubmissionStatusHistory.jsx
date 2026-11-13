@@ -1,11 +1,11 @@
-import UserAvatar from '../common/UserAvatar';
+import UserAvatar from "../common/UserAvatar";
 import { Text } from "../common/FontText";
 import { ActivityIndicator, View } from "react-native";
 import { useReviewLogs } from "../../hooks/useReviewLogs";
 import { FontAwesome6, Feather } from "@expo/vector-icons";
 import { surfaces, typography } from "../../theme/layout";
 import { getSubmissionStatus } from "./SubmissionStatusBadge";
-import { TimelineSkeleton } from '../common/Skeleton';
+import { TimelineSkeleton } from "../common/Skeleton";
 
 const STATUS_LABELS = {
   pending: "Pending",
@@ -34,7 +34,10 @@ export default function SubmissionStatusHistory({ submissionId }) {
   const logs = data?.results ?? [];
 
   return (
-    <View className="bg-white rounded-3xl mb-4 overflow-hidden" style={surfaces.card}>
+    <View
+      className="bg-white rounded-3xl mb-4 overflow-hidden"
+      style={surfaces.card}
+    >
       <View className="bg-[#FFE35B] px-4 py-3 flex-row items-center gap-3">
         <FontAwesome6 name="clock-rotate-left" size={20} color="#102D69" />
         <Text className="text-vistaNavy flex-1" style={typography.section}>
@@ -71,12 +74,17 @@ export default function SubmissionStatusHistory({ submissionId }) {
                     <View
                       className="w-3 h-3 rounded-full"
                       style={{
-                        backgroundColor: index === 0 ? getSubmissionStatus(log.new_status).foreground : "#94A3B8",
+                        backgroundColor:
+                          index === 0
+                            ? getSubmissionStatus(log.new_status).foreground
+                            : "#94A3B8",
                       }}
                     />
                   </View>
                 </View>
-                <View className={`flex-1 min-w-0 pl-2 ${hasNextLog ? "pb-6" : ""}`}>
+                <View
+                  className={`flex-1 min-w-0 pl-2 ${hasNextLog ? "pb-6" : ""}`}
+                >
                   <View className="flex-row items-center flex-wrap gap-2">
                     <Text className="text-vistaNavy text-sm font-bold leading-6 shrink">
                       {formatStatus(log.new_status)}
@@ -95,7 +103,9 @@ export default function SubmissionStatusHistory({ submissionId }) {
                   {log.old_status ? (
                     <View className="flex-row items-center flex-wrap gap-1.5 mt-2">
                       <View className="flex items-center shrink">
-                        <Text className="text-gray-500 text-xs leading-5">{formatStatus(log.old_status)}</Text>
+                        <Text className="text-gray-500 text-xs leading-5">
+                          {formatStatus(log.old_status)}
+                        </Text>
                       </View>
                       <Feather name="arrow-right" size={13} color="#94A3B8" />
                       <View className="flex items-center shrink">
@@ -110,10 +120,10 @@ export default function SubmissionStatusHistory({ submissionId }) {
                       <UserAvatar uri={log.changed_by_image_url} size={32} />
                     </View>
                     <View className="flex-1">
-                      <Text className="text-gray-500 text-xs leading-4">Updated by</Text>
-                      <Text
-                        className="text-vistaNavy text-[13px] leading-5 font-bold"
-                      >
+                      <Text className="text-gray-500 text-xs leading-4">
+                        Updated by
+                      </Text>
+                      <Text className="text-vistaNavy text-[13px] leading-5 font-bold">
                         {log.changed_by_name || "Staff"}
                       </Text>
                     </View>

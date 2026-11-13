@@ -7,7 +7,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { Animated, StyleSheet, View } from "react-native";
+import { Animated, Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 
@@ -30,17 +30,24 @@ export function ToastProvider({ children }) {
   }, []);
 
   const show = useCallback(
-    (message, variant = "info", duration = 3200) => {
+    (message, variant = "info", duration = 3200, action = null) => {
       const id = ++idCounter;
-      setToasts((prev) => [...prev, { id, message, variant }]);
+      setToasts((prev) => [...prev, { id, message, variant, action }]);
       setTimeout(() => dismiss(id), duration);
       return id;
     },
     [dismiss],
   );
 
+  const showAction = useCallback(
+    (message, label, onPress, variant = "info", duration = 10000) =>
+      show(message, variant, duration, { label, onPress }),
+    [show],
+  );
+
   const api = {
     show,
+    showAction,
     success: (message, duration) => show(message, "success", duration),
     error: (message, duration) => show(message, "error", duration ?? 4200),
     info: (message, duration) => show(message, "info", duration),
@@ -82,13 +89,25 @@ function ToastItem({ toast, onPress }) {
   return (
     <Animated.View style={{ opacity }}>
       <View
-        onTouchEnd={onPress}
+        onTouchEnd={toast.action ? undefined : onPress}
         style={[styles.toast, { backgroundColor: variant.bg }]}
       >
         <Feather name={variant.icon} size={16} color="white" />
         <Text style={styles.text} numberOfLines={3}>
           {toast.message}
         </Text>
+        {toast.action ? (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => {
+              onPress();
+              toast.action.onPress();
+            }}
+            style={styles.action}
+          >
+            <Text style={styles.actionText}>{toast.action.label}</Text>
+          </Pressable>
+        ) : null}
       </View>
     </Animated.View>
   );
@@ -120,6 +139,16 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginLeft: 8,
     flex: 1,
+  },
+  action: {
+    marginLeft: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+  },
+  actionText: {
+    color: "white",
+    fontSize: 13,
+    fontWeight: "700",
   },
 });
 

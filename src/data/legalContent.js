@@ -10,7 +10,7 @@
 
 export const CONTACT_EMAIL = 'vista.ustp.edu.ph@gmail.com';
 export const LAST_UPDATED = 'October 2026';
-export const APP_VERSION = '1.0.4';
+export const APP_VERSION = require('../../app.json').expo.version;
 
 export const LEGAL_DOCUMENTS = {
   privacy: {

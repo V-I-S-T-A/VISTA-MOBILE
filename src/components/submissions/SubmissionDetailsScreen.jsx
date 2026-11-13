@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Keyboard, KeyboardAvoidingView, Platform, RefreshControl, ScrollView, TouchableOpacity, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { Keyboard, RefreshControl, ScrollView, TouchableOpacity, View } from 'react-native';
+import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Text } from '../common/FontText';
 import { DetailsSkeleton } from '../common/Skeleton';
@@ -34,13 +35,9 @@ function ScopedDetails({ navigation, user, scope, id }) {
   const client = useQueryClient();
   const layout = useStaffLayout();
   const footerClearance = typeof useBottomNavClearance === 'function' ? useBottomNavClearance() : 68;
-  const [keyboard, setKeyboard] = useState(false);
   const [sheet, setSheet] = useState(false);
   const [lost, setLost] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const scrollViewRef = useRef(null);
-  const scrollOffsetRef = useRef(0);
-  const composerBottomPadding = keyboard ? 4 : Math.max(52, footerClearance - 8);
   const tasksKey = ['drive', 'review-tasks', scope, id];
   const [driveTasks, setDriveTasks] = useState(() => client.getQueryData?.(tasksKey) || []);
   const trackUpload = task => setDriveTasks(current => {
@@ -65,20 +62,6 @@ function ScopedDetails({ navigation, user, scope, id }) {
     client.removeQueries({ queryKey: ['review-drafts', id, scope] });
   }, [client, id, scope]);
   const conversation = useSubmissionConversation({ submissionId: id, scope, access, enabled: ready, onAccessLost });
-  useEffect(() => {
-    const onShow = () => setKeyboard(true);
-    const onHide = () => setKeyboard(false);
-    const s1 = Keyboard.addListener('keyboardWillShow', onShow);
-    const s2 = Keyboard.addListener('keyboardDidShow', onShow);
-    const h1 = Keyboard.addListener('keyboardWillHide', onHide);
-    const h2 = Keyboard.addListener('keyboardDidHide', onHide);
-    return () => {
-      s1.remove();
-      s2.remove();
-      h1.remove();
-      h2.remove();
-    };
-  }, []);
   useEffect(() => { if ([403, 404].includes(detail.error?.status)) onAccessLost(); }, [detail.error, onAccessLost]);
   const refresh = async () => {
     setRefreshing(true);
@@ -99,29 +82,16 @@ function ScopedDetails({ navigation, user, scope, id }) {
     if (history.isError) throw history.error;
     setSheet(false);
   };
-  const composerVisible = ready && !access.viewOnly && (access.staff || conversation.hasReply);
+  const composerVisible = ready && !access.viewOnly && (access.staff || conversation.hasReply) && !!conversation.target;
+  const closedComposerOffset = Math.max(52, footerClearance - 8);
   return <View style={{ flex: 1, backgroundColor: '#F3F3F3' }}>
-    <KeyboardAvoidingView key={keyboard ? 'kb-active' : 'kb-resting'} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
       <View style={[{ flex: 1 }, layout.body]}>
         <ScrollView
-          ref={scrollViewRef}
-          onScroll={e => {
-            scrollOffsetRef.current = e.nativeEvent?.contentOffset?.y || 0;
-          }}
-          scrollEventThrottle={16}
-          onLayout={() => {
-            if (scrollOffsetRef.current > 0) {
-              scrollViewRef.current?.scrollTo({ y: scrollOffsetRef.current, animated: false });
-            }
-          }}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} />}
-          contentContainerStyle={{
-            paddingTop: 8,
-            paddingBottom: composerVisible ? (composerBottomPadding + 56) : footerClearance,
-          }}>
+          contentContainerStyle={{ paddingTop: 8, paddingBottom: composerVisible ? closedComposerOffset + 104 : footerClearance }}>
           <AccountHeader profileRoute={access.staff ? 'StaffProfile' : 'StudentProfile'} />
           <PageHeading title="Track Details" subtitle="Submission & conversation" />
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 18 }}><BackButton /><Text style={{ fontSize: 13, color: '#173866' }}>Track Details</Text></View>
@@ -137,12 +107,13 @@ function ScopedDetails({ navigation, user, scope, id }) {
           </>}
         </ScrollView>
       </View>
-      <View style={{ backgroundColor: 'transparent', paddingBottom: 0 }}>
-        {composerVisible ? <View style={[layout.horizontal, { paddingTop: 4, paddingBottom: composerBottomPadding }]}>
-          <ReplyComposer conversation={conversation} onStatus={access.staff ? () => { Keyboard.dismiss(); setSheet(true); } : undefined} />
-        </View> : null}
+    {composerVisible ? <KeyboardStickyView
+      offset={{ closed: -closedComposerOffset, opened: 0 }}
+      style={{ position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 10 }}>
+      <View style={[layout.horizontal, { paddingTop: 4, paddingBottom: 4, backgroundColor: '#F3F3F3' }]}>
+        <ReplyComposer conversation={conversation} onStatus={access.staff ? () => { Keyboard.dismiss(); setSheet(true); } : undefined} />
       </View>
-    </KeyboardAvoidingView>
+    </KeyboardStickyView> : null}
     {access.staff ? (
       <StaffBottomNav activeTab="reports" onScanPress={() => openDocumentEntryWithAttachment(navigation)} onHomePress={() => navigation.navigate('StaffHome')} onProfilePress={() => navigation.navigate('StaffDocumentEntry')} onReportsPress={() => navigation.navigate('StaffReviewPanel')} onCloudPress={() => navigation.navigate('GDriveSync')} />
     ) : (
