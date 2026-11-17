@@ -10,7 +10,9 @@ export const installedCode = () =>
   parseInt(Application.nativeBuildVersion, 10) || 0;
 
 export async function fetchLatestRelease() {
-  if (Platform.OS !== "android") return null;
+  // Local development build numbers do not track EAS release build numbers.
+  // Installing a published APK here would replace the client serving current JS.
+  if (__DEV__ || Platform.OS !== "android") return null;
   try {
     const { data } = await apiClient.get(API_ENDPOINTS.APP.LATEST, {
       timeout: 10000,
