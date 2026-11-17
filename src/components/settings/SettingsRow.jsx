@@ -1,7 +1,7 @@
-import { View, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { Text } from '../common/FontText';
-import { colors, compact } from '../../theme/tokens';
+import { colors, compact, type, space, settingsLayout, motion, sizes } from '../../theme/tokens';
 
 export default function SettingsRow({
   icon,
@@ -14,64 +14,80 @@ export default function SettingsRow({
   hasDivider = false,
   disabled = false,
   danger = false,
+  triggerRef,
+  variant = 'brand',
+  iconColor = colors.blue,
+  busy = false,
 }) {
+  const Row = onPress ? TouchableOpacity : View;
+  const grouped = variant === 'grouped';
+  const iconStyle = grouped ? {
+    width: settingsLayout.iconSize,
+    height: settingsLayout.iconSize,
+    borderRadius: settingsLayout.iconRadius,
+    borderCurve: 'continuous',
+    backgroundColor: danger ? colors.danger : iconColor,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: space.md,
+    flexShrink: 0,
+  } : {
+    width: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 11,
+    flexShrink: 0,
+  };
   return (
     <View>
-      <TouchableOpacity
+      <Row
+        ref={triggerRef}
         onPress={onPress}
-        disabled={disabled || !onPress}
-        accessibilityRole="button"
+        disabled={disabled || busy || !onPress}
+        accessibilityRole={onPress ? 'button' : undefined}
         accessibilityLabel={description ? `${label}, ${description}` : label}
-        accessibilityState={{ disabled }}
-        activeOpacity={0.65}
+        accessibilityState={{ disabled: disabled || busy, busy }}
+        activeOpacity={motion.pressedOpacity}
         style={{
-          minHeight: compact.touch,
-          paddingHorizontal: 14,
-          paddingVertical: description ? 9.5 : 8.5,
+          minHeight: grouped ? settingsLayout.rowMinHeight : compact.touch,
+          paddingHorizontal: space.lg,
+          paddingVertical: space.md,
           flexDirection: 'row',
           alignItems: 'center',
           backgroundColor: colors.surface,
+          opacity: disabled ? motion.disabledOpacity : 1,
         }}
       >
-        {/* Left Icon (containerless) */}
+        {/* Icon tiles are an opt-in for the neutral Settings landing page. */}
         {iconComponent ? (
           <View
-            style={{
-              width: 22,
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginRight: 11,
-              flexShrink: 0,
-            }}
+            accessible={false}
+            importantForAccessibility="no-hide-descendants"
+            style={iconStyle}
           >
             {iconComponent}
           </View>
         ) : icon ? (
           <View
-            style={{
-              width: 22,
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginRight: 11,
-              flexShrink: 0,
-            }}
+            accessible={false}
+            importantForAccessibility="no-hide-descendants"
+            style={iconStyle}
           >
             <Feather
               name={icon}
-              size={18.5}
-              color={danger ? colors.danger : colors.blue}
+              size={sizes.icon}
+              color={grouped ? colors.onBrand : danger ? colors.danger : colors.blue}
             />
           </View>
         ) : null}
 
         {/* Center Label & Description */}
-        <View style={{ flex: 1, justifyContent: 'center' }}>
+        <View style={{ flex: 1, minWidth: 0, justifyContent: 'center' }}>
           <Text
-            numberOfLines={1}
             style={{
-              fontFamily: 'DMSans_600SemiBold',
-              fontSize: 13.5,
-              lineHeight: 18,
+              fontFamily: grouped ? type.medium : 'DMSans_600SemiBold',
+              fontSize: type.field.fontSize,
+              lineHeight: type.field.lineHeight,
               color: danger ? colors.danger : colors.navy,
             }}
           >
@@ -79,13 +95,12 @@ export default function SettingsRow({
           </Text>
           {description ? (
             <Text
-              numberOfLines={1}
               style={{
                 fontFamily: 'DMSans_400Regular',
-                fontSize: 10.5,
-                lineHeight: 14,
+                fontSize: type.meta.fontSize,
+                lineHeight: type.meta.lineHeight,
                 color: colors.muted,
-                marginTop: 1,
+                marginTop: grouped ? space.xs : 1,
               }}
             >
               {description}
@@ -94,21 +109,23 @@ export default function SettingsRow({
         </View>
 
         {/* Right Action / Chevron */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 8 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: space.sm }}>
           {rightElement}
-          {showChevron ? (
-            <Feather name="chevron-right" size={15} color="#94A3B8" />
+          {busy ? (
+            <ActivityIndicator size="small" color={colors.blue} />
+          ) : showChevron ? (
+            <Feather name="chevron-right" size={grouped ? sizes.icon : 15} color={grouped ? colors.muted : '#94A3B8'} />
           ) : null}
         </View>
-      </TouchableOpacity>
+      </Row>
 
       {/* Subtle Inset Divider */}
       {hasDivider ? (
         <View
           style={{
-            height: 1,
-            backgroundColor: '#F1F5F9',
-            marginLeft: 47,
+            height: settingsLayout.separatorWidth,
+            backgroundColor: grouped ? colors.divider : '#F1F5F9',
+            marginLeft: grouped ? space.lg + settingsLayout.iconSize + space.md : 47,
           }}
         />
       ) : null}
