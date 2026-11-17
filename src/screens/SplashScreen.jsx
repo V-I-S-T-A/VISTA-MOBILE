@@ -1,9 +1,13 @@
-import { Text, View, Image, TouchableOpacity } from "react-native";
+import { type } from '../theme/tokens';
+import { Text, ScrollView, RefreshControl, Image, TouchableOpacity } from "react-native";
+import { useScreenRefresh } from '../hooks/useScreenRefresh';
 import { MAIN_YELLOW, MAIN_BLUE } from "../constants/colors";
 
 export default function SplashScreen({ error, onRetry }) {
+  const { refreshing, onRefresh } = useScreenRefresh([], error ? onRetry : undefined);
   return (
-    <View className="flex-1 bg-white items-center justify-center">
+    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF' }}
+      alwaysBounceVertical overScrollMode="always" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
       <Image
         source={require("../assets/logo.webp")}
         style={{ width: 130, height: 130 }}
@@ -12,7 +16,7 @@ export default function SplashScreen({ error, onRetry }) {
       <Text
         style={{
           fontFamily: "DMSans_800ExtraBold",
-          fontSize: 28,
+          fontSize: type.number.fontSize,
           letterSpacing: 3,
           color: MAIN_YELLOW,
           marginTop: 12,
@@ -36,6 +40,6 @@ export default function SplashScreen({ error, onRetry }) {
           </TouchableOpacity>
         </>
       ) : null}
-    </View>
+    </ScrollView>
   );
 }
