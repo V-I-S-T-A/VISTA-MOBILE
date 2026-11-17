@@ -1,7 +1,7 @@
 import { View, TouchableOpacity, Image } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { Text } from '../common/FontText';
-import { compact, radii, type } from '../../theme/tokens';
+import { compact, radii, type, colors, space, motion } from '../../theme/tokens';
 
 export default function SettingsHeader({
   title = 'Settings',
@@ -9,11 +9,13 @@ export default function SettingsHeader({
   onBack,
   showVistaIcon = false,
   rightElement = null,
+  variant = 'brand',
 }) {
+  const grouped = variant === 'grouped';
   return (
     <View
       style={{
-        paddingHorizontal: 16,
+        paddingHorizontal: space.lg,
         paddingTop: 2,
         paddingBottom: 2,
         minHeight: 50,
@@ -27,6 +29,7 @@ export default function SettingsHeader({
         onPress={onBack}
         accessibilityRole="button"
         accessibilityLabel="Go back"
+        activeOpacity={motion.pressedOpacity}
         style={{
           width: compact.touch,
           height: compact.touch,
@@ -38,31 +41,30 @@ export default function SettingsHeader({
         }}
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       >
-        <Feather name="chevron-left" size={22} color="#FFFFFF" />
+        <Feather name="chevron-left" size={22} color={grouped ? colors.blue : colors.onBrand} />
       </TouchableOpacity>
 
       {/* Page Title */}
       <View style={{ flex: 1, paddingHorizontal: 2 }}>
         <Text
-          numberOfLines={1}
+          accessibilityRole="header"
           style={{
             ...type.heading,
-            fontSize: 18,
-            lineHeight: 24,
+            fontSize: type.navigationTitle.fontSize,
+            lineHeight: type.navigationTitle.lineHeight,
             fontFamily: 'DMSans_700Bold',
-            color: '#FFFFFF',
+            color: grouped ? colors.navy : colors.onBrand,
           }}
         >
           {title}
         </Text>
         {subtitle ? (
           <Text
-            numberOfLines={1}
             style={{
               ...type.meta,
-              fontSize: 11,
-              lineHeight: 14,
-              color: 'rgba(255, 255, 255, 0.8)',
+              fontSize: type.meta.fontSize,
+              lineHeight: type.meta.lineHeight,
+              color: grouped ? colors.muted : 'rgba(255, 255, 255, 0.8)',
               marginTop: 1,
             }}
           >
