@@ -1,3 +1,4 @@
+import { useScreenRefresh } from '../../hooks/useScreenRefresh';
 import { useState } from 'react';
 import { ScrollView, View, TouchableOpacity, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -43,17 +44,10 @@ export default function UserGuideScreen({ navigation }) {
   };
 
   const areAllExpanded = manual.sections.every((s) => expandedSections[s.id]);
-  const [refreshing, setRefreshing] = useState(false);
-
-  const handleRefresh = () => {
-    setRefreshing(true);
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 250);
-  };
+  const { refreshing, onRefresh: handleRefresh } = useScreenRefresh([]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#245EA9', paddingTop: insets.top }}>
+    <View style={{ flex: 1, backgroundColor: colors.profileBlue, paddingTop: insets.top }}>
       {/* Header */}
       <SettingsHeader
         title="User Guide"
@@ -62,6 +56,7 @@ export default function UserGuideScreen({ navigation }) {
       />
 
       <ScrollView
+        alwaysBounceVertical overScrollMode="always"
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -81,7 +76,7 @@ export default function UserGuideScreen({ navigation }) {
         <View
           style={{
             backgroundColor: colors.surface,
-            borderRadius: 16,
+            borderRadius: radii.listCard,
             borderWidth: 1,
             borderColor: colors.border,
             padding: 14,
@@ -106,7 +101,7 @@ export default function UserGuideScreen({ navigation }) {
                 style={{
                   ...type.notificationBadge,
                   fontFamily: 'DMSans_700Bold',
-                  fontSize: 10,
+                  fontSize: type.meta.fontSize,
                   color: colors.blue,
                 }}
               >
@@ -123,7 +118,7 @@ export default function UserGuideScreen({ navigation }) {
                 style={{
                   ...type.meta,
                   fontFamily: 'DMSans_600SemiBold',
-                  fontSize: 10.5,
+                  fontSize: type.meta.fontSize,
                   color: colors.blue,
                 }}
               >
@@ -135,8 +130,8 @@ export default function UserGuideScreen({ navigation }) {
           <Text
             style={{
               ...type.heading,
-              fontSize: 16,
-              lineHeight: 22,
+              fontSize: type.heading.fontSize,
+              lineHeight: type.heading.lineHeight,
               fontFamily: 'DMSans_700Bold',
               color: colors.navy,
               marginBottom: 3,
@@ -148,8 +143,8 @@ export default function UserGuideScreen({ navigation }) {
           <Text
             style={{
               ...type.body,
-              fontSize: 12,
-              lineHeight: 16,
+              fontSize: type.meta.fontSize,
+              lineHeight: type.meta.lineHeight,
               color: colors.muted,
               marginBottom: 8,
             }}
@@ -162,16 +157,16 @@ export default function UserGuideScreen({ navigation }) {
             style={{
               flexDirection: 'row',
               alignItems: 'center',
-              backgroundColor: '#F8FAFC',
-              borderRadius: 8,
+              backgroundColor: colors.field,
+              borderRadius: radii.chip,
               paddingHorizontal: 9,
               paddingVertical: 5.5,
               borderWidth: 1,
-              borderColor: '#E2E8F0',
+              borderColor: colors.border,
             }}
           >
             <Feather name="user-check" size={12} color={colors.blue} style={{ marginRight: 6 }} />
-            <Text style={{ ...type.meta, fontSize: 10.5, color: colors.navy, flex: 1 }}>
+            <Text style={{ ...type.meta, fontSize: type.meta.fontSize, color: colors.navy, flex: 1 }}>
               Authenticated as{' '}
               <Text style={{ fontFamily: 'DMSans_700Bold' }}>
                 {user?.first_name ? `${user.first_name} ${user.last_name}` : user?.email || 'User'}
@@ -189,7 +184,7 @@ export default function UserGuideScreen({ navigation }) {
               key={section.id}
               style={{
                 backgroundColor: colors.surface,
-                borderRadius: 16,
+                borderRadius: radii.listCard,
                 borderWidth: 1,
                 borderColor: colors.border,
                 marginBottom: 8,
@@ -221,7 +216,7 @@ export default function UserGuideScreen({ navigation }) {
                   style={{
                     width: 24,
                     height: 24,
-                    borderRadius: 12,
+                    borderRadius: radii.field,
                     backgroundColor: colors.selectedSurface,
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -232,7 +227,7 @@ export default function UserGuideScreen({ navigation }) {
                   <Text
                     style={{
                       fontFamily: 'DMSans_700Bold',
-                      fontSize: 10.5,
+                      fontSize: type.meta.fontSize,
                       color: colors.blue,
                     }}
                   >
@@ -244,8 +239,8 @@ export default function UserGuideScreen({ navigation }) {
                   <Text
                     style={{
                       fontFamily: 'DMSans_700Bold',
-                      fontSize: 13,
-                      lineHeight: 17,
+                      fontSize: type.field.fontSize,
+                      lineHeight: type.field.lineHeight,
                       color: colors.navy,
                     }}
                   >
@@ -256,8 +251,8 @@ export default function UserGuideScreen({ navigation }) {
                       numberOfLines={isExpanded ? 2 : 1}
                       style={{
                         fontFamily: 'DMSans_400Regular',
-                        fontSize: 10.5,
-                        lineHeight: 14,
+                        fontSize: type.meta.fontSize,
+                        lineHeight: type.meta.lineHeight,
                         color: colors.muted,
                         marginTop: 1,
                       }}
@@ -292,8 +287,8 @@ export default function UserGuideScreen({ navigation }) {
                         style={{
                           flexDirection: 'row',
                           alignItems: 'flex-start',
-                          backgroundColor: '#F8FAFC',
-                          borderRadius: 8,
+                          backgroundColor: colors.field,
+                          borderRadius: radii.chip,
                           padding: 8,
                           borderWidth: 1,
                           borderColor: '#EDF2F7',
@@ -303,8 +298,8 @@ export default function UserGuideScreen({ navigation }) {
                           style={{
                             width: 16,
                             height: 16,
-                            borderRadius: 8,
-                            backgroundColor: '#E8EFF8',
+                            borderRadius: radii.chip,
+                            backgroundColor: colors.selectedSurface,
                             alignItems: 'center',
                             justifyContent: 'center',
                             marginRight: 7,
@@ -317,8 +312,8 @@ export default function UserGuideScreen({ navigation }) {
                         <Text
                           style={{
                             ...type.body,
-                            fontSize: 11.5,
-                            lineHeight: 16,
+                            fontSize: type.meta.fontSize,
+                            lineHeight: type.meta.lineHeight,
                             color: '#334155',
                             flex: 1,
                           }}
@@ -338,7 +333,7 @@ export default function UserGuideScreen({ navigation }) {
         <View
           style={{
             backgroundColor: colors.surface,
-            borderRadius: 16,
+            borderRadius: radii.listCard,
             borderWidth: 1,
             borderColor: colors.border,
             padding: 12,
@@ -353,7 +348,7 @@ export default function UserGuideScreen({ navigation }) {
             style={{
               width: 30,
               height: 30,
-              borderRadius: 15,
+              borderRadius: radii.listCard,
               backgroundColor: '#DBEAFE',
               alignItems: 'center',
               justifyContent: 'center',
@@ -362,10 +357,10 @@ export default function UserGuideScreen({ navigation }) {
             <Feather name="help-circle" size={15} color={colors.blue} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: 'DMSans_600SemiBold', fontSize: 12, color: colors.navy }}>
+            <Text style={{ fontFamily: 'DMSans_600SemiBold', fontSize: type.meta.fontSize, color: colors.navy }}>
               Need Additional Help?
             </Text>
-            <Text style={{ ...type.meta, fontSize: 10.5, lineHeight: 14, color: colors.muted, marginTop: 1 }}>
+            <Text style={{ ...type.meta, fontSize: type.meta.fontSize, lineHeight: type.meta.lineHeight, color: colors.muted, marginTop: 1 }}>
               Visit the Student Center Building Ground Floor or contact OSA support.
             </Text>
           </View>
@@ -376,8 +371,8 @@ export default function UserGuideScreen({ navigation }) {
           <Text
             style={{
               ...type.meta,
-              fontSize: 11,
-              color: '#FFFFFF',
+              fontSize: type.meta.fontSize,
+              color: colors.onBrand,
               textAlign: 'center',
             }}
           >
@@ -386,7 +381,7 @@ export default function UserGuideScreen({ navigation }) {
           <Text
             style={{
               ...type.meta,
-              fontSize: 10,
+              fontSize: type.meta.fontSize,
               color: 'rgba(255, 255, 255, 0.75)',
               marginTop: 1.5,
               textAlign: 'center',
