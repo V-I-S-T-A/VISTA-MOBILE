@@ -1,24 +1,23 @@
 import { typography } from "../../theme/layout";
-import { TouchableOpacity, View, useWindowDimensions } from "react-native";
+import { View } from "react-native";
+import PressableCard from '../common/PressableCard';
+import useDashboardGrid from '../../hooks/useDashboardGrid';
 import DashboardCardIllustration from './DashboardCardIllustration';
 import { Text } from "../common/FontText";
-import { DashboardCardsSkeleton } from '../common/Skeleton';
-import { dashboardLayout, dashboardTones, radii, type, space, motion } from '../../theme/tokens';
+import { DashboardCardsSkeletonContent } from '../common/Skeleton';
+import { dashboardLayout, dashboardTones, radii, type, space } from '../../theme/tokens';
 
 function DashboardCard({ onPress, style, label, count, children }) {
-  const Card = onPress ? TouchableOpacity : View;
-
   return (
-    <Card
+    <PressableCard
       onPress={onPress}
-      accessibilityRole={onPress ? "button" : undefined}
-      activeOpacity={motion.pressedOpacity}
       accessibilityLabel={`${label}: ${count ?? 'Unavailable'} submissions`}
       accessibilityHint={onPress ? 'Opens submission history with this filter selected' : undefined}
       style={style}
+      containerStyle={{ flex: 1, minWidth: 0 }}
     >
       {children}
-    </Card>
+    </PressableCard>
   );
 }
 
@@ -36,9 +35,8 @@ export default function SubmissionDashboardCards({
   rejectedOnPress,
   showTotalLoader = false,
 }) {
-  const { fontScale } = useWindowDimensions();
-  if (isLoading) return <DashboardCardsSkeleton />;
-  const columns = fontScale >= dashboardLayout.singleColumnFontScale ? 1 : 2;
+  const { columns, fontScale, onLayout } = useDashboardGrid();
+  if (isLoading) return <DashboardCardsSkeletonContent columns={columns} fontScale={fontScale} onLayout={onLayout} />;
   const artScale = dashboardLayout.artScale / (columns === 2 ? Math.max(1, fontScale) : 1);
   const artSize = dashboardLayout.artSize * artScale;
   const cards = [
@@ -49,7 +47,7 @@ export default function SubmissionDashboardCards({
   ];
   const rows = Array.from({ length: Math.ceil(cards.length / columns) }, (_, index) => cards.slice(index * columns, (index + 1) * columns));
   return (
-    <View style={{ gap: space.md, marginBottom: space.lg }}>
+    <View onLayout={onLayout} style={{ gap: space.md, marginBottom: space.lg }}>
       {rows.map((row, index) => (
         <View key={index} style={{ flexDirection: 'row', gap: space.md, alignItems: 'stretch' }}>
           {row.map(card => {
