@@ -21,15 +21,21 @@ export const layout = {
   scrollBottom: sizes.scrollBottom,
 };
 
+// First-render size estimates and the screen itself must use identical gutters.
+export function getContentHorizontalInsets(width, insets) {
+  const gutter = width < 360 ? space.lg : layout.gutter;
+  const horizontal = Math.max(gutter, (width - layout.maxContentWidth) / 2);
+  return { paddingLeft: Math.max(horizontal, insets.left), paddingRight: Math.max(horizontal, insets.right) };
+}
+
 export function useStaffLayout() {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const gutter = width < 360 ? 16 : layout.gutter;
-  const horizontal = Math.max(gutter, (width - layout.maxContentWidth) / 2);
+  const horizontal = getContentHorizontalInsets(width, insets);
   return {
     top: { paddingTop: insets.top },
-    horizontal: { paddingLeft: Math.max(horizontal, insets.left), paddingRight: Math.max(horizontal, insets.right) },
-    body: { paddingTop: insets.top, paddingLeft: Math.max(horizontal, insets.left), paddingRight: Math.max(horizontal, insets.right) },
+    horizontal,
+    body: { paddingTop: insets.top, ...horizontal },
   };
 }
 
