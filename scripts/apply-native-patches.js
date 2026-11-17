@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const root = path.resolve(__dirname, "..");
+require('../plugins/withSplashBranding').applyNativeSplashPatch(root);
 
 // Expo's temporary launcher delegate has no ReactDelegate during reloads.
 // RN 0.81 added callbacks which must also be no-ops in that state.
