@@ -1,16 +1,20 @@
 import { useScreenRefresh } from '../../hooks/useScreenRefresh';
 import { useState } from 'react';
+import Animated, { LinearTransition } from 'react-native-reanimated';
+import useReducedMotion from '../../hooks/useReducedMotion';
 import { ScrollView, View, TouchableOpacity, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { Text } from '../../components/common/FontText';
 import SettingsHeader from '../../components/settings/SettingsHeader';
-import { colors, radii, type, space, sizes, settingsLayout } from '../../theme/tokens';
+import { colors, radii, type, space, sizes, settingsLayout, motion } from '../../theme/tokens';
 import { useAuth } from '../../context/AuthContext';
 import { getManualForRole } from '../../data/userManualContent';
 import { APP_VERSION } from '../../data/legalContent';
 
 export default function UserGuideScreen({ navigation }) {
+  const reducedMotion = useReducedMotion();
+  const accordionTransition = reducedMotion ? undefined : LinearTransition.duration(motion.contextual);
   const insets = useSafeAreaInsets();
   const { user, role } = useAuth();
 
@@ -176,8 +180,9 @@ export default function UserGuideScreen({ navigation }) {
         {manual.sections.map((section) => {
           const isExpanded = !!expandedSections[section.id];
           return (
-            <View
+            <Animated.View
               key={section.id}
+              layout={accordionTransition}
               style={{
                 backgroundColor: colors.surface,
                 borderRadius: settingsLayout.cardRadius,
@@ -311,7 +316,7 @@ export default function UserGuideScreen({ navigation }) {
                   </View>
                 </View>
               ) : null}
-            </View>
+            </Animated.View>
           );
         })}
 
