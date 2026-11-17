@@ -5,15 +5,16 @@ import {
   BackHandler,
   Easing,
   findNodeHandle,
-  KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
+  TouchableOpacity,
   View,
   useWindowDimensions,
 } from "react-native";
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import OverlayPortal, {
   useOverlayAvailable,
   useOverlayActive,
@@ -21,6 +22,7 @@ import OverlayPortal, {
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "./FontText";
+import useReducedMotion from '../../hooks/useReducedMotion';
 import {
   colors,
   radii,
@@ -29,6 +31,7 @@ import {
   sheetLayout,
   space,
   reviewControls,
+  motion,
 } from "../../theme/tokens";
 
 function focusAccessibility(ref) {
@@ -54,7 +57,9 @@ function SheetSurface({
 }) {
   const { height } = useWindowDimensions();
   const topLayer = useOverlayActive();
+  const reducedMotion = useReducedMotion();
   const offset = useRef(new Animated.Value(height)).current;
+  const scrim = useRef(new Animated.Value(0)).current;
   const heading = useRef(null);
   const started = useRef(false);
   const entered = useRef(false);
@@ -62,26 +67,46 @@ function SheetSurface({
   const active = useRef(visible);
   const measured = useRef(0);
   const animationRun = useRef(0);
+  const entryFrame = useRef(null);
   active.current = visible && topLayer;
   useEffect(() => {
     mounted.current = true;
     return () => {
       mounted.current = false;
+      if (entryFrame.current !== null) cancelAnimationFrame(entryFrame.current);
       offset.stopAnimation();
+      scrim.stopAnimation();
     };
-  }, [offset]);
+  }, [offset, scrim]);
   useEffect(() => {
     if (!visible) {
       animationRun.current++;
+      if (entryFrame.current !== null) cancelAnimationFrame(entryFrame.current);
+      entryFrame.current = null;
       started.current = false;
       entered.current = false;
       offset.stopAnimation();
       offset.setValue(height);
+      scrim.stopAnimation();
+      scrim.setValue(0);
     } else if (measured.current) enter();
-  }, [visible, offset]);
+  }, [visible, offset, scrim]);
   useEffect(() => {
     if (topLayer && visible && entered.current) focusAccessibility(heading);
   }, [topLayer, visible]);
+  useEffect(() => {
+    if (reducedMotion && visible && started.current && !entered.current) {
+      animationRun.current++;
+      if (entryFrame.current !== null) cancelAnimationFrame(entryFrame.current);
+      entryFrame.current = null;
+      offset.stopAnimation();
+      offset.setValue(0);
+      scrim.stopAnimation();
+      scrim.setValue(1);
+      entered.current = true;
+      if (active.current) focusAccessibility(heading);
+    }
+  }, [reducedMotion, visible, offset, scrim]);
   function enter(event) {
     if (event) measured.current = event.nativeEvent.layout.height;
     if (!visible) return;
@@ -89,12 +114,26 @@ function SheetSurface({
     started.current = true;
     const run = ++animationRun.current;
     offset.setValue(measured.current || height);
-    AccessibilityInfo.isReduceMotionEnabled()
-      .then((reduced) => {
+    // Never wait for a native preference Promise. Commit the measured starting
+    // pose before native timing begins so mounting cannot consume the animation.
+    if (reducedMotion) {
+      offset.setValue(0);
+      scrim.setValue(1);
+      entered.current = true;
+      if (active.current) focusAccessibility(heading);
+    } else {
+      entryFrame.current = requestAnimationFrame(() => {
+        entryFrame.current = null;
         if (!mounted.current || run !== animationRun.current) return;
+        Animated.timing(scrim, {
+          toValue: 1,
+          duration: sheetLayout.duration,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }).start();
         Animated.timing(offset, {
           toValue: 0,
-          duration: reduced ? 0 : sheetLayout.duration,
+          duration: sheetLayout.duration,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }).start(({ finished }) => {
@@ -103,14 +142,8 @@ function SheetSurface({
             if (active.current) focusAccessibility(heading);
           }
         });
-      })
-      .catch(() => {
-        if (mounted.current && run === animationRun.current) {
-          offset.setValue(0);
-          entered.current = true;
-          if (active.current) focusAccessibility(heading);
-        }
       });
+    }
   }
   const body = scroll ? (
     <ScrollView
@@ -138,10 +171,12 @@ function SheetSurface({
   );
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior="padding"
       style={[styles.host, { paddingTop: Math.max(insets.top, space.lg) }]}
     >
-      <Pressable accessible={false} onPress={close} style={styles.backdrop} />
+      <Animated.View style={[styles.backdrop, { opacity: scrim }]}>
+        <Pressable accessible={false} onPress={close} style={StyleSheet.absoluteFillObject} />
+      </Animated.View>
       <Animated.View
         onLayout={enter}
         accessibilityViewIsModal
@@ -170,16 +205,17 @@ function SheetSurface({
           >
             {title}
           </Text>
-          <Pressable
+          <TouchableOpacity
             disabled={busy}
             accessibilityRole="button"
             accessibilityLabel="Close sheet"
             accessibilityState={{ disabled: busy }}
             onPress={close}
-            style={styles.close}
+            activeOpacity={motion.pressedOpacity}
+            style={[styles.close, { opacity: busy ? motion.disabledOpacity : 1 }]}
           >
             <Feather name="x" size={sizes.icon} color={colors.muted} />
-          </Pressable>
+          </TouchableOpacity>
         </View>
         {body}
       </Animated.View>
