@@ -128,7 +128,7 @@ export default function AcademicYearFilterSheet({
                   style={{
                     width: 18,
                     height: 18,
-                    borderRadius: 9,
+                    borderRadius: radii.chip,
                     borderWidth: 1.5,
                     borderColor: isSelected ? colors.blue : colors.border,
                     alignItems: 'center',
