@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { Text } from '../../components/common/FontText';
 import SettingsHeader from '../../components/settings/SettingsHeader';
-import { colors, radii, type } from '../../theme/tokens';
+import { colors, radii, type, space, sizes, settingsLayout } from '../../theme/tokens';
 import { LEGAL_DOCUMENTS, CONTACT_EMAIL, APP_VERSION } from '../../data/legalContent';
 
 export default function LegalDocumentScreen({ route, navigation }) {
@@ -20,9 +20,10 @@ export default function LegalDocumentScreen({ route, navigation }) {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.profileBlue, paddingTop: insets.top }}>
+    <View style={{ flex: 1, backgroundColor: colors.background, paddingTop: insets.top }}>
       {/* Header */}
       <SettingsHeader
+        variant="grouped"
         title={doc.title}
         subtitle={doc.eyebrow}
         onBack={() => navigation.goBack()}
@@ -35,39 +36,35 @@ export default function LegalDocumentScreen({ route, navigation }) {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            colors={['#1a59a5', '#fdc849']}
-            tintColor="#FFFFFF"
+            colors={[colors.blue, colors.yellow]}
+            tintColor={colors.blue}
           />
         }
         contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingTop: 2,
-          paddingBottom: Math.max(insets.bottom, 16) + 16,
+          paddingHorizontal: space.lg,
+          paddingTop: space.lg,
+          paddingBottom: Math.max(insets.bottom, space.lg) + space.lg,
         }}
       >
         {/* Hero Meta Card */}
         <View
           style={{
             backgroundColor: colors.surface,
-            borderRadius: radii.listCard,
+            borderRadius: settingsLayout.cardRadius,
             borderWidth: 1,
             borderColor: colors.border,
-            padding: 14,
-            marginBottom: 10,
-            shadowColor: '#183A60',
-            shadowOffset: { width: 0, height: 1.5 },
-            shadowOpacity: 0.035,
-            shadowRadius: 6,
-            elevation: 1,
+            padding: space.lg,
+            marginBottom: space.lg,
           }}
         >
           {/* Eyebrow & Status Row */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: space.sm, marginBottom: space.md }}>
             <Text
               style={{
                 ...type.meta,
                 fontFamily: 'DMSans_600SemiBold',
                 fontSize: type.meta.fontSize,
+                flexShrink: 1,
                 letterSpacing: 0.6,
                 color: colors.blue,
                 textTransform: 'uppercase',
@@ -80,7 +77,7 @@ export default function LegalDocumentScreen({ route, navigation }) {
                 paddingHorizontal: 7,
                 paddingVertical: 2.5,
                 borderRadius: radii.chip,
-                backgroundColor: doc.isDraft ? '#FFF4D5' : '#E8EFF8',
+                backgroundColor: doc.isDraft ? colors.warningSurface : colors.selectedSurface,
               }}
             >
               <Text
@@ -88,7 +85,7 @@ export default function LegalDocumentScreen({ route, navigation }) {
                   ...type.notificationBadge,
                   fontFamily: 'DMSans_700Bold',
                   fontSize: type.meta.fontSize,
-                  color: doc.isDraft ? '#875100' : colors.blue,
+                  color: doc.isDraft ? colors.warning : colors.blue,
                 }}
               >
                 {doc.status}
@@ -146,16 +143,11 @@ export default function LegalDocumentScreen({ route, navigation }) {
             key={section.number}
             style={{
               backgroundColor: colors.surface,
-              borderRadius: radii.listCard,
+              borderRadius: settingsLayout.cardRadius,
               borderWidth: 1,
               borderColor: colors.border,
-              padding: 14,
-              marginBottom: 10,
-              shadowColor: '#183A60',
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.03,
-              shadowRadius: 5,
-              elevation: 1,
+              padding: space.lg,
+              marginBottom: space.lg,
             }}
           >
             {/* Section Header */}
@@ -203,7 +195,7 @@ export default function LegalDocumentScreen({ route, navigation }) {
                       ...type.body,
                       fontSize: type.field.fontSize,
                       lineHeight: type.field.lineHeight,
-                      color: '#334155',
+                      color: colors.text,
                       marginBottom: idx < section.paragraphs.length - 1 ? 8 : 0,
                     }}
                   >
@@ -225,7 +217,7 @@ export default function LegalDocumentScreen({ route, navigation }) {
                         ...type.body,
                         fontSize: type.field.fontSize,
                         lineHeight: type.field.lineHeight,
-                        color: '#334155',
+                        color: colors.text,
                         flex: 1,
                       }}
                     >
@@ -242,12 +234,12 @@ export default function LegalDocumentScreen({ route, navigation }) {
         <View
           style={{
             backgroundColor: colors.selectedSurface,
-            borderRadius: radii.listCard,
+            borderRadius: settingsLayout.cardRadius,
             borderWidth: 1,
-            borderColor: '#CBD5E1',
-            padding: 12,
+            borderColor: colors.border,
+            padding: space.lg,
             marginTop: 4,
-            marginBottom: 14,
+            marginBottom: space.lg,
             alignItems: 'center',
           }}
         >
@@ -255,7 +247,7 @@ export default function LegalDocumentScreen({ route, navigation }) {
             style={{
               width: 32,
               height: 32,
-              borderRadius: radii.listCard,
+              borderRadius: settingsLayout.cardRadius,
               backgroundColor: colors.surface,
               alignItems: 'center',
               justifyContent: 'center',
@@ -288,8 +280,11 @@ export default function LegalDocumentScreen({ route, navigation }) {
             accessibilityRole="button"
             accessibilityLabel="Send email inquiry regarding policy"
             style={{
-              paddingVertical: 5,
-              paddingHorizontal: 12,
+              minHeight: sizes.touch,
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingVertical: space.md,
+              paddingHorizontal: space.lg,
               borderRadius: radii.pill,
               backgroundColor: colors.blue,
             }}
@@ -306,7 +301,7 @@ export default function LegalDocumentScreen({ route, navigation }) {
             style={{
               ...type.meta,
               fontSize: type.meta.fontSize,
-              color: colors.onBrand,
+              color: colors.muted,
               textAlign: 'center',
             }}
           >
@@ -316,7 +311,7 @@ export default function LegalDocumentScreen({ route, navigation }) {
             style={{
               ...type.meta,
               fontSize: type.meta.fontSize,
-              color: 'rgba(255, 255, 255, 0.75)',
+              color: colors.muted,
               marginTop: 1.5,
               textAlign: 'center',
             }}
