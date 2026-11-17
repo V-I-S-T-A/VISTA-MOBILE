@@ -1,9 +1,11 @@
+import { PullRefreshScrollView as ScrollView } from '../../../components/common/PullRefresh';
+import useBottomNavScroll from '../../../hooks/useBottomNavScroll';
 import { useEffect, useRef, useState } from "react";
 import SubmissionSummaryTabs from '../../../components/submissions/SubmissionSummaryTabs';
-import { View, ScrollView, RefreshControl } from "react-native";
+import { View, RefreshControl } from "react-native";
 import { useStaffLayout, useBottomNavClearance } from "../../../theme/layout";
 import StaffBottomNav from "../../../components/staff/StaffBottomNav";
-import StaffReviewHeader from "../reviewPanel/StaffReviewHeader";
+import SubPageHeader from "../../../components/common/SubPageHeader";
 import SubmissionHistoryTop from "./submissionHistory/SubmissionHistoryTop";
 import StaffReviewSearch from "../reviewPanel/StaffReviewSearch";
 import SubmissionHistoryList from "./submissionHistory/SubmissionHistoryList";
@@ -13,6 +15,7 @@ import AcademicYearFilterSheet from '../../../components/submissions/AcademicYea
 
 const filters = ['All Status', 'Pending', 'Approved', 'Rejected'];
 export default function StaffSubmissionHistory({ navigation, route }) {
+  const navScroll = useBottomNavScroll(navigation);
   const screenLayout = useStaffLayout();
   const footerClearance = useBottomNavClearance();
 
@@ -32,14 +35,18 @@ export default function StaffSubmissionHistory({ navigation, route }) {
 
   return (
     <View className="flex-1 bg-[#F3F3F3]" style={screenLayout.top}>
-      <ScrollView 
+      <View style={screenLayout.horizontal}>
+        <SubPageHeader />
+      </View>
+      <ScrollView {...navScroll.scrollProps}
+        alwaysBounceVertical overScrollMode="always"
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        className="flex-1 pt-2"
+        keyboardShouldPersistTaps="handled"
+        className="flex-1"
         style={screenLayout.horizontal}
         contentContainerStyle={{ paddingBottom: footerClearance }}
         showsVerticalScrollIndicator={false}
       >
-        <StaffReviewHeader />
         <SubmissionHistoryTop />
         <SubmissionSummaryTabs
           staff
@@ -64,7 +71,7 @@ export default function StaffSubmissionHistory({ navigation, route }) {
         />
       </ScrollView>
 
-      <StaffBottomNav
+      <StaffBottomNav scrollBehavior={navScroll}
         activeTab="reports"
         onScanPress={() => openDocumentEntryWithAttachment(navigation)}
         onHomePress={() => navigation?.navigate("StaffHome")}
