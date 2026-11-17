@@ -13,7 +13,8 @@ import useOnboarding from '../hooks/useOnboarding';
 export default function RootNavigator() {
   const { user, role, isRestoring, restoreError, retryRestore } = useAuth();
   const onboarding = useOnboarding();
-
+  // Android animates its existing native splash at handoff. Do not mount a
+  // second React splash between the OS launch screen and onboarding.
   if (isRestoring) return null;
   if (!restoreError && !onboarding.ready) return null;
   let screen;
@@ -31,7 +32,7 @@ export default function RootNavigator() {
   return (
     <View style={{ flex: 1, backgroundColor: '#FFFFFF' }} onLayout={() => { NativeSplash.hideAsync().catch(() => {}); }}>
       <View style={{ flex: 1 }}>{screen}</View>
-      {user && onboarding.completed ? <OfflineBanner bottomOffset={compact.navHeight + nav.actionLift + space.lg} /> : null}
+      {user && onboarding.completed && !restoreError ? <OfflineBanner bottomOffset={compact.navHeight + nav.actionLift + space.lg} /> : null}
     </View>
   );
 }
