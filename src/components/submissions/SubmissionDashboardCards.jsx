@@ -3,7 +3,7 @@ import { TouchableOpacity, View, useWindowDimensions } from "react-native";
 import DashboardCardIllustration from './DashboardCardIllustration';
 import { Text } from "../common/FontText";
 import { DashboardCardsSkeleton } from '../common/Skeleton';
-import { dashboardArtSurfaces, dashboardLayout, dashboardTones, radii, type, space, motion } from '../../theme/tokens';
+import { dashboardLayout, dashboardTones, radii, type, space, motion } from '../../theme/tokens';
 
 function DashboardCard({ onPress, style, label, count, children }) {
   const Card = onPress ? TouchableOpacity : View;
@@ -41,7 +41,6 @@ export default function SubmissionDashboardCards({
   const columns = fontScale >= dashboardLayout.singleColumnFontScale ? 1 : 2;
   const artScale = dashboardLayout.artScale / (columns === 2 ? Math.max(1, fontScale) : 1);
   const artSize = dashboardLayout.artSize * artScale;
-  const insetArtScale = Math.max(0, artSize - space.sm) / dashboardLayout.artSize;
   const cards = [
       { key: 'total', label: totalLabel, count: total, icon: 'folder', onPress: totalOnPress },
       { key: 'pending', label: 'Pending', count: pending, icon: 'clock', onPress: pendingOnPress },
@@ -62,9 +61,9 @@ export default function SubmissionDashboardCards({
               <View style={{ flex: 1, minHeight: 0, flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: space.xs, marginTop: space.xs }}>
                 <Text style={[typography.number, { flexShrink: 1, color: tone.foreground }]}>{card.count ?? '—'}</Text>
                 <View pointerEvents="none" accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
-                  style={{ width: artSize, height: artSize, alignSelf: 'flex-end', flexShrink: 0, backgroundColor: dashboardArtSurfaces[card.key], borderRadius: radii.field, borderCurve: 'continuous' }}>
-                  <View style={{ position: 'absolute', right: space.xs, bottom: space.xs }}>
-                    <DashboardCardIllustration kind={card.key} scale={insetArtScale} />
+                  style={{ width: artSize, height: artSize, alignSelf: 'flex-end', flexShrink: 0 }}>
+                  <View style={{ position: 'absolute', right: 0, bottom: 0 }}>
+                    <DashboardCardIllustration kind={card.key} scale={artScale} />
                   </View>
                 </View>
               </View>
