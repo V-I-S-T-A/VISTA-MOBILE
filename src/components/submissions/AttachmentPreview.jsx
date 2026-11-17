@@ -1,8 +1,10 @@
 import { useRef, useState } from 'react';
-import { ActivityIndicator, Image, Linking, Modal, Platform, ScrollView, StatusBar, StyleSheet, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, Animated, Image, Linking, Modal, Platform, ScrollView, StatusBar, StyleSheet, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import OverlayPortal, { useOverlayAvailable } from '../common/OverlayPortal';
+import useOverlayPresence from '../../hooks/useOverlayPresence';
+import useVisibilityProgress from '../../hooks/useVisibilityProgress';
 import { Text } from '../common/FontText';
 import { colors, radii, sizes, space, type, motion } from '../../theme/tokens';
 import { attachmentPreview } from './attachmentPreviewPolicy.cjs';
@@ -78,12 +80,21 @@ function PreviewContent({ document, onClose }) {
   return body;
 }
 
+function PreviewSurface({ visible, document, onClose, onHidden }) {
+  const opacity = useVisibilityProgress(visible, onHidden);
+  return <Animated.View pointerEvents={visible ? 'auto' : 'none'} accessibilityElementsHidden={!visible} importantForAccessibility={visible ? 'auto' : 'no-hide-descendants'} style={{ flex: 1, opacity }}>
+    <PreviewContent key={document.document_id || document.file_url} document={document} onClose={onClose} />
+  </Animated.View>;
+}
+
 export default function AttachmentPreview({ document, onClose }) {
   const available = useOverlayAvailable();
-  if (!document) return null;
-  const content = <PreviewContent key={document.document_id || document.file_url} document={document} onClose={onClose} />;
-  return Platform.OS === 'android' && available ? <OverlayPortal onRequestClose={onClose}>{content}</OverlayPortal>
-    : <Modal visible statusBarTranslucent navigationBarTranslucent animationType="fade" onRequestClose={onClose}>{content}</Modal>;
+  const presence = useOverlayPresence(!!document, document);
+  if (!presence.present) return null;
+  const close = () => { if (document) onClose(); };
+  const content = <PreviewSurface visible={!!document} document={presence.content} onClose={close} onHidden={presence.onHidden} />;
+  return Platform.OS === 'android' && available ? <OverlayPortal onRequestClose={close}>{content}</OverlayPortal>
+    : <Modal visible statusBarTranslucent navigationBarTranslucent animationType="none" onRequestClose={close}>{content}</Modal>;
 }
 
 const styles = StyleSheet.create({
