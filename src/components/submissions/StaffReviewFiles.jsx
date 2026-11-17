@@ -6,7 +6,7 @@ import { Text } from '../common/FontText';
 import AppInput from '../common/AppInput';
 import AppButton from '../common/AppButton';
 import SelectField from '../staff/SelectField';
-import { colors, type, sizes } from '../../theme/tokens';
+import { colors, type, sizes, radii } from '../../theme/tokens';
 import { PROCESS_FILE_TYPES, APPROVAL_FILE_TYPES, validateReviewFile, isImage } from './staffReviewPolicy.cjs';
 import { imagesToPdf } from '../../utils/imagesToPdf';
 import { scanDocument } from '../../utils/documentScan';
@@ -87,5 +87,5 @@ export default function StaffReviewFiles({ approval = false, label, files, onCha
 const styles = StyleSheet.create({
   group: { gap: 6 }, label: { ...type.label, color: colors.text }, meta: { ...type.meta, color: colors.muted },
   row: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4 }, touch: { minWidth: sizes.touch, minHeight: sizes.touch, alignItems: 'center', justifyContent: 'center' },
-  file: { padding: 8, backgroundColor: colors.field, borderRadius: 12, gap: 4 }, link: { ...type.meta, color: colors.blue }, error: { ...type.meta, color: colors.danger },
+  file: { padding: 8, backgroundColor: colors.field, borderRadius: radii.field, gap: 4 }, link: { ...type.meta, color: colors.blue }, error: { ...type.meta, color: colors.danger },
 });
