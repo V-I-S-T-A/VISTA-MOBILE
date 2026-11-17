@@ -38,13 +38,15 @@ export const dashboardTones = {
 };
 export const dashboardLayout = { singleColumnFontScale: 1.4, artSize: 88, artScale: 0.8, artSpace: 56 };
 export const dashboardArt = { paper: '#F7F3E9', paperEdge: '#DAD7CB', line: '#BFC8C3', gold: '#D8AD55', goldLight: '#EDCB83', goldEdge: '#BB9142', ink: '#738A91', seal: '#F2D4CB' };
+// Separate the artwork from its card: lighter on blue/red, darker on yellow/green.
+export const dashboardArtSurfaces = { total: '#AFCDEC', pending: '#94651A', approved: '#23673A', rejected: '#EDA6A6' };
 export const radii = { field: 16, button: 24, card: 20, sheet: 28, pill: 999, listCard: 20, chip: 12 };
 export const compact = { inset: 8, gutter: 8, leadingInset: 12, paddingHorizontal: 12, paddingVertical: 8, rowGap: 4, iconGap: 4, avatar: 30, accent: 3, chipInset: 8, chipHeight: 32, inputHeight: 40, touch: 48, footerGap: 16, navHeight: 56 };
 export const sizes = { touch: 48, input: 48, avatar: 34, avatarHeader: 32, avatarProfile: 84, accountHeader: 56, icon: 18, navIcon: 22, modalWidth: 340, contentWidth: 600, scrollBottom: 110 };
 export const form = { paddingHorizontal: 12, paddingVertical: 8, labelGap: 4, fieldGap: 8, sectionGap: 12 };
 export const notificationLayout = { avatar: 30, padding: 8, paddingHorizontal: 12, paddingVertical: 8, previewLines: 1, titleLines: 1, unread: 6, radius: radii.listCard, gap: 8 };
 export const sheetLayout = { maxHeight: '80%', handleWidth: 36, handleHeight: 4, padding: 16, gap: 8, duration: 220 };
-export const nav = { padding: 4, radius: 32, selected: colors.blue, selectedSurface: colors.surface, inactive: colors.muted, indicator: 48, actionSize: 44, actionRing: 4, actionLift: 6, ring: 0, lift: 0, bottomGap: 8, hideGap: 24, scroll: { hideDistance: 8, revealDistance: 8, topEdge: 8 } };
+export const nav = { padding: 4, radius: 32, background: colors.blue, selected: colors.yellow, inactive: colors.onBrand, indicator: 48, actionSize: 60, actionIcon: 30, actionRing: 1.5, actionLift: 10, ring: 0, lift: 0, bottomGap: 8, hideGap: 24, scroll: { hideDistance: 8, revealDistance: 8, topEdge: 8 } };
 export const type = {
   regular: 'DMSans_400Regular', medium: 'DMSans_500Medium', bold: 'DMSans_700Bold',
   title: { fontFamily: 'DMSans_600SemiBold', fontSize: 20, lineHeight: 26, letterSpacing: -0.5 },
