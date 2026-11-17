@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { Text } from '../../components/common/FontText';
 import SettingsHeader from '../../components/settings/SettingsHeader';
-import { colors, radii, type } from '../../theme/tokens';
+import { colors, radii, type, space, sizes, settingsLayout } from '../../theme/tokens';
 import { useAuth } from '../../context/AuthContext';
 import { getManualForRole } from '../../data/userManualContent';
 import { APP_VERSION } from '../../data/legalContent';
@@ -47,9 +47,10 @@ export default function UserGuideScreen({ navigation }) {
   const { refreshing, onRefresh: handleRefresh } = useScreenRefresh([]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.profileBlue, paddingTop: insets.top }}>
+    <View style={{ flex: 1, backgroundColor: colors.background, paddingTop: insets.top }}>
       {/* Header */}
       <SettingsHeader
+        variant="grouped"
         title="User Guide"
         subtitle={manual.title}
         onBack={() => navigation.goBack()}
@@ -62,30 +63,25 @@ export default function UserGuideScreen({ navigation }) {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            colors={['#1a59a5', '#fdc849']}
-            tintColor="#FFFFFF"
+            colors={[colors.blue, colors.yellow]}
+            tintColor={colors.blue}
           />
         }
         contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingTop: 2,
-          paddingBottom: Math.max(insets.bottom, 16) + 16,
+          paddingHorizontal: space.lg,
+          paddingTop: space.lg,
+          paddingBottom: Math.max(insets.bottom, space.lg) + space.lg,
         }}
       >
         {/* Hero Role Banner */}
         <View
           style={{
             backgroundColor: colors.surface,
-            borderRadius: radii.listCard,
+            borderRadius: settingsLayout.cardRadius,
             borderWidth: 1,
             borderColor: colors.border,
-            padding: 14,
-            marginBottom: 10,
-            shadowColor: '#183A60',
-            shadowOffset: { width: 0, height: 1.5 },
-            shadowOpacity: 0.035,
-            shadowRadius: 6,
-            elevation: 1,
+            padding: space.lg,
+            marginBottom: space.lg,
           }}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
@@ -94,7 +90,7 @@ export default function UserGuideScreen({ navigation }) {
                 paddingHorizontal: 7,
                 paddingVertical: 2.5,
                 borderRadius: radii.chip,
-                backgroundColor: role === 'student' ? '#DBEAFE' : '#E8EFF8',
+                backgroundColor: colors.selectedSurface,
               }}
             >
               <Text
@@ -112,7 +108,7 @@ export default function UserGuideScreen({ navigation }) {
               onPress={areAllExpanded ? collapseAll : expandAll}
               accessibilityRole="button"
               accessibilityLabel={areAllExpanded ? 'Collapse all sections' : 'Expand all sections'}
-              style={{ paddingVertical: 4, paddingHorizontal: 6 }}
+              style={{ minHeight: sizes.touch, justifyContent: 'center', paddingHorizontal: space.sm }}
             >
               <Text
                 style={{
@@ -184,16 +180,11 @@ export default function UserGuideScreen({ navigation }) {
               key={section.id}
               style={{
                 backgroundColor: colors.surface,
-                borderRadius: radii.listCard,
+                borderRadius: settingsLayout.cardRadius,
                 borderWidth: 1,
                 borderColor: colors.border,
                 marginBottom: 8,
                 overflow: 'hidden',
-                shadowColor: '#183A60',
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.03,
-                shadowRadius: 5,
-                elevation: 1,
               }}
             >
               {/* Accordion Header */}
@@ -204,11 +195,11 @@ export default function UserGuideScreen({ navigation }) {
                 accessibilityState={{ expanded: isExpanded }}
                 activeOpacity={0.7}
                 style={{
-                  minHeight: 48,
+                  minHeight: settingsLayout.rowMinHeight,
                   flexDirection: 'row',
                   alignItems: 'center',
-                  paddingHorizontal: 14,
-                  paddingVertical: 9.5,
+                  paddingHorizontal: space.lg,
+                  paddingVertical: space.md,
                   backgroundColor: colors.surface,
                 }}
               >
@@ -248,7 +239,6 @@ export default function UserGuideScreen({ navigation }) {
                   </Text>
                   {section.summary ? (
                     <Text
-                      numberOfLines={isExpanded ? 2 : 1}
                       style={{
                         fontFamily: 'DMSans_400Regular',
                         fontSize: type.meta.fontSize,
@@ -273,25 +263,21 @@ export default function UserGuideScreen({ navigation }) {
               {isExpanded ? (
                 <View
                   style={{
-                    paddingHorizontal: 14,
+                    paddingHorizontal: space.lg,
                     paddingBottom: 11,
                     paddingTop: 3,
                     borderTopWidth: 1,
-                    borderTopColor: '#F1F5F9',
+                    borderTopColor: colors.divider,
                   }}
                 >
-                  <View style={{ gap: 6, marginTop: 4 }}>
+                  <View style={{ gap: space.md, marginTop: space.md }}>
                     {section.steps.map((step, idx) => (
                       <View
                         key={idx}
                         style={{
                           flexDirection: 'row',
                           alignItems: 'flex-start',
-                          backgroundColor: colors.field,
-                          borderRadius: radii.chip,
-                          padding: 8,
-                          borderWidth: 1,
-                          borderColor: '#EDF2F7',
+                          paddingVertical: space.xs,
                         }}
                       >
                         <View
@@ -312,9 +298,9 @@ export default function UserGuideScreen({ navigation }) {
                         <Text
                           style={{
                             ...type.body,
-                            fontSize: type.meta.fontSize,
-                            lineHeight: type.meta.lineHeight,
-                            color: '#334155',
+                            fontSize: type.body.fontSize,
+                            lineHeight: type.body.lineHeight,
+                            color: colors.text,
                             flex: 1,
                           }}
                         >
@@ -333,12 +319,12 @@ export default function UserGuideScreen({ navigation }) {
         <View
           style={{
             backgroundColor: colors.surface,
-            borderRadius: radii.listCard,
+            borderRadius: settingsLayout.cardRadius,
             borderWidth: 1,
             borderColor: colors.border,
-            padding: 12,
+            padding: space.lg,
             marginTop: 4,
-            marginBottom: 14,
+            marginBottom: space.lg,
             flexDirection: 'row',
             alignItems: 'center',
             gap: 10,
@@ -348,8 +334,8 @@ export default function UserGuideScreen({ navigation }) {
             style={{
               width: 30,
               height: 30,
-              borderRadius: radii.listCard,
-              backgroundColor: '#DBEAFE',
+              borderRadius: settingsLayout.cardRadius,
+              backgroundColor: colors.selectedSurface,
               alignItems: 'center',
               justifyContent: 'center',
             }}
@@ -372,7 +358,7 @@ export default function UserGuideScreen({ navigation }) {
             style={{
               ...type.meta,
               fontSize: type.meta.fontSize,
-              color: colors.onBrand,
+              color: colors.muted,
               textAlign: 'center',
             }}
           >
@@ -382,7 +368,7 @@ export default function UserGuideScreen({ navigation }) {
             style={{
               ...type.meta,
               fontSize: type.meta.fontSize,
-              color: 'rgba(255, 255, 255, 0.75)',
+              color: colors.muted,
               marginTop: 1.5,
               textAlign: 'center',
             }}
