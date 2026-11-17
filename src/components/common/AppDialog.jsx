@@ -24,6 +24,9 @@ export function DialogProvider({ children }) {
     return () => { if (present === enqueue) present = undefined; };
   }, []);
   const dialog = queue[0];
+  const lastDialog = useRef(null);
+  if (dialog) lastDialog.current = dialog;
+  const displayed = dialog || lastDialog.current;
   const choose = button => {
     if (!dialog || acted.current === dialog.id) return;
     acted.current = dialog.id;
@@ -36,7 +39,7 @@ export function DialogProvider({ children }) {
   };
   // Keep consequential confirmations blocking; source choices and ordinary
   // acknowledgements use the same bottom-sheet surface as the rest of the app.
-  const destructive = dialog?.buttons.some(button => button.style === 'destructive');
+  const destructive = displayed?.buttons.some(button => button.style === 'destructive');
   const Presentation = destructive ? AppModal : AppBottomSheet;
   return <>{children}<Presentation title={dialog?.title} visible={!!dialog} onClose={cancel} returnFocusRef={dialog?.options.returnFocusRef} dismissible={!!dialog?.buttons.some(button => button.style === 'cancel') || !!dialog?.options.cancelable}>
     {destructive ? <Text style={{ ...type.heading, color: colors.text }}>{dialog?.title}</Text> : null}
