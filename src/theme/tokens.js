@@ -36,7 +36,7 @@ export const dashboardTones = {
   approved: { background: colors.green, foreground: colors.onBrand },
   rejected: { background: colors.danger, foreground: colors.onBrand },
 };
-export const dashboardLayout = { singleColumnFontScale: 1.4, artSize: 88, artScale: 0.8, artSpace: 56 };
+export const dashboardLayout = { singleColumnFontScale: 1.4, minCardWidth: 136, artSize: 88, artScale: 0.8, artSpace: 56 };
 export const dashboardArt = { paper: '#F7F3E9', paperEdge: '#DAD7CB', line: '#BFC8C3', gold: '#D8AD55', goldLight: '#EDCB83', goldEdge: '#BB9142', ink: '#738A91', seal: '#F2D4CB', clock: colors.blue, clockLight: '#94BCE5', clockInk: colors.navy };
 export const radii = { field: 16, button: 24, card: 20, sheet: 28, pill: 999, listCard: 20, chip: 12 };
 export const compact = { inset: 8, gutter: 8, leadingInset: 12, paddingHorizontal: 12, paddingVertical: 8, rowGap: 4, iconGap: 4, avatar: 30, accent: 3, chipInset: 8, chipHeight: 32, inputHeight: 40, touch: 48, footerGap: 16, navHeight: 56 };
@@ -80,7 +80,7 @@ export const type = {
 
 // Keep motion and depth restrained; compatible with the existing RN 0.81 renderer.
 export const shadows = { card: { boxShadow: '0 2px 8px rgba(20, 43, 82, 0.04)' }, raised: { boxShadow: '0 4px 16px rgba(20, 43, 82, 0.10)' }, navigation: { boxShadow: '0 6px 24px rgba(20, 43, 82, 0.12)' }, indicator: { boxShadow: '0 3px 8px rgba(26, 89, 165, 0.18)' } };
-export const motion = { pressedOpacity: 0.72, disabledOpacity: 0.5, fast: 150, tab: 180, page: 180, pressIn: 90, pressOut: 130, pressedScale: 0.96, modalScale: 0.98, sheet: sheetLayout.duration };
+export const motion = { pressedOpacity: 0.72, disabledOpacity: 0.5, fast: 150, contextual: 200, tab: 180, page: 180, modal: 220, pressIn: 90, pressOut: 130, pressedScale: 0.96, modalScale: 0.98, sheet: sheetLayout.duration };
 export const composerLayout = { minHeight: 48, maxHeight: 112, padding: 8, gap: 8 };
 
 // Opt-in geometry for dense review/archive tools; default forms stay unchanged.
@@ -89,3 +89,5 @@ export const reviewControls = { fieldHeight: 42, attachmentHeight: 44, actionHei
 // Shared inset groups and quiet outline icons throughout Settings.
 export const settingsLayout = { iconSize: space.xxl, iconRadius: 0, rowMinHeight: compact.touch + space.lg, separatorWidth: 1, cardRadius: radii.field, profileAvatar: sizes.touch };
 export const settingsTones = { notification: colors.danger, update: colors.blue, guide: colors.blue, help: colors.profileBlue, support: colors.success, issue: colors.warning, privacy: colors.success, document: colors.blue, community: colors.navy, about: colors.muted };
+// Profile and its loading state share header, avatar and panel geometry.
+export const profileLayout = { headerPaddingTop: space.sm, headerPaddingBottom: space.xl, panelTopGap: 44, avatarTop: -34, contentTop: 68, actionHeight: 42, logoutHeight: 44 };
