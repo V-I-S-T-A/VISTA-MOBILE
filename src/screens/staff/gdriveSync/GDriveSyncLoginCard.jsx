@@ -5,6 +5,8 @@ import TextInput from '../../../components/common/AppInput';
 import { useState } from "react";
 import { View, TouchableOpacity, Image, ActivityIndicator, FlatList } from 'react-native';
 import { DriveSkeleton, Skeleton } from '../../../components/common/Skeleton';
+import ContentState from '../../../components/common/ContentState';
+import useConnectivity from '../../../hooks/useConnectivity';
 import VistaProcessing from '../../../components/common/VistaProcessing';
 import { Feather } from "@expo/vector-icons";
 import GoogleDriveLogo from '../../../components/common/GoogleDriveLogo';
@@ -29,11 +31,13 @@ export function DriveAccountIdentity({ email }) {
 }
 
 export default function GDriveSyncLoginCard() {
+  const online = useConnectivity();
   const toast = useToast();
   const {
     data: connection,
     isLoading: loadingConnection,
     isError: connectionError,
+    error: connectionErrorDetail,
     refetch,
   } = useDriveConnection();
   const authStart = useDriveAuthStart();
@@ -134,21 +138,17 @@ export default function GDriveSyncLoginCard() {
     );
   };
 
-  if (loadingConnection) {
+  if (loadingConnection && online) {
     return (
       <DriveSkeleton />
     );
   }
 
-  if (connectionError) {
+  if (connectionError || (!online && !connection)) {
     return (
       <View className="bg-white rounded-3xl p-4 mb-3  items-center" style={[surfaces.card, panelStyles.card]}>
-        <Text className="text-gray-500 text-xs text-center mb-3">
-          Could not check your Google Drive connection.
-        </Text>
-        <TouchableOpacity style={panelStyles.touch} onPress={() => refetch()} className="bg-vistaNavy rounded-xl px-4 py-3">
-          <Text className="text-white font-medium text-xs">Try again</Text>
-        </TouchableOpacity>
+        <ContentState compact variant="error" title="Could not check your Google Drive connection"
+          error={!online ? { code: 'OFFLINE' } : connectionErrorDetail} onRetry={() => refetch()} />
       </View>
     );
   }
@@ -278,7 +278,9 @@ export default function GDriveSyncLoginCard() {
           </View>
         </View>
 
-        {loadingFolders ? (
+        {!online && !folders.length ? (
+          <ContentState compact variant="error" title="Could not load Drive folders" error={{ code: 'OFFLINE' }} onRetry={() => refetchFolders()} />
+        ) : loadingFolders ? (
           <View style={{ gap: 10, marginVertical: space.sm }}>{[0, 1, 2].map(i => <Skeleton key={i} height={42} radius={reviewControls.radius} />)}</View>
         ) : foldersError ? (
           <View style={{ paddingVertical: space.md, alignItems: 'center', gap: space.xs }}>
@@ -331,9 +333,8 @@ export default function GDriveSyncLoginCard() {
               </TouchableOpacity>
             )}
             ListEmptyComponent={
-              <Text className="text-slate-400 text-xs py-3">
-                No matching folders found.
-              </Text>
+              <ContentState compact title={folderSearch.trim() ? 'No matching folders' : 'No Drive folders yet'}
+                message={folderSearch.trim() ? 'Try another folder name.' : 'Create an archive folder below to get started.'} />
             }
           />
         )}
