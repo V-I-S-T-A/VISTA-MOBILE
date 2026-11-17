@@ -122,7 +122,7 @@ function ScopedDetails({ navigation, user, scope, id }) {
               <SubmissionConversation conversation={conversation} submissionId={id} scope={scope} access={access} documents={access.staff && detail.data.status !== 'rejected' ? detail.data.documents : []} onAccessLost={onAccessLost} onEntryLayout={(key, y) => { entryOffsets.current[key] = y; }} />
             </View>
             {access.staff ? driveTasks.map(task => <ReviewDriveTask key={task.taskId} task={task} onComplete={archiveComplete} />) : null}
-            {access.staff ? <DriveArchiveCard submission={detail.data} /> : null}
+            {access.staff ? <DriveArchiveCard submission={detail.data} handledBy={conversation.entries.find(log => log.new_status === 'approved')} /> : null}
           </>}
         </ScrollView>
       </View>
