@@ -1,20 +1,19 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Keyboard, RefreshControl, ScrollView, TouchableOpacity, View } from 'react-native';
-import { KeyboardStickyView } from 'react-native-keyboard-controller';
+import { PullRefreshScrollView as ScrollView } from '../common/PullRefresh';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Keyboard, RefreshControl, TouchableOpacity, View } from 'react-native';
+import { KeyboardAvoidingView, useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Text } from '../common/FontText';
 import { DetailsSkeleton } from '../common/Skeleton';
-import AccountHeader from '../common/AccountHeader';
 import PageHeading from '../common/PageHeading';
-import BackButton from '../common/BackButton';
-import StaffBottomNav from '../staff/StaffBottomNav';
-import StudentBottomNav from '../students/StudentBottomNav';
+import SubPageHeader from '../common/SubPageHeader';
 import DriveArchiveCard from '../staff/DriveArchiveCard';
 import { useAuth } from '../../context/AuthContext';
-import { useStaffLayout, panelStyles, useBottomNavClearance } from '../../theme/layout';
+import { useStaffLayout, panelStyles } from '../../theme/layout';
 import { submissionsService } from '../../services/submissionsService';
 import { usersService } from '../../services/usersService';
-import { openDocumentEntryWithAttachment } from '../../utils/openDocumentEntryWithAttachment';
 import useSubmissionConversation from '../../hooks/useSubmissionConversation';
 import { capabilities, viewerScope } from './conversationPolicy.cjs';
 import SubmissionTicket from './SubmissionTicket';
@@ -22,6 +21,7 @@ import SubmissionConversation from './SubmissionConversation';
 import ReplyComposer from './ReplyComposer';
 import StaffStatusSheet from './StaffStatusSheet';
 import ReviewDriveTask from './ReviewDriveTask';
+import { colors, space, type, radii, sizes } from '../../theme/tokens';
 
 export default function SubmissionDetailsScreen(props) {
   const { user } = useAuth();
@@ -34,10 +34,16 @@ export default function SubmissionDetailsScreen(props) {
 function ScopedDetails({ navigation, user, scope, id }) {
   const client = useQueryClient();
   const layout = useStaffLayout();
-  const footerClearance = typeof useBottomNavClearance === 'function' ? useBottomNavClearance() : 68;
+  const insets = useSafeAreaInsets();
+  const footerClearance = Math.max(insets.bottom, space.sm);
   const [sheet, setSheet] = useState(false);
   const [lost, setLost] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const scroll = useRef(null);
+  const conversationTop = useRef(0);
+  const entryOffsets = useRef({});
+  const { progress } = useReanimatedKeyboardAnimation();
+  const footerStyle = useAnimatedStyle(() => ({ height: footerClearance * (1 - progress.value) }), [footerClearance]);
   const tasksKey = ['drive', 'review-tasks', scope, id];
   const [driveTasks, setDriveTasks] = useState(() => client.getQueryData?.(tasksKey) || []);
   const trackUpload = task => setDriveTasks(current => {
@@ -80,45 +86,53 @@ function ScopedDetails({ navigation, user, scope, id }) {
     if (fresh.isError) throw fresh.error;
     const history = await conversation.logs.refetch();
     if (history.isError) throw history.error;
+    conversation.clearUpdateDraft?.();
     setSheet(false);
   };
-  const composerVisible = ready && !access.viewOnly && (access.staff || conversation.hasReply) && !!conversation.target;
-  const closedComposerOffset = Math.max(52, footerClearance - 8);
-  return <View style={{ flex: 1, backgroundColor: '#F3F3F3' }}>
+  const composerVisible = ready && !access.viewOnly && (access.staff || (conversation.hasReply && !!conversation.target));
+  const keepTargetVisible = () => {
+    const key = conversation.target?.log.log_id;
+    if (key && entryOffsets.current[key] != null) scroll.current?.scrollTo({ y: Math.max(0, conversationTop.current + (entryOffsets.current.__heading || 0) + entryOffsets.current[key] - space.sm), animated: false });
+  };
+  useEffect(keepTargetVisible, [conversation.target]);
+  return <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
       <View style={[{ flex: 1 }, layout.body]}>
+        <SubPageHeader />
         <ScrollView
-          keyboardShouldPersistTaps="handled"
+          alwaysBounceVertical overScrollMode="always"
+          ref={scroll}
+          style={{ flex: 1 }}
+          onLayout={keepTargetVisible}
+          // Reply focuses an input outside this ScrollView. Releasing that tap
+          // must not blur it again; dragging still dismisses the keyboard.
+          keyboardShouldPersistTaps="always"
           keyboardDismissMode="on-drag"
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} />}
-          contentContainerStyle={{ paddingTop: 8, paddingBottom: composerVisible ? closedComposerOffset + 104 : footerClearance }}>
-          <AccountHeader profileRoute={access.staff ? 'StaffProfile' : 'StudentProfile'} />
-          <PageHeading title="Track Details" subtitle="Submission & conversation" />
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 18 }}><BackButton /><Text style={{ fontSize: 13, color: '#173866' }}>Track Details</Text></View>
+          contentContainerStyle={{ paddingBottom: composerVisible ? space.sm : Math.max(insets.bottom, space.lg) }}>
+          <PageHeading title="Track Details" subtitle="Submission & conversation" compact />
           {(detail.isPending || (!detail.isFetchedAfterMount && !detail.isError)) && id ? <DetailsSkeleton staff={access.staff} /> : !ready ? <View style={{ paddingVertical: 28 }}>
-            <Text style={{ color: '#64748B', marginBottom: 12 }}>{lost ? 'This submission is no longer accessible. Reload to verify your access.' : id ? 'Could not load submission details.' : 'No submission selected.'}</Text>
+            <Text style={{ color: colors.muted, marginBottom: 12 }}>{lost ? 'This submission is no longer accessible. Reload to verify your access.' : id ? 'Could not load submission details.' : 'No submission selected.'}</Text>
             {id ? <TouchableOpacity accessibilityRole="button" onPress={refresh} style={panelStyles.touch}><Text style={{ color: '#165BAB' }}>Reload submission</Text></TouchableOpacity> : null}
           </View> : <>
-            {access.viewOnly ? <View style={{ backgroundColor: '#E8EFF8', borderRadius: 12, padding: 12, marginBottom: 12 }}><Text style={{ color: '#38557B', fontSize: 12 }}>Organization Submission — View Only</Text></View> : null}
+            {access.viewOnly ? <View style={{ backgroundColor: colors.selectedSurface, borderRadius: radii.field, padding: 12, marginBottom: 12 }}><Text style={{ color: '#38557B', fontSize: type.meta.fontSize }}>Organization Submission — View Only</Text></View> : null}
             <SubmissionTicket submission={detail.data} viewerRole={user.role} access={access} user={user} submitter={access.staff ? submitter.data : undefined} handler={conversation.entries[0]} />
-            <SubmissionConversation conversation={conversation} submissionId={id} scope={scope} access={access} onAccessLost={onAccessLost} />
+            <View onLayout={event => { conversationTop.current = event.nativeEvent.layout.y; }}>
+              <SubmissionConversation conversation={conversation} submissionId={id} scope={scope} access={access} onAccessLost={onAccessLost} onEntryLayout={(key, y) => { entryOffsets.current[key] = y; }} />
+            </View>
             {access.staff ? driveTasks.map(task => <ReviewDriveTask key={task.taskId} task={task} onComplete={archiveComplete} />) : null}
             {access.staff ? <DriveArchiveCard submission={detail.data} /> : null}
           </>}
         </ScrollView>
       </View>
-    {composerVisible ? <KeyboardStickyView
-      offset={{ closed: -closedComposerOffset, opened: 0 }}
-      style={{ position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 10 }}>
-      <View style={[layout.horizontal, { paddingTop: 4, paddingBottom: 4, backgroundColor: '#F3F3F3' }]}>
-        <ReplyComposer conversation={conversation} onStatus={access.staff ? () => { Keyboard.dismiss(); setSheet(true); } : undefined} />
+    {composerVisible ? <>
+      <View style={{ width: '100%', maxWidth: sizes.contentWidth, alignSelf: 'center', backgroundColor: colors.surface }}>
+        <ReplyComposer conversation={conversation} user={user} onStatus={access.staff ? () => { Keyboard.dismiss(); setSheet(true); } : undefined} />
       </View>
-    </KeyboardStickyView> : null}
-    {access.staff ? (
-      <StaffBottomNav activeTab="reports" onScanPress={() => openDocumentEntryWithAttachment(navigation)} onHomePress={() => navigation.navigate('StaffHome')} onProfilePress={() => navigation.navigate('StaffDocumentEntry')} onReportsPress={() => navigation.navigate('StaffReviewPanel')} onCloudPress={() => navigation.navigate('GDriveSync')} />
-    ) : (
-      <StudentBottomNav activeTab="tracker" onHomePress={() => navigation.navigate('StudentHome')} onTrackerPress={() => navigation.navigate('StudentTracker')} />
-    )}
-    {ready && access.staff ? <StaffStatusSheet visible={sheet} submission={detail.data} onClose={() => setSheet(false)} onConfirmed={confirmStatus} onQueued={trackUpload} /> : null}
+      <Animated.View accessible={false} style={footerStyle} />
+    </> : null}
+    </KeyboardAvoidingView>
+    {ready && access.staff ? <StaffStatusSheet visible={sheet} submission={detail.data} initialRemarks={conversation.updateDraft || ''} onRemarksChange={conversation.changeUpdateDraft} onClose={() => setSheet(false)} onConfirmed={confirmStatus} onQueued={trackUpload} /> : null}
   </View>;
 }
