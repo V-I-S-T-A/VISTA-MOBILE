@@ -12,7 +12,7 @@ export default function NotificationDetailSheet({ notification, onClose, onOpenS
   return <AppBottomSheet portal visible={!!notification} title="Notification details" onClose={onClose} returnFocusRef={returnFocusRef} contentStyle={{ gap: space.sm }}>
     {notification ? <>
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: space.sm }}>
-        <UserAvatar uri={notification.actor_image_url} size={notificationLayout.avatar} fallbackIcon={<VistaIcon name="file-text" size={18} color={colors.muted} />} />
+        <UserAvatar uri={notification.actor_image_url} size={notificationLayout.avatar} />
         <View style={{ flex: 1, minWidth: 0, gap: space.xs }}>
           <Text accessibilityRole="header" style={{ ...type.cardTitle, color: colors.text }}>{notification.submission_title || (notification.submission_id ? `Submission ${notification.submission_id.slice(0, 8)}` : 'Submission update')}</Text>
           <Text style={{ ...type.meta, color: colors.muted }}>{status.label} · {formatTime(notification.created_at)}</Text>
