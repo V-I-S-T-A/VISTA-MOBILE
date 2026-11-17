@@ -14,7 +14,7 @@ import VistaProcessing from '../../components/common/VistaProcessing';
 import { ProfileSkeleton } from '../../components/common/Skeleton';
 import { useQuery } from '@tanstack/react-query';
 import UserAvatar from '../../components/common/UserAvatar';
-import { colors, sizes, type, reviewControls, radii } from '../../theme/tokens';
+import { colors, sizes, type, reviewControls, radii, profileLayout } from '../../theme/tokens';
 import { useStaffLayout } from '../../theme/layout';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import useStableBottomLayout from '../../hooks/useStableBottomLayout';
@@ -197,8 +197,8 @@ export default function EditProfileScreen({ navigation }) {
   };
   return (
     <View className="flex-1 bg-[#F3F3F3]" style={{ paddingTop: insets.top, marginBottom: bottomLayout.marginBottom }}>
-      {profile.isPending ? <ProfileSkeleton /> : <>
-      <View style={[screenLayout.horizontal, { paddingTop: 8, paddingBottom: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}>
+      {profile.isPending ? <ProfileSkeleton hasOrganization={!!user?.department} bottomInset={bottomLayout.bottom} /> : <>
+      <View style={[screenLayout.horizontal, { paddingTop: profileLayout.headerPaddingTop, paddingBottom: profileLayout.headerPaddingBottom, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}>
         <TouchableOpacity
           onPress={leaveProfile}
           accessibilityRole="button"
@@ -223,14 +223,14 @@ export default function EditProfileScreen({ navigation }) {
             borderTopLeftRadius: 20,
             borderTopRightRadius: 20,
             overflow: 'visible',
-            marginTop: 44,
+            marginTop: profileLayout.panelTopGap,
           },
         ]}
       >
         <View
           style={{
             position: 'absolute',
-            top: -34,
+            top: profileLayout.avatarTop,
             left: 0,
             right: 0,
             alignItems: 'center',
@@ -291,7 +291,7 @@ export default function EditProfileScreen({ navigation }) {
           contentContainerStyle={{
             flexGrow: 1,
             justifyContent: 'space-between',
-            paddingTop: 68,
+            paddingTop: profileLayout.contentTop,
             paddingBottom: Math.max(bottomLayout.bottom, 16) + 16,
             width: '100%',
             maxWidth: sizes.contentWidth,
@@ -420,7 +420,7 @@ export default function EditProfileScreen({ navigation }) {
                 style={{
                   backgroundColor: colors.yellow,
                   borderRadius: radii.button,
-                  minHeight: 42,
+                  minHeight: profileLayout.actionHeight,
                   alignItems: 'center',
                   justifyContent: 'center',
                   flex: 1,
@@ -442,7 +442,7 @@ export default function EditProfileScreen({ navigation }) {
                 style={{
                   backgroundColor: colors.surface,
                   borderRadius: radii.button,
-                  minHeight: 42,
+                  minHeight: profileLayout.actionHeight,
                   alignItems: 'center',
                   justifyContent: 'center',
                   flex: 1,
@@ -480,7 +480,7 @@ export default function EditProfileScreen({ navigation }) {
                 borderWidth: 1,
                 borderColor: 'rgba(255, 255, 255, 0.35)',
                 borderRadius: radii.button,
-                minHeight: 44,
+                minHeight: profileLayout.logoutHeight,
                 width: '100%',
               }}
               hitSlop={{ top: 2, bottom: 2, left: 0, right: 0 }}
