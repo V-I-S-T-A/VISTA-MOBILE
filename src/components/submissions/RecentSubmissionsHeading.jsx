@@ -28,8 +28,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'DMSans_600SemiBold',
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: type.meta.fontSize,
+    lineHeight: type.meta.lineHeight,
     color: colors.text,
     flex: 1,
     includeFontPadding: false,
@@ -41,8 +41,8 @@ const styles = StyleSheet.create({
   },
   actionText: {
     fontFamily: type.bold,
-    fontSize: 10,
-    lineHeight: 14,
+    fontSize: type.meta.fontSize,
+    lineHeight: type.meta.lineHeight,
     color: colors.blue,
     includeFontPadding: false,
   },
