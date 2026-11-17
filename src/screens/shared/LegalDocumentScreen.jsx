@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useScreenRefresh } from '../../hooks/useScreenRefresh';
 import { ScrollView, View, Linking, TouchableOpacity, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
@@ -12,14 +12,7 @@ export default function LegalDocumentScreen({ route, navigation }) {
   const documentType = route?.params?.documentType || 'privacy';
 
   const doc = LEGAL_DOCUMENTS[documentType] || LEGAL_DOCUMENTS.privacy;
-  const [refreshing, setRefreshing] = useState(false);
-
-  const handleRefresh = () => {
-    setRefreshing(true);
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 250);
-  };
+  const { refreshing, onRefresh: handleRefresh } = useScreenRefresh([]);
 
   const handleEmailSupport = () => {
     const subject = encodeURIComponent(`Legal Inquiry: ${doc.title}`);
@@ -27,7 +20,7 @@ export default function LegalDocumentScreen({ route, navigation }) {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#245EA9', paddingTop: insets.top }}>
+    <View style={{ flex: 1, backgroundColor: colors.profileBlue, paddingTop: insets.top }}>
       {/* Header */}
       <SettingsHeader
         title={doc.title}
@@ -36,6 +29,7 @@ export default function LegalDocumentScreen({ route, navigation }) {
       />
 
       <ScrollView
+        alwaysBounceVertical overScrollMode="always"
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -55,7 +49,7 @@ export default function LegalDocumentScreen({ route, navigation }) {
         <View
           style={{
             backgroundColor: colors.surface,
-            borderRadius: 16,
+            borderRadius: radii.listCard,
             borderWidth: 1,
             borderColor: colors.border,
             padding: 14,
@@ -73,7 +67,7 @@ export default function LegalDocumentScreen({ route, navigation }) {
               style={{
                 ...type.meta,
                 fontFamily: 'DMSans_600SemiBold',
-                fontSize: 10.5,
+                fontSize: type.meta.fontSize,
                 letterSpacing: 0.6,
                 color: colors.blue,
                 textTransform: 'uppercase',
@@ -93,7 +87,7 @@ export default function LegalDocumentScreen({ route, navigation }) {
                 style={{
                   ...type.notificationBadge,
                   fontFamily: 'DMSans_700Bold',
-                  fontSize: 10,
+                  fontSize: type.meta.fontSize,
                   color: doc.isDraft ? '#875100' : colors.blue,
                 }}
               >
@@ -106,8 +100,8 @@ export default function LegalDocumentScreen({ route, navigation }) {
           <Text
             style={{
               ...type.heading,
-              fontSize: 17,
-              lineHeight: 23,
+              fontSize: type.navigationTitle.fontSize,
+              lineHeight: type.navigationTitle.lineHeight,
               fontFamily: 'DMSans_700Bold',
               color: colors.navy,
               marginBottom: 6,
@@ -120,7 +114,7 @@ export default function LegalDocumentScreen({ route, navigation }) {
           <View
             style={{
               backgroundColor: colors.selectedSurface,
-              borderRadius: 10,
+              borderRadius: radii.chip,
               padding: 10,
               marginBottom: 8,
             }}
@@ -128,8 +122,8 @@ export default function LegalDocumentScreen({ route, navigation }) {
             <Text
               style={{
                 ...type.body,
-                fontSize: 12,
-                lineHeight: 17,
+                fontSize: type.meta.fontSize,
+                lineHeight: type.meta.lineHeight,
                 color: colors.text,
               }}
             >
@@ -140,7 +134,7 @@ export default function LegalDocumentScreen({ route, navigation }) {
           {/* Metadata Footer */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
             <Feather name="calendar" size={11} color={colors.muted} />
-            <Text style={{ ...type.meta, fontSize: 10.5, color: colors.muted }}>
+            <Text style={{ ...type.meta, fontSize: type.meta.fontSize, color: colors.muted }}>
               {doc.lastUpdated}
             </Text>
           </View>
@@ -152,7 +146,7 @@ export default function LegalDocumentScreen({ route, navigation }) {
             key={section.number}
             style={{
               backgroundColor: colors.surface,
-              borderRadius: 16,
+              borderRadius: radii.listCard,
               borderWidth: 1,
               borderColor: colors.border,
               padding: 14,
@@ -170,7 +164,7 @@ export default function LegalDocumentScreen({ route, navigation }) {
                 style={{
                   width: 24,
                   height: 24,
-                  borderRadius: 12,
+                  borderRadius: radii.field,
                   backgroundColor: colors.selectedSurface,
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -180,7 +174,7 @@ export default function LegalDocumentScreen({ route, navigation }) {
                 <Text
                   style={{
                     fontFamily: 'DMSans_700Bold',
-                    fontSize: 10.5,
+                    fontSize: type.meta.fontSize,
                     color: colors.blue,
                   }}
                 >
@@ -190,8 +184,8 @@ export default function LegalDocumentScreen({ route, navigation }) {
               <Text
                 style={{
                   fontFamily: 'DMSans_700Bold',
-                  fontSize: 13.5,
-                  lineHeight: 18,
+                  fontSize: type.field.fontSize,
+                  lineHeight: type.field.lineHeight,
                   color: colors.navy,
                   flex: 1,
                 }}
@@ -207,8 +201,8 @@ export default function LegalDocumentScreen({ route, navigation }) {
                     key={idx}
                     style={{
                       ...type.body,
-                      fontSize: 13,
-                      lineHeight: 19,
+                      fontSize: type.field.fontSize,
+                      lineHeight: type.field.lineHeight,
                       color: '#334155',
                       marginBottom: idx < section.paragraphs.length - 1 ? 8 : 0,
                     }}
@@ -223,14 +217,14 @@ export default function LegalDocumentScreen({ route, navigation }) {
               <View style={{ gap: 5, marginTop: 4 }}>
                 {section.bullets.map((b, idx) => (
                   <View key={idx} style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
-                    <Text style={{ fontSize: 13, lineHeight: 18, color: colors.blue, marginRight: 7 }}>
+                    <Text style={{ fontSize: type.field.fontSize, lineHeight: type.field.lineHeight, color: colors.blue, marginRight: 7 }}>
                       •
                     </Text>
                     <Text
                       style={{
                         ...type.body,
-                        fontSize: 13,
-                        lineHeight: 19,
+                        fontSize: type.field.fontSize,
+                        lineHeight: type.field.lineHeight,
                         color: '#334155',
                         flex: 1,
                       }}
@@ -248,7 +242,7 @@ export default function LegalDocumentScreen({ route, navigation }) {
         <View
           style={{
             backgroundColor: colors.selectedSurface,
-            borderRadius: 16,
+            borderRadius: radii.listCard,
             borderWidth: 1,
             borderColor: '#CBD5E1',
             padding: 12,
@@ -261,8 +255,8 @@ export default function LegalDocumentScreen({ route, navigation }) {
             style={{
               width: 32,
               height: 32,
-              borderRadius: 16,
-              backgroundColor: '#FFFFFF',
+              borderRadius: radii.listCard,
+              backgroundColor: colors.surface,
               alignItems: 'center',
               justifyContent: 'center',
               marginBottom: 6,
@@ -270,14 +264,14 @@ export default function LegalDocumentScreen({ route, navigation }) {
           >
             <Feather name="help-circle" size={16} color={colors.blue} />
           </View>
-          <Text style={{ fontFamily: 'DMSans_700Bold', fontSize: 13, color: colors.navy }}>
+          <Text style={{ fontFamily: 'DMSans_700Bold', fontSize: type.field.fontSize, color: colors.navy }}>
             Questions About This Policy?
           </Text>
           <Text
             style={{
               ...type.body,
-              fontSize: 11.5,
-              lineHeight: 16,
+              fontSize: type.meta.fontSize,
+              lineHeight: type.meta.lineHeight,
               color: colors.muted,
               textAlign: 'center',
               marginTop: 2,
@@ -286,7 +280,7 @@ export default function LegalDocumentScreen({ route, navigation }) {
           >
             For inquiries regarding student organization data handling, contact the Office of Student Affairs.
           </Text>
-          <Text style={{ fontFamily: 'DMSans_700Bold', fontSize: 12, color: colors.blue, marginTop: 2, marginBottom: 6 }}>
+          <Text style={{ fontFamily: 'DMSans_700Bold', fontSize: type.meta.fontSize, color: colors.blue, marginTop: 2, marginBottom: 6 }}>
             {CONTACT_EMAIL}
           </Text>
           <TouchableOpacity
@@ -300,7 +294,7 @@ export default function LegalDocumentScreen({ route, navigation }) {
               backgroundColor: colors.blue,
             }}
           >
-            <Text style={{ fontFamily: 'DMSans_700Bold', fontSize: 11, color: '#FFFFFF' }}>
+            <Text style={{ fontFamily: 'DMSans_700Bold', fontSize: type.meta.fontSize, color: colors.onBrand }}>
               Email Project Admin
             </Text>
           </TouchableOpacity>
@@ -311,8 +305,8 @@ export default function LegalDocumentScreen({ route, navigation }) {
           <Text
             style={{
               ...type.meta,
-              fontSize: 11,
-              color: '#FFFFFF',
+              fontSize: type.meta.fontSize,
+              color: colors.onBrand,
               textAlign: 'center',
             }}
           >
@@ -321,7 +315,7 @@ export default function LegalDocumentScreen({ route, navigation }) {
           <Text
             style={{
               ...type.meta,
-              fontSize: 10,
+              fontSize: type.meta.fontSize,
               color: 'rgba(255, 255, 255, 0.75)',
               marginTop: 1.5,
               textAlign: 'center',
