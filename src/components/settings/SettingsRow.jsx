@@ -15,7 +15,7 @@ export default function SettingsRow({
   disabled = false,
   danger = false,
   triggerRef,
-  variant = 'brand',
+  variant = 'grouped',
   iconColor = colors.blue,
   busy = false,
 }) {
@@ -26,7 +26,6 @@ export default function SettingsRow({
     height: settingsLayout.iconSize,
     borderRadius: settingsLayout.iconRadius,
     borderCurve: 'continuous',
-    backgroundColor: danger ? colors.danger : iconColor,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: space.md,
@@ -58,7 +57,7 @@ export default function SettingsRow({
           opacity: disabled ? motion.disabledOpacity : 1,
         }}
       >
-        {/* Icon tiles are an opt-in for the neutral Settings landing page. */}
+        {/* Quiet outline icons align with the inset group separators. */}
         {iconComponent ? (
           <View
             accessible={false}
@@ -76,7 +75,7 @@ export default function SettingsRow({
             <Feather
               name={icon}
               size={sizes.icon}
-              color={grouped ? colors.onBrand : danger ? colors.danger : colors.blue}
+              color={danger ? colors.danger : grouped ? colors.muted : colors.blue}
             />
           </View>
         ) : null}
