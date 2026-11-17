@@ -21,10 +21,30 @@ export function getSubmissionStatus(status) {
   );
 }
 
-export default function SubmissionStatusBadge({ status, size = "regular", showIcon = false }) {
+export default function SubmissionStatusBadge({ status, size = "regular", showIcon = false, variant = "pill" }) {
   const statusStyle = getSubmissionStatus(status);
   const mini = size === 'mini';
   const compact = size === "small" || mini;
+  if (variant === 'dot') {
+    return (
+      <View
+        accessible
+        accessibilityLabel={statusStyle.label}
+        style={styles.dotBadge}
+      >
+        <View style={[styles.dot, { backgroundColor: statusStyle.foreground }]} />
+        <Text
+          style={[
+            styles.dotLabel,
+            { color: statusStyle.foreground },
+            mini ? { fontSize: type.miniBadge.fontSize, lineHeight: type.miniBadge.lineHeight } : compact && { fontSize: type.badge.fontSize, lineHeight: type.badge.lineHeight },
+          ]}
+        >
+          {statusStyle.label}
+        </Text>
+      </View>
+    );
+  }
   return (
     <View
       accessible
@@ -35,7 +55,7 @@ export default function SubmissionStatusBadge({ status, size = "regular", showIc
           backgroundColor: statusStyle.background,
           paddingHorizontal: mini ? 6 : compact ? 6 : 12,
           paddingVertical: mini ? 2 : compact ? 2 : 6,
-          borderRadius: mini ? 8 : radii.pill,
+          borderRadius: mini ? radii.chip : radii.pill,
         },
         showIcon && { flexDirection: 'row', alignItems: 'center', gap: 3 },
       ]}
@@ -52,7 +72,7 @@ export default function SubmissionStatusBadge({ status, size = "regular", showIc
           styles.label,
           { color: statusStyle.foreground },
           mini
-            ? { fontFamily: type.medium, fontSize: 9.5, lineHeight: 13, includeFontPadding: false }
+            ? { ...type.miniBadge, includeFontPadding: false }
             : compact && { ...type.badge },
         ]}
       >
@@ -65,4 +85,7 @@ export default function SubmissionStatusBadge({ status, size = "regular", showIc
 const styles = StyleSheet.create({
   badge: { alignSelf: 'flex-start', flexShrink: 1, maxWidth: '100%', minWidth: 0, borderRadius: radii.pill },
   label: { ...type.label, textAlign: 'center', flexShrink: 1 },
+  dotBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, flexShrink: 0, backgroundColor: 'transparent' },
+  dot: { width: 6, height: 6, borderRadius: 3 },
+  dotLabel: { fontFamily: type.bold, fontSize: type.label.fontSize, lineHeight: type.label.lineHeight, includeFontPadding: false },
 });
