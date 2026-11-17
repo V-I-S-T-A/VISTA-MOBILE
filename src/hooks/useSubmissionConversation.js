@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { uuid } from 'expo-modules-core';
 import { reviewLogsService } from '../services/reviewLogsService';
@@ -21,7 +21,7 @@ export default function useSubmissionConversation({ submissionId, scope, access,
     queryFn: ({ pageParam, signal }) => reviewLogsService.listReviewLogs(submissionId, { page: pageParam, pageSize: 20, signal }),
     initialPageParam: 1, getNextPageParam: nextPage, enabled, retry: false, staleTime: 0,
   });
-  const entries = logs.isError ? [] : uniqueRows(logs.data?.pages, 'log_id');
+  const entries = useMemo(() => logs.isError ? [] : uniqueRows(logs.data?.pages, 'log_id'), [logs.isError, logs.data?.pages]);
   useEffect(() => {
     mounted.current = true;
     return () => { mounted.current = false; abort.current?.abort(); };
