@@ -3,6 +3,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import { authService } from "../services/authService";
@@ -10,6 +11,7 @@ import { tokenStore } from "../lib/tokenStore";
 import { unregisterPush, resumePushSession } from '../services/nativeNotifications';
 import VistaProcessing from '../components/common/VistaProcessing';
 import { queryClient } from "../lib/queryClient";
+import { connectivity, isConnectionError } from '../lib/connectivityState.cjs';
 
 const AuthContext = createContext(null);
 
@@ -20,47 +22,70 @@ export function AuthProvider({ children }) {
   const [isRestoring, setIsRestoring] = useState(true);
   const [restoreError, setRestoreError] = useState(null);
   const [authProcess, setAuthProcess] = useState(null);
+  const sessionRevision = useRef(0);
+  const currentUserRef = useRef(null);
+  currentUserRef.current = user;
+  const rememberUser = async (profile) => {
+    try { await tokenStore.saveCachedUser?.(profile); }
+    catch { /* Online access still works if the optional offline cache cannot be written. */ }
+  };
 
   const restoreSession = useCallback(async () => {
-    setIsRestoring(true);
+    const revision = ++sessionRevision.current;
+    const current = () => revision === sessionRevision.current;
+    setIsRestoring(!currentUserRef.current);
     setRestoreError(null);
     let tokensLoaded = false;
 
     try {
       const storedTokens = await tokenStore.loadTokens();
+      if (!current()) return;
       tokensLoaded = true;
       if (!storedTokens.access && !storedTokens.refresh) return;
 
+      // A verified profile bound to these saved credentials opens the bundled
+      // interface immediately. Server checks still govern all online operations.
+      const cached = tokenStore.getCachedUser?.();
+      if (cached) {
+        setUser(cached); setRole(cached.role); setTokens(storedTokens);
+        setIsRestoring(false);
+      }
+
       const currentUser = await authService.me();
+      if (!current()) return;
+      if (cached && (cached.user_id !== currentUser.user_id || cached.role !== currentUser.role)) {
+        await queryClient.cancelQueries(); queryClient.clear();
+      }
+      await rememberUser(currentUser);
+      if (!current()) return;
       setUser(currentUser);
       setRole(currentUser?.role ?? null);
       setTokens(tokenStore.getTokens());
     } catch (error) {
-      let restoreFailure = error;
-      if (
-        error.status === 401 &&
-        !tokenStore.getRefreshToken() &&
-        tokenStore.getAccessToken()
-      ) {
-        try {
-          await tokenStore.clear();
-        } catch (clearError) {
-          restoreFailure = clearError;
-        }
+      if (!current()) return;
+      const cached = tokenStore.getCachedUser?.();
+      if (cached && (isConnectionError(error) || error.status >= 500)) {
+        setRestoreError(null);
+        return;
       }
-
+      if ([401, 403].includes(error.status)) {
+        await queryClient.cancelQueries(); queryClient.clear();
+        setUser(null); setRole(null); setTokens(null);
+        try { await tokenStore.clear(); }
+        catch (clearError) { if (current()) setRestoreError(clearError); }
+        return;
+      }
       if (
         tokensLoaded &&
         !tokenStore.getAccessToken() &&
-        !tokenStore.getRefreshToken() &&
-        restoreFailure === error
+        !tokenStore.getRefreshToken()
       ) {
         setRestoreError(null);
       } else {
-        setRestoreError(restoreFailure);
+        setRestoreError(error);
       }
     } finally {
-      setIsRestoring(false);
+      if (current()) setIsRestoring(false);
     }
   }, []);
 
@@ -77,12 +102,22 @@ export function AuthProvider({ children }) {
         setUser(null);
         setRole(null);
         setTokens(null);
+        sessionRevision.current++;
+        setIsRestoring(false);
+        setRestoreError(null);
       }
     });
     return unsubscribe;
   }, []);
 
+  useEffect(() => connectivity.subscribe(online => {
+    if (online && (tokenStore.getAccessToken() || tokenStore.getRefreshToken())) restoreSession();
+  }), [restoreSession]);
+
+  useEffect(() => () => { sessionRevision.current++; }, []);
+
   const login = async ({ email, password }) => {
+    sessionRevision.current++;
     setAuthProcess('Signing in…');
     try {
       // Drain/unbind the prior account before replacing its authentication tokens.
@@ -91,7 +126,9 @@ export function AuthProvider({ children }) {
       queryClient.clear();
       const data = await authService.login({ email, password });
       await tokenStore.setTokens(data.tokens);
-      setUser({ ...data.user, is_first_login: !!data.is_first_login });
+      const profile = { ...data.user, is_first_login: !!data.is_first_login };
+      await rememberUser(profile);
+      setUser(profile);
       setRole(data.user?.role ?? null);
       setTokens(tokenStore.getTokens());
       return data;
@@ -102,6 +139,7 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
+    sessionRevision.current++;
     setAuthProcess('Signing out…');
     try {
       try {
@@ -130,7 +168,10 @@ export function AuthProvider({ children }) {
   };
 
   const updateUser = useCallback((newData) => {
-    setUser((prev) => ({ ...prev, ...newData }));
+    const profile = { ...currentUserRef.current, ...newData };
+    currentUserRef.current = profile;
+    setUser(profile);
+    rememberUser(profile);
   }, []);
 
   return (
