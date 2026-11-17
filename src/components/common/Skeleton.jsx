@@ -1,6 +1,6 @@
 import { View, useWindowDimensions } from 'react-native';
 import { surfaces } from '../../theme/layout';
-import { colors, compact, radii, type, notificationLayout, sizes, form, space, reviewControls } from '../../theme/tokens';
+import { colors, compact, radii, type, notificationLayout, sizes, form, space, reviewControls, dashboardLayout, dashboardTones } from '../../theme/tokens';
 
 // Base placeholder component using consistent design tokens
 export function Skeleton({ width = '100%', height = 14, radius = 8, style, light = false }) {
@@ -44,8 +44,8 @@ export function SubmissionListSkeleton({ count = 3 }) {
             marginBottom: compact.gutter || 5,
             borderRadius: radii.listCard || 14,
             borderWidth: 1,
-            borderColor: '#E2E8F0',
-            backgroundColor: '#FFFFFF',
+            borderColor: colors.border,
+            backgroundColor: colors.surface,
           }}
         >
           {/* Avatar */}
@@ -69,54 +69,25 @@ export function SubmissionListSkeleton({ count = 3 }) {
 
 // 2. Dashboard Summary Cards Skeleton — Matches SubmissionDashboardCards.jsx
 export function DashboardCardsSkeleton() {
+  const { fontScale } = useWindowDimensions();
+  const columns = fontScale >= dashboardLayout.singleColumnFontScale ? 1 : 2;
+  const keys = ['total', 'pending', 'approved', 'rejected'];
+  const rows = Array.from({ length: Math.ceil(keys.length / columns) }, (_, index) => keys.slice(index * columns, (index + 1) * columns));
   return (
-    <View accessibilityLabel="Loading dashboard totals" accessibilityRole="progressbar">
-      {/* Primary Card */}
-      <View
-        style={{
-          borderRadius: 18,
-          padding: 12,
-          backgroundColor: '#023C69',
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'flex-end',
-          marginBottom: 12,
-          minHeight: 88,
-        }}
-      >
-        <View style={{ flex: 1, minWidth: 0, gap: 6 }}>
-          <Skeleton width="50%" height={14} radius={4} light />
-          <Skeleton width={70} height={36} radius={6} light />
-        </View>
-        <Skeleton width={38} height={38} radius={10} light />
-      </View>
-
-      {/* Secondary Cards Row */}
-      <View style={{ flexDirection: 'row', gap: 12, marginBottom: 4 }}>
-        {[0, 1].map((i) => (
-          <View
-            key={i}
-            style={{
-              flex: 1,
-              borderRadius: 18,
-              padding: 12,
-              backgroundColor: '#FFFFFF',
-              borderWidth: 1,
-              borderColor: '#E2E8F0',
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'flex-end',
-              minHeight: 78,
-            }}
-          >
-            <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
-              <Skeleton width="65%" height={12} radius={3} />
-              <Skeleton width={45} height={26} radius={6} />
+    <View accessibilityLabel="Loading dashboard totals" accessibilityRole="progressbar" accessibilityState={{ busy: true }}
+      style={{ gap: space.md, marginBottom: space.lg }}>
+      {rows.map((row, index) => (
+        <View key={index} style={{ flexDirection: 'row', gap: space.md }}>
+          {row.map(key => <View key={key} style={{ flex: 1, minWidth: 0, aspectRatio: 1,
+            padding: space.md, overflow: 'hidden', borderRadius: radii.card, borderCurve: 'continuous', backgroundColor: dashboardTones[key].background }}>
+            <Skeleton light width="80%" height={type.sectionTitle.lineHeight * 2 * fontScale} radius={space.xs} />
+            <View style={{ flex: 1, minHeight: 0, flexDirection: 'row', justifyContent: 'space-between', gap: space.xs, marginTop: space.xs }}>
+              <Skeleton light width="35%" height={type.number.lineHeight * fontScale} radius={space.xs} />
+              <Skeleton light width={dashboardLayout.artSpace} height={dashboardLayout.artSpace} radius={radii.field} style={{ alignSelf: 'flex-end' }} />
             </View>
-            <Skeleton width={28} height={28} radius={8} />
-          </View>
-        ))}
-      </View>
+          </View>)}
+        </View>
+      ))}
     </View>
   );
 }
@@ -136,9 +107,9 @@ export function NotificationsSkeleton({ count = 4 }) {
             paddingVertical: notificationLayout.paddingVertical || 7.5,
             marginBottom: notificationLayout.gap || 5,
             borderRadius: notificationLayout.radius || 14,
-            backgroundColor: '#FFFFFF',
+            backgroundColor: colors.surface,
             borderWidth: 1,
-            borderColor: '#E2E8F0',
+            borderColor: colors.border,
           }}
         >
           {/* Avatar icon */}
@@ -172,7 +143,7 @@ export function TrackDetailsSkeleton({ staff = false }) {
       {/* Ticket Banner (Cosmic Purple look) */}
       <View
         style={{
-          borderRadius: 20,
+          borderRadius: radii.card,
           padding: 16,
           backgroundColor: '#1C1033',
           minHeight: 140,
@@ -194,11 +165,11 @@ export function TrackDetailsSkeleton({ staff = false }) {
       {/* Submitter & Documents Info Card */}
       <View
         style={{
-          borderRadius: 16,
+          borderRadius: radii.listCard,
           padding: 14,
-          backgroundColor: '#FFFFFF',
+          backgroundColor: colors.surface,
           borderWidth: 1,
-          borderColor: '#E2E8F0',
+          borderColor: colors.border,
           gap: 10,
         }}
       >
@@ -219,11 +190,11 @@ export function TrackDetailsSkeleton({ staff = false }) {
       {staff ? (
         <View
           style={{
-            borderRadius: 16,
+            borderRadius: radii.listCard,
             padding: 14,
-            backgroundColor: '#FFFFFF',
+            backgroundColor: colors.surface,
             borderWidth: 1,
-            borderColor: '#E2E8F0',
+            borderColor: colors.border,
             gap: 10,
           }}
         >
@@ -235,11 +206,11 @@ export function TrackDetailsSkeleton({ staff = false }) {
       {/* Official Remarks / Conversation Card */}
       <View
         style={{
-          borderRadius: 16,
+          borderRadius: radii.listCard,
           padding: 14,
-          backgroundColor: '#FFFFFF',
+          backgroundColor: colors.surface,
           borderWidth: 1,
-          borderColor: '#E2E8F0',
+          borderColor: colors.border,
           gap: 10,
         }}
       >
@@ -256,11 +227,11 @@ export function TrackDetailsSkeleton({ staff = false }) {
       {/* Reply Composer Skeleton Bar */}
       <View
         style={{
-          borderRadius: 24,
+          borderRadius: radii.sheet,
           height: 48,
-          backgroundColor: '#FFFFFF',
+          backgroundColor: colors.surface,
           borderWidth: 1,
-          borderColor: '#E2E8F0',
+          borderColor: colors.border,
           flexDirection: 'row',
           alignItems: 'center',
           paddingHorizontal: 14,
@@ -281,7 +252,7 @@ export const DetailsSkeleton = TrackDetailsSkeleton;
 export function ProfileSkeleton() {
   return (
     <View
-      style={{ flex: 1, backgroundColor: '#F3F3F3' }}
+      style={{ flex: 1, backgroundColor: colors.background }}
       accessibilityLabel="Loading profile"
       accessibilityRole="progressbar"
     >
@@ -304,7 +275,7 @@ export function ProfileSkeleton() {
       <View
         style={{
           flex: 1,
-          backgroundColor: '#245EA9',
+          backgroundColor: colors.profileBlue,
           borderTopLeftRadius: 20,
           borderTopRightRadius: 20,
           marginTop: 44,
@@ -326,7 +297,7 @@ export function ProfileSkeleton() {
           width={sizes.avatarProfile || 68}
           height={sizes.avatarProfile || 68}
           radius={(sizes.avatarProfile || 68) / 2}
-          style={{ borderWidth: 3, borderColor: '#FFFFFF' }}
+          style={{ borderWidth: 3, borderColor: colors.surface }}
         />
       </View>
 
@@ -335,15 +306,15 @@ export function ProfileSkeleton() {
 
       {/* Form Fields */}
       <View style={{ gap: 12, marginBottom: 16 }}>
-        <Skeleton height={reviewControls.fieldHeight || 42} radius={22} style={{ backgroundColor: '#FFFFFF' }} />
-        <Skeleton height={reviewControls.fieldHeight || 42} radius={22} style={{ backgroundColor: '#FFFFFF' }} />
-        <Skeleton height={reviewControls.fieldHeight || 42} radius={22} style={{ backgroundColor: '#FFFFFF' }} />
+        <Skeleton height={reviewControls.fieldHeight || 42} radius={radii.field} style={{ backgroundColor: colors.surface }} />
+        <Skeleton height={reviewControls.fieldHeight || 42} radius={radii.field} style={{ backgroundColor: colors.surface }} />
+        <Skeleton height={reviewControls.fieldHeight || 42} radius={radii.field} style={{ backgroundColor: colors.surface }} />
       </View>
 
       {/* Account Info / Role Box */}
       <View
         style={{
-          borderRadius: 20,
+          borderRadius: radii.card,
           height: 68,
           backgroundColor: 'rgba(255, 255, 255, 0.16)',
           padding: 12,
@@ -357,8 +328,8 @@ export function ProfileSkeleton() {
 
       {/* Buttons */}
       <View style={{ flexDirection: 'row', gap: 12, marginBottom: 20 }}>
-        <Skeleton width="48%" height={42} radius={22} style={{ backgroundColor: '#FFFFFF' }} />
-        <Skeleton width="48%" height={42} radius={22} style={{ backgroundColor: '#FFFFFF' }} />
+        <Skeleton width="48%" height={42} radius={radii.button} style={{ backgroundColor: colors.surface }} />
+        <Skeleton width="48%" height={42} radius={radii.button} style={{ backgroundColor: colors.surface }} />
       </View>
 
       {/* Version */}
@@ -374,7 +345,7 @@ export function SettingsSkeleton() {
     <View
       style={{
         flex: 1,
-        backgroundColor: '#245EA9',
+        backgroundColor: colors.profileBlue,
         paddingHorizontal: 16,
         paddingTop: 12,
       }}
@@ -390,7 +361,7 @@ export function SettingsSkeleton() {
 
       {/* Section 1 */}
       <Skeleton width={80} height={11} radius={3} light style={{ marginBottom: 6, marginLeft: 4 }} />
-      <View style={{ borderRadius: 16, backgroundColor: '#FFFFFF', padding: 14, marginBottom: 16, gap: 8 }}>
+      <View style={{ borderRadius: radii.listCard, backgroundColor: colors.surface, padding: 14, marginBottom: 16, gap: 8 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <Skeleton width={20} height={20} radius={4} />
           <View style={{ flex: 1, gap: 4 }}>
@@ -403,7 +374,7 @@ export function SettingsSkeleton() {
 
       {/* Section 2 */}
       <Skeleton width={95} height={11} radius={3} light style={{ marginBottom: 6, marginLeft: 4 }} />
-      <View style={{ borderRadius: 16, backgroundColor: '#FFFFFF', padding: 14, marginBottom: 16, gap: 12 }}>
+      <View style={{ borderRadius: radii.listCard, backgroundColor: colors.surface, padding: 14, marginBottom: 16, gap: 12 }}>
         {[0, 1, 2].map((i) => (
           <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <Skeleton width={20} height={20} radius={4} />
@@ -418,7 +389,7 @@ export function SettingsSkeleton() {
 
       {/* Section 3 */}
       <Skeleton width={85} height={11} radius={3} light style={{ marginBottom: 6, marginLeft: 4 }} />
-      <View style={{ borderRadius: 16, backgroundColor: '#FFFFFF', padding: 14, gap: 12 }}>
+      <View style={{ borderRadius: radii.listCard, backgroundColor: colors.surface, padding: 14, gap: 12 }}>
         {[0, 1, 2, 3].map((i) => (
           <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <Skeleton width={20} height={20} radius={4} />
@@ -447,7 +418,7 @@ export function DropdownSkeleton({ count = 3 }) {
             gap: 12,
             paddingVertical: 12,
             borderBottomWidth: i === count - 1 ? 0 : 1,
-            borderBottomColor: '#E2E8F0',
+            borderBottomColor: colors.border,
           }}
         >
           <Skeleton width={18} height={18} radius={9} />
