@@ -6,9 +6,10 @@ import { Text } from '../../components/common/FontText';
 import SettingsHeader from '../../components/settings/SettingsHeader';
 import SettingsSection from '../../components/settings/SettingsSection';
 import SettingsRow from '../../components/settings/SettingsRow';
+import UserAvatar from '../../components/common/UserAvatar';
 import AppBottomSheet from '../../components/common/AppBottomSheet';
 import AppButton from '../../components/common/AppButton';
-import { colors, type, radii, sizes, space, settingsTones } from '../../theme/tokens';
+import { colors, type, radii, sizes, space, settingsTones, settingsLayout } from '../../theme/tokens';
 import { useAuth } from '../../context/AuthContext';
 import { authService } from '../../services/authService';
 import { queryClient } from '../../lib/queryClient';
@@ -143,8 +144,18 @@ export default function SettingsScreen({ navigation }) {
           paddingBottom: Math.max(insets.bottom, space.lg) + space.md,
         }}
       >
+        <View
+          style={{ flexDirection: 'row', alignItems: 'center', gap: space.md, backgroundColor: colors.surface,
+            borderWidth: 1, borderColor: colors.border, borderRadius: settingsLayout.cardRadius,
+            padding: space.lg, marginBottom: space.xxl }}>
+          <UserAvatar uri={user?.image_url} size={settingsLayout.profileAvatar} />
+          <View style={{ flex: 1, minWidth: 0, gap: space.xs }}>
+            <Text style={{ ...type.sectionTitle, color: colors.navy }}>{[user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'Your account'}</Text>
+            {user?.email ? <Text numberOfLines={1} style={{ ...type.meta, color: colors.muted }}>{user.email}</Text> : null}
+          </View>
+        </View>
         {/* Section 1 — Preferences */}
-        <SettingsSection title="PREFERENCES" variant="grouped">
+        <SettingsSection title="Preferences" variant="grouped">
           <SettingsRow
             variant="grouped"
             iconColor={settingsTones.notification}
@@ -155,7 +166,7 @@ export default function SettingsScreen({ navigation }) {
           />
         </SettingsSection>
 
-        <SettingsSection title="APP UPDATE" variant="grouped">
+        <SettingsSection title="App updates" variant="grouped">
           <SettingsRow
             variant="grouped"
             iconColor={settingsTones.update}
@@ -169,7 +180,7 @@ export default function SettingsScreen({ navigation }) {
         </SettingsSection>
 
         {/* Section 2 — Help & Support */}
-        <SettingsSection title="HELP & SUPPORT" variant="grouped">
+        <SettingsSection title="Help & support" variant="grouped">
           <SettingsRow
             variant="grouped"
             iconColor={settingsTones.guide}
@@ -215,7 +226,7 @@ export default function SettingsScreen({ navigation }) {
         </SettingsSection>
 
         {/* Section 3 — Legal & Information */}
-        <SettingsSection title="LEGAL & INFORMATION" variant="grouped">
+        <SettingsSection title="Legal & information" variant="grouped">
           <SettingsRow
             variant="grouped"
             iconColor={settingsTones.privacy}
@@ -302,7 +313,7 @@ export default function SettingsScreen({ navigation }) {
                   style={{
                     backgroundColor: colors.field,
                     borderRadius: radii.chip,
-                    padding: 10,
+                    padding: space.md,
                     minHeight: sizes.touch,
                     justifyContent: 'center',
                     borderWidth: 1,
@@ -327,9 +338,9 @@ export default function SettingsScreen({ navigation }) {
                     <Text
                       style={{
                         ...type.body,
-                        fontSize: type.meta.fontSize,
-                        lineHeight: type.meta.lineHeight,
-                        color: '#475569',
+                        fontSize: type.body.fontSize,
+                        lineHeight: type.body.lineHeight,
+                        color: colors.text,
                         marginTop: 5,
                         paddingTop: 5,
                         borderTopWidth: 1,
@@ -359,7 +370,7 @@ export default function SettingsScreen({ navigation }) {
             style={{
               backgroundColor: colors.field,
               borderRadius: radii.chip,
-              padding: 10,
+              padding: space.lg,
               borderWidth: 1,
               borderColor: colors.border,
               gap: 6,
@@ -367,7 +378,7 @@ export default function SettingsScreen({ navigation }) {
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
               <Feather name="map-pin" size={14} color={colors.blue} />
-              <Text style={{ fontFamily: 'DMSans_600SemiBold', fontSize: type.field.fontSize, color: colors.navy }}>
+              <Text style={{ fontFamily: 'DMSans_600SemiBold', fontSize: type.field.fontSize, color: colors.navy, flex: 1 }}>
                 Student Center Building, Ground Floor
               </Text>
             </View>
@@ -403,7 +414,7 @@ export default function SettingsScreen({ navigation }) {
         returnFocusRef={reportTrigger}
       >
         <View style={{ gap: 8, paddingBottom: 10 }}>
-          <Text style={{ ...type.body, fontSize: type.meta.fontSize, lineHeight: type.meta.lineHeight, color: '#334155' }}>
+          <Text style={{ ...type.body, fontSize: type.meta.fontSize, lineHeight: type.meta.lineHeight, color: colors.text }}>
             Encountered a bug, display glitch, or network problem? Sending a report will include basic diagnostics
             to help resolve it quickly.
           </Text>
