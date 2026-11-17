@@ -4,7 +4,7 @@ import { Text, TextInput as PlainTextInput } from "../../../components/common/Fo
 import TextInput from '../../../components/common/AppInput';
 import { useState } from "react";
 import { View, TouchableOpacity, Image, ActivityIndicator, FlatList } from 'react-native';
-import { DriveSkeleton, Skeleton } from '../../../components/common/Skeleton';
+import { DriveSkeleton, DropdownSkeleton } from '../../../components/common/Skeleton';
 import ContentState from '../../../components/common/ContentState';
 import useConnectivity from '../../../hooks/useConnectivity';
 import VistaProcessing from '../../../components/common/VistaProcessing';
@@ -281,7 +281,7 @@ export default function GDriveSyncLoginCard() {
         {!online && !folders.length ? (
           <ContentState compact variant="error" title="Could not load Drive folders" error={{ code: 'OFFLINE' }} onRetry={() => refetchFolders()} />
         ) : loadingFolders ? (
-          <View style={{ gap: 10, marginVertical: space.sm }}>{[0, 1, 2].map(i => <Skeleton key={i} height={42} radius={reviewControls.radius} />)}</View>
+          <DropdownSkeleton variant="drive" />
         ) : foldersError ? (
           <View style={{ paddingVertical: space.md, alignItems: 'center', gap: space.xs }}>
             <Text style={{ ...reviewControls.value, color: colors.muted, textAlign: 'center' }}>
