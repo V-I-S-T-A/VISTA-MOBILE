@@ -39,7 +39,7 @@ export function SubmissionAttachmentRow({ name, url, document, history = false, 
       <Text style={[styles.fileName, { color: ink }]}>{name}</Text>
       <Feather name={external ? 'external-link' : 'eye'} size={18} color={ink} />
     </TouchableOpacity>
-    {preview ? <AttachmentPreview document={file} onClose={() => setPreview(false)} /> : null}
+    {!external ? <AttachmentPreview document={preview ? file : null} onClose={() => setPreview(false)} /> : null}
   </>;
 }
 
