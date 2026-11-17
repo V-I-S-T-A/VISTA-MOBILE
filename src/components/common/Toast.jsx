@@ -1,5 +1,5 @@
 import { colors, radii, sizes, type, shadows, motion } from '../../theme/tokens';
-import useReducedMotion from '../../hooks/useReducedMotion';
+import useVisibilityProgress from '../../hooks/useVisibilityProgress';
 import { Text } from "./FontText";
 import {
   createContext,
@@ -25,17 +25,20 @@ let idCounter = 0;
 
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
+  const timers = useRef(new Map());
   const insets = useSafeAreaInsets();
+  useEffect(() => () => { timers.current.forEach(clearTimeout); timers.current.clear(); }, []);
 
   const dismiss = useCallback((id) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
+    clearTimeout(timers.current.get(id)); timers.current.delete(id);
+    setToasts(prev => prev.map(toast => toast.id === id ? { ...toast, dismissed: true } : toast));
   }, []);
 
   const show = useCallback(
     (message, variant = "info", duration = 3200, action = null) => {
       const id = ++idCounter;
       setToasts((prev) => [...prev, { id, message, variant, action }]);
-      setTimeout(() => dismiss(id), duration);
+      timers.current.set(id, setTimeout(() => dismiss(id), duration));
       return id;
     },
     [dismiss],
@@ -68,6 +71,7 @@ export function ToastProvider({ children }) {
             key={toast.id}
             toast={toast}
             onPress={() => dismiss(toast.id)}
+            onHidden={() => setToasts(prev => prev.filter(item => item.id !== toast.id))}
           />
         ))}
       </View>
@@ -75,24 +79,14 @@ export function ToastProvider({ children }) {
   );
 }
 
-function ToastItem({ toast, onPress }) {
-  const opacity = useRef(new Animated.Value(0)).current;
-  const reducedMotion = useReducedMotion();
-
-  useEffect(() => {
-    if (reducedMotion) opacity.setValue(1);
-    else Animated.timing(opacity, {
-      toValue: 1,
-      duration: motion.fast,
-      useNativeDriver: true,
-    }).start();
-    return () => opacity.stopAnimation();
-  }, [opacity, reducedMotion]);
+function ToastItem({ toast, onPress, onHidden }) {
+  const opacity = useVisibilityProgress(!toast.dismissed, onHidden);
+  const acted = useRef(false);
 
   const variant = VARIANTS[toast.variant] || VARIANTS.info;
 
   return (
-    <Animated.View style={{ opacity }}>
+    <Animated.View pointerEvents={toast.dismissed ? 'none' : 'auto'} accessibilityElementsHidden={!!toast.dismissed} importantForAccessibility={toast.dismissed ? 'no-hide-descendants' : 'auto'} style={{ opacity }}>
       <View
         accessibilityLiveRegion="polite"
         onTouchEnd={toast.action ? undefined : onPress}
@@ -104,8 +98,11 @@ function ToastItem({ toast, onPress }) {
         </Text>
         {toast.action ? (
           <TouchableOpacity
+            disabled={!!toast.dismissed}
             accessibilityRole="button"
             onPress={() => {
+              if (acted.current || toast.dismissed) return;
+              acted.current = true;
               onPress();
               toast.action.onPress();
             }}
