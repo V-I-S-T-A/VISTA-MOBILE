@@ -1,21 +1,21 @@
 import { useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { colors, compact, radii, sizes, type, nav } from './tokens';
+import { colors, compact, radii, sizes, type, nav, space, shadows } from './tokens';
 import { getStableRestingBottom } from '../components/common/BottomNavFrame';
 
 export function useBottomNavClearance() {
   const insets = useSafeAreaInsets();
   const dimensions = typeof useWindowDimensions === 'function' ? useWindowDimensions() : null;
   const restingBottom = getStableRestingBottom(insets, dimensions);
-  return compact.navHeight + Math.max(restingBottom, compact.iconGap) + compact.footerGap;
+  return compact.navHeight + Math.max(restingBottom, nav.bottomGap) + compact.footerGap;
 }
 
 // One spacing system for staff screens; keep readable content centered on tablets.
 export const layout = {
   background: colors.background,
-  gutter: 20,
+  gutter: space.xl,
   maxContentWidth: sizes.contentWidth,
-  sectionGap: 16,
+  sectionGap: space.lg,
   cardRadius: radii.card,
   controlHeight: sizes.touch,
   scrollBottom: sizes.scrollBottom,
@@ -38,22 +38,23 @@ export const surfaces = {
   card: {
     backgroundColor: colors.surface, borderRadius: radii.card, borderCurve: "continuous",
     borderWidth: 1, borderColor: colors.border,
-    shadowColor: "#183A60", shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.045, shadowRadius: 12, elevation: 1,
+    ...shadows.card,
   },
   field: { borderRadius: radii.field, backgroundColor: colors.field, borderColor: colors.border },
 };
 // Shared shell and hit areas; route-specific bars retain their own actions.
 export const navigationStyles = {
-  shell: { flexDirection: 'row', alignItems: 'center', width: '100%', maxWidth: sizes.contentWidth, alignSelf: 'center', padding: nav.padding, borderRadius: nav.radius, borderCurve: 'continuous', backgroundColor: colors.blue, elevation: 2 },
+  shell: { flexDirection: 'row', alignItems: 'center', width: '100%', maxWidth: sizes.contentWidth, alignSelf: 'center', paddingVertical: nav.padding, paddingHorizontal: space.xs, minHeight: compact.navHeight, borderRadius: nav.radius, borderCurve: 'continuous', backgroundColor: colors.surface, ...shadows.navigation },
   item: { flex: 1, minWidth: sizes.touch, minHeight: sizes.touch, alignItems: 'center', justifyContent: 'center', borderRadius: radii.pill },
+  indicator: { minWidth: nav.indicator, height: nav.indicator, borderRadius: radii.pill, flexDirection: 'row', gap: space.xs, paddingHorizontal: space.sm, alignItems: 'center', justifyContent: 'center' },
   selected: { backgroundColor: nav.selectedSurface },
+  action: { minWidth: nav.actionSize, width: nav.actionSize, height: nav.actionSize, borderWidth: nav.actionRing, borderColor: colors.surface, backgroundColor: colors.blue, ...shadows.indicator },
 };
 export const typography = {
   title: { ...type.title, fontWeight: 'normal' },
   body: { ...type.body, color: colors.muted },
   section: { ...type.heading, fontWeight: 'normal', letterSpacing: -0.25 },
-  number: { fontFamily: "DMSans_700Bold", fontWeight: "normal", fontSize: 28, lineHeight: 32, letterSpacing: -0.7, fontVariant: ["tabular-nums"] },
+  number: { ...type.number, fontWeight: 'normal' },
 };
 
 // Opt-in ticket-balanced panels and list states; do not apply to compact conversations.
