@@ -10,7 +10,7 @@ import { colors, radii, type } from '../../theme/tokens';
 import { useAuth } from '../../context/AuthContext';
 import { ROLES } from '../../constants/roles';
 
-const PROFILE_BLUE = '#245EA9';
+const PROFILE_BLUE = colors.profileBlue;
 
 function StatusPill({ label = 'Enabled' }) {
   return (
@@ -25,7 +25,7 @@ function StatusPill({ label = 'Enabled' }) {
       <Text
         style={{
           fontFamily: 'DMSans_700Bold',
-          fontSize: 10.5,
+          fontSize: type.meta.fontSize,
           color: colors.blue,
         }}
       >
@@ -70,6 +70,7 @@ export default function NotificationPreferencesScreen({ navigation }) {
       />
 
       <ScrollView
+        alwaysBounceVertical overScrollMode="always"
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -156,8 +157,8 @@ export default function NotificationPreferencesScreen({ navigation }) {
           <Text
             style={{
               ...type.meta,
-              fontSize: 10.5,
-              lineHeight: 15,
+              fontSize: type.meta.fontSize,
+              lineHeight: type.meta.lineHeight,
               color: 'rgba(255, 255, 255, 0.8)',
               textAlign: 'center',
             }}
