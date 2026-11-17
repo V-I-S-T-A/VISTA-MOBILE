@@ -40,7 +40,7 @@ export default function SubmissionDocuments({ documents = [] }) {
           </TouchableOpacity>
         );
       })}
-      {selected && current.some(doc => doc === selected) ? <AttachmentPreview document={selected} onClose={() => setSelected(null)} /> : null}
+      {!selected || current.some(doc => doc === selected) ? <AttachmentPreview document={selected} onClose={() => setSelected(null)} /> : null}
     </View>
   );
 }
