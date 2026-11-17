@@ -44,7 +44,7 @@ export default function OnboardingScreen({ onComplete }) {
   return (
     <View style={[styles.screen, { paddingTop: insets.top, paddingLeft: insets.left, paddingRight: insets.right }]}>
       <View style={styles.width}>
-        <View style={styles.header}>
+        <View style={[styles.header, step < 0 && styles.welcomeHeader]}>
           {step < 0 ? (
             <View style={styles.brand}>
               <Image source={require('../../assets/vista-logo.webp')} style={styles.logo} resizeMode="contain" accessible={false} />
@@ -61,9 +61,11 @@ export default function OnboardingScreen({ onComplete }) {
         <View style={styles.width}>
           {step < 0 ? (
             <View style={styles.welcome}>
-              <Text accessibilityRole="header" style={styles.title}>Welcome to VISTA</Text>
-              <Text style={styles.description}>See how VISTA helps you, one feature at a time.</Text>
-              <Text style={styles.caption}>Choose your tour</Text>
+              <View style={styles.welcomeIntro}>
+                <Text accessibilityRole="header" style={styles.title}>Welcome to VISTA</Text>
+                <Text style={styles.description}>See how VISTA helps you, one feature at a time.</Text>
+                <Text style={styles.caption}>Choose your tour</Text>
+              </View>
               {[
                 { id: 'student', title: 'Student', description: 'Monitor documents and follow staff feedback.' },
                 { id: 'staff', title: 'OSA Staff', description: 'Register, review, and organize event documents.' },
@@ -126,13 +128,15 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.surface },
   width: { width: '100%', maxWidth: sizes.contentWidth, alignSelf: 'center' },
   header: { paddingHorizontal: space.lg, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: sizes.touch + space.lg },
+  welcomeHeader: { minHeight: onboardingLayout.logoSize + space.lg },
   brand: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexShrink: 1 },
   logo: { width: onboardingLayout.logoSize, height: onboardingLayout.logoSize },
   brandText: { ...type.heading, color: colors.blue, letterSpacing: 2 },
   back: { width: sizes.touch, minHeight: sizes.touch, borderRadius: radii.pill, borderWidth: 1, borderColor: colors.border, justifyContent: 'center', alignItems: 'center' },
   progress: { ...type.sectionTitle, color: colors.blue },
   scroll: { paddingHorizontal: space.lg, paddingBottom: space.xxl, flexGrow: 1 },
-  welcome: { paddingTop: space.lg, gap: space.md },
+  welcome: { paddingTop: space.xs, gap: space.md },
+  welcomeIntro: { gap: space.xs },
   title: { ...type.title, fontFamily: type.bold, letterSpacing: 0, color: colors.navy },
   description: { ...type.body, color: colors.muted },
   caption: { ...type.label, color: colors.blue },
