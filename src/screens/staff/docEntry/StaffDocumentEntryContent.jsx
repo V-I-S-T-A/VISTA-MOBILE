@@ -7,6 +7,8 @@ import { prepareAttachment } from '../../../services/prepareAttachment';
 import DraftAttachmentPreview from '../../../components/submissions/DraftAttachmentPreview';
 import VistaProcessing from '../../../components/common/VistaProcessing';
 import { FormSkeleton } from '../../../components/common/Skeleton';
+import ContentState from '../../../components/common/ContentState';
+import useConnectivity from '../../../hooks/useConnectivity';
 import { Text } from '../../../components/common/FontText';
 import { useEffect, useMemo, useRef, useState } from "react";
 import { View, Image, TouchableOpacity, ActivityIndicator, Switch, StyleSheet, RefreshControl } from 'react-native';
@@ -29,6 +31,7 @@ function toOption(row, idField, labelFn) {
 }
 
 export default function StaffDocumentEntryContent({ navigation, initialAttachment, navScroll }) {
+  const online = useConnectivity();
   const footerClearance = useBottomNavClearance();
   const { refreshing, onRefresh } = useScreenRefresh([
     ['organizations'], ['categories'], ['document-types'], ['academic-years'], ['users', 'by-organization'],
@@ -50,13 +53,14 @@ export default function StaffDocumentEntryContent({ navigation, initialAttachmen
   const [priority, setPriority] = useState(false);
 
   // --- reference data ---------------------------------------------------
-  const { data: organizations = [], isLoading: loadingOrgs } =
+  const { data: organizations = [], isLoading: loadingOrgs, error: organizationsError } =
     useOrganizations();
-  const { data: categories = [], isLoading: loadingCategories } =
+  const { data: categories = [], isLoading: loadingCategories, error: categoriesError } =
     useCategories();
-  const { data: documentTypes = [], isLoading: loadingDocTypes } =
+  const { data: documentTypes = [], isLoading: loadingDocTypes, error: documentTypesError } =
     useDocumentTypes();
-  const { data: activeAcademicYear, isLoading: loadingAcademicYear } = useActiveAcademicYear();
+  const { data: activeAcademicYear, isLoading: loadingAcademicYear, error: academicYearError } = useActiveAcademicYear();
+  const referenceError = organizationsError || categoriesError || documentTypesError || academicYearError;
   const { data: orgUsers = [], isLoading: loadingOrgUsers } =
     useOrganizationUsers(organization?.id);
 
@@ -300,7 +304,9 @@ export default function StaffDocumentEntryContent({ navigation, initialAttachmen
 
       <PageHeading compact title="Document Entry" subtitle="Registration Portal." />
 
-      {loadingOrgs || loadingCategories || loadingDocTypes || loadingAcademicYear ? <FormSkeleton compact /> : <View style={styles.form}>
+      {!online || referenceError ? <ContentState compact variant="error" title="Could not load form options"
+        error={!online ? { code: 'OFFLINE' } : referenceError} onRetry={onRefresh} /> : null}
+      {online && (loadingOrgs || loadingCategories || loadingDocTypes || loadingAcademicYear) ? <FormSkeleton compact /> : <View style={styles.form}>
         <SelectField
           size="compact"
           label="Organization"
@@ -397,7 +403,7 @@ export default function StaffDocumentEntryContent({ navigation, initialAttachmen
               onRemove={() => { setScannedFile(null); setOcrDraft(null); setOcrNotice(null); }}
             />
           </View>
-        ) : null}
+        ) : !isBusy ? <ContentState compact title="Ready for your document" message="Scan a document or choose a file. You can also continue without an attachment." /> : null}
         <TouchableOpacity
           ref={attachmentTrigger}
           onPress={handleAttachDocument}
