@@ -1,8 +1,8 @@
 import { View } from 'react-native';
 import { Text } from '../common/FontText';
-import { colors, type, radii, shadows, space } from '../../theme/tokens';
+import { colors, type, radii, shadows, space, settingsLayout } from '../../theme/tokens';
 
-export default function SettingsSection({ title, children, style, variant = 'brand' }) {
+export default function SettingsSection({ title, children, style, variant = 'grouped' }) {
   const grouped = variant === 'grouped';
   return (
     <View style={[{ marginBottom: grouped ? space.xxl : space.lg }, style]}>
@@ -15,9 +15,9 @@ export default function SettingsSection({ title, children, style, variant = 'bra
             lineHeight: type.meta.lineHeight,
             letterSpacing: grouped ? 0 : 0.7,
             color: grouped ? colors.muted : colors.onBrand,
-            textTransform: 'uppercase',
+            textTransform: grouped ? 'none' : 'uppercase',
             marginBottom: grouped ? space.sm : 5,
-            marginLeft: grouped ? space.lg : 3,
+            marginLeft: grouped ? space.xs : 3,
           }}
         >
           {title}
@@ -26,9 +26,9 @@ export default function SettingsSection({ title, children, style, variant = 'bra
       <View
         style={{
           backgroundColor: colors.surface,
-          borderRadius: radii.listCard,
+          borderRadius: grouped ? settingsLayout.cardRadius : radii.listCard,
           borderCurve: 'continuous',
-          borderWidth: grouped ? 0 : 1,
+          borderWidth: 1,
           borderColor: colors.border,
           overflow: 'hidden',
           ...(grouped ? {} : shadows.card),
