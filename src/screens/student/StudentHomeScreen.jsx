@@ -19,6 +19,7 @@ import { useStaffLayout, typography, panelStyles } from '../../theme/layout';
 import PageHeading from '../../components/common/PageHeading';
 import { useAuth } from '../../context/AuthContext';
 import StaleWarningBanner from '../../components/common/StaleWarningBanner';
+import ContentState from '../../components/common/ContentState';
 import { isConnectionError } from '../../lib/connectivityState.cjs';
 
 function useSubmissionCounts() {
@@ -73,7 +74,7 @@ export default function StudentHomeScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const screenLayout = useStaffLayout();
   const counts = useSubmissionCounts();
-  const { data, isLoading, isError, error } = useSubmissions({ page_size: 5 });
+  const { data, isLoading, isError, error, refetch } = useSubmissions({ page_size: 5 });
   const submissions = data?.results ?? [];
   const { refreshing, onRefresh } = useScreenRefresh([["student-submissions"], ["submissions"]]);
   const hasData = submissions.length > 0;
@@ -110,9 +111,9 @@ export default function StudentHomeScreen({ navigation }) {
         {isLoading && !hasData ? (
           <SubmissionListSkeleton compact />
         ) : isError && (!hasData || isAuthError) ? (
-          <Text style={[typography.body, panelStyles.inlineState]}>Could not load submissions.</Text>
+          <ContentState compact variant="error" title="Could not load submissions" error={error} onRetry={refetch} />
         ) : submissions.length === 0 ? (
-          <Text style={[typography.body, panelStyles.inlineState]}>No submissions yet.</Text>
+          <ContentState compact title="No submissions yet" message="Your recent submissions will appear here." />
         ) : (
           <>
             {isError && hasData && !isAuthError ? <StaleWarningBanner /> : null}
