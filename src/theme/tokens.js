@@ -37,9 +37,7 @@ export const dashboardTones = {
   rejected: { background: colors.danger, foreground: colors.onBrand },
 };
 export const dashboardLayout = { singleColumnFontScale: 1.4, artSize: 88, artScale: 0.8, artSpace: 56 };
-export const dashboardArt = { paper: '#F7F3E9', paperEdge: '#DAD7CB', line: '#BFC8C3', gold: '#D8AD55', goldLight: '#EDCB83', goldEdge: '#BB9142', ink: '#738A91', seal: '#F2D4CB' };
-// Separate the artwork from its card: lighter on blue/red, darker on yellow/green.
-export const dashboardArtSurfaces = { total: '#AFCDEC', pending: '#94651A', approved: '#23673A', rejected: '#EDA6A6' };
+export const dashboardArt = { paper: '#F7F3E9', paperEdge: '#DAD7CB', line: '#BFC8C3', gold: '#D8AD55', goldLight: '#EDCB83', goldEdge: '#BB9142', ink: '#738A91', seal: '#F2D4CB', clock: colors.blue, clockLight: '#94BCE5', clockInk: colors.navy };
 export const radii = { field: 16, button: 24, card: 20, sheet: 28, pill: 999, listCard: 20, chip: 12 };
 export const compact = { inset: 8, gutter: 8, leadingInset: 12, paddingHorizontal: 12, paddingVertical: 8, rowGap: 4, iconGap: 4, avatar: 30, accent: 3, chipInset: 8, chipHeight: 32, inputHeight: 40, touch: 48, footerGap: 16, navHeight: 56 };
 export const sizes = { touch: 48, input: 48, avatar: 34, avatarHeader: 32, avatarProfile: 84, accountHeader: 56, icon: 18, navIcon: 22, modalWidth: 340, contentWidth: 600, scrollBottom: 110 };
