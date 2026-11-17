@@ -6,6 +6,7 @@ import SplashScreen from "../screens/SplashScreen";
 import AuthNavigator from "./AuthNavigator";
 import StudentNavigator from "./StudentNavigator";
 import StaffNavigator from "./StaffNavigator";
+import OfflineBanner from '../components/common/OfflineBanner';
 
 export default function RootNavigator() {
   const { user, role, isRestoring, restoreError, retryRestore } = useAuth();
@@ -25,7 +26,8 @@ export default function RootNavigator() {
   // Hide only once real content (including the recoverable error state) lays out.
   return (
     <View style={{ flex: 1, backgroundColor: '#FFFFFF' }} onLayout={() => { NativeSplash.hideAsync().catch(() => {}); }}>
-      {screen}
+      <OfflineBanner />
+      <View style={{ flex: 1 }}>{screen}</View>
     </View>
   );
 }
