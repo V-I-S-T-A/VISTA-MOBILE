@@ -1,11 +1,13 @@
 import { AppAlert as Alert } from '../../../components/common/AppDialog';
 import { surfaces, panelStyles } from "../../../theme/layout";
-import { Text, TextInput } from "../../../components/common/FontText";
+import { Text, TextInput as PlainTextInput } from "../../../components/common/FontText";
+import TextInput from '../../../components/common/AppInput';
 import { useState } from "react";
 import { View, TouchableOpacity, Image, ActivityIndicator, FlatList } from 'react-native';
 import { DriveSkeleton, Skeleton } from '../../../components/common/Skeleton';
 import VistaProcessing from '../../../components/common/VistaProcessing';
-import { MaterialCommunityIcons, Feather } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
+import GoogleDriveLogo from '../../../components/common/GoogleDriveLogo';
 import {
   useDriveConnection,
   useDriveAuthStart,
@@ -16,7 +18,7 @@ import {
 } from "../../../hooks/useDrive";
 import { runDriveAuthSession } from "../../../utils/driveAuth";
 import { useToast } from "../../../components/common/Toast";
-import { colors, space, type } from '../../../theme/tokens';
+import { colors, radii, reviewControls, sizes, space, type } from '../../../theme/tokens';
 
 export function DriveAccountIdentity({ email }) {
   const accountEmail = typeof email === 'string' ? email.trim() : '';
@@ -45,11 +47,11 @@ export default function GDriveSyncLoginCard() {
   const [showCreateFolder, setShowCreateFolder] = useState(false);
   const [showFolderPicker, setShowFolderPicker] = useState(false);
 
-  const { data: folders = [], isLoading: loadingFolders, isError: foldersError, refetch: refetchFolders } =
-    useDriveFolders(folderSearch);
-
   const isConnected = !!connection?.connected;
   const hasFolder = isConnected && !!connection?.folder_id;
+
+  const { data: folders = [], isLoading: loadingFolders, isError: foldersError, error: foldersErrorDetail, refetch: refetchFolders } =
+    useDriveFolders(folderSearch, { enabled: isConnected && (!hasFolder || showFolderPicker) });
 
   const handleSignIn = async () => {
     setIsAuthorizing(true);
@@ -155,11 +157,7 @@ export default function GDriveSyncLoginCard() {
     return (
       <View className="bg-white rounded-3xl p-4 mb-3  border border-gray-100 items-center" style={[surfaces.card, panelStyles.card]}>
         <VistaProcessing visible={isAuthorizing} message="Connecting Google Drive…" />
-        <View className="bg-[#eef2ff] w-12 h-12 rounded-2xl items-center justify-center mb-3">
-          <View className="bg-vistaNavy w-8 h-8 rounded-xl items-center justify-center">
-            <MaterialCommunityIcons name="line-scan" size={18} color="white" />
-          </View>
-        </View>
+        <View style={{ padding: space.sm, marginBottom: space.md }}><GoogleDriveLogo /></View>
 
         <Text className="text-vistaNavy font-medium text-sm mb-2">
           Internal Staff Login
@@ -216,52 +214,101 @@ export default function GDriveSyncLoginCard() {
     return (
       <View className="bg-white rounded-3xl p-4 mb-3  border border-gray-100" style={[surfaces.card, panelStyles.card]}>
         <VistaProcessing visible={selectFolderMutation.isPending || createFolderMutation.isPending || disconnectMutation.isPending} message={disconnectMutation.isPending ? 'Disconnecting Google Drive…' : 'Saving your Drive folder…'} />
-        <View className="flex-row items-center mb-2">
-          <View className="bg-[#e7f6ec] w-10 h-10 rounded-xl items-center justify-center mr-3">
-            <Feather name="check-circle" size={18} color="#16a34a" />
-          </View>
+        <View className="flex-row items-center mb-3">
+          <View style={{ marginRight: space.md }}><GoogleDriveLogo /></View>
           <DriveAccountIdentity email={connection.google_account_email} />
-          <TouchableOpacity style={panelStyles.touch}
+          <TouchableOpacity
+            style={{ width: sizes.touch, height: sizes.touch, alignItems: 'center', justifyContent: 'center' }}
             onPress={handleDisconnect}
             disabled={disconnectMutation.isPending}
+            accessibilityRole="button"
+            accessibilityLabel="Disconnect Google Drive"
           >
-            <Feather name="log-out" size={18} color="#dc2626" />
+            <Feather name="log-out" size={18} color={colors.danger} />
           </TouchableOpacity>
         </View>
 
-        <Text className="text-vistaNavy font-medium text-xs mb-2">
-          {hasFolder ? "Change archive folder" : "Choose an archive folder"}
-        </Text>
-        <Text className="text-gray-500 text-xs leading-5 mb-2">
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: space.xs }}>
+          <Text style={{ ...type.sectionTitle, color: colors.navy, flex: 1 }}>
+            {hasFolder ? "Change archive folder" : "Choose an archive folder"}
+          </Text>
+          {hasFolder ? (
+            <TouchableOpacity
+              style={{ minHeight: sizes.touch, justifyContent: 'center', paddingLeft: space.sm }}
+              onPress={() => setShowFolderPicker(false)}
+            >
+              <Text style={{ ...reviewControls.action, color: colors.blue }}>Cancel</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
+        <Text style={{ ...type.meta, color: colors.muted, marginBottom: space.md }}>
           Approved submissions will be organized under this folder as Academic
           Year → Organization → Title.
         </Text>
 
-        {hasFolder ? (
-          <TouchableOpacity style={panelStyles.touch} onPress={() => setShowFolderPicker(false)} className="self-end mb-2">
-            <Text className="text-vistaNavy text-xs font-medium">Cancel</Text>
-          </TouchableOpacity>
-        ) : null}
-
-        <View className="flex-row items-center bg-[#eef0f3] border border-gray-200 rounded-lg px-3 min-h-[48px] mb-3">
-          <Feather name="search" size={16} color="#9ca3af" />
-          <TextInput
-            value={folderSearch}
-            onChangeText={setFolderSearch}
-            placeholder="Search your Drive folders..."
-            placeholderTextColor="#9ca3af"
-            className="flex-1 text-[13px] text-gray-700 ml-2 min-h-[48px] p-0"
-          />
+        <View style={{ minHeight: sizes.touch, justifyContent: 'center', marginBottom: space.sm }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: colors.field,
+              borderWidth: 1,
+              borderColor: colors.border,
+              borderRadius: reviewControls.radius,
+              paddingHorizontal: reviewControls.padding,
+              minHeight: reviewControls.fieldHeight,
+              gap: space.sm,
+            }}
+          >
+            <Feather name="search" size={reviewControls.icon} color={colors.muted} />
+            <PlainTextInput
+              value={folderSearch}
+              onChangeText={setFolderSearch}
+              placeholder="Search your Drive folders..."
+              accessibilityLabel="Search Drive folders"
+              placeholderTextColor={colors.placeholder}
+              style={{
+                flex: 1,
+                ...reviewControls.value,
+                color: colors.text,
+                paddingVertical: 0,
+                includeFontPadding: false,
+              }}
+            />
+          </View>
         </View>
 
         {loadingFolders ? (
-          <View style={{ gap: 12, marginVertical: 12 }}>{[0, 1, 2].map(i => <Skeleton key={i} height={44} radius={12} />)}</View>
+          <View style={{ gap: 10, marginVertical: space.sm }}>{[0, 1, 2].map(i => <Skeleton key={i} height={42} radius={reviewControls.radius} />)}</View>
         ) : foldersError ? (
-          <View className="py-3 items-center">
-            <Text className="text-gray-500 text-xs mb-2">Could not load Drive folders.</Text>
-            <TouchableOpacity style={panelStyles.touch} onPress={() => refetchFolders()}>
-              <Text className="text-vistaNavy text-xs font-medium">Try again</Text>
-            </TouchableOpacity>
+          <View style={{ paddingVertical: space.md, alignItems: 'center', gap: space.xs }}>
+            <Text style={{ ...reviewControls.value, color: colors.muted, textAlign: 'center' }}>
+              Could not load Drive folders.
+            </Text>
+            {foldersErrorDetail?.message ? (
+              <Text style={{ ...reviewControls.label, color: colors.danger, textAlign: 'center', paddingHorizontal: space.sm }}>
+                {foldersErrorDetail.message}
+              </Text>
+            ) : null}
+            {foldersErrorDetail?.code === 'drive_reauth_required' || foldersErrorDetail?.message === 'Connect Google Drive first.' ? (
+              <TouchableOpacity
+                style={{ minHeight: sizes.touch, justifyContent: 'center', marginTop: space.xs }}
+                onPress={() => { setShowFolderPicker(false); refetch(); }}
+              >
+                <View style={{ minHeight: reviewControls.actionHeight, paddingHorizontal: space.lg, borderRadius: reviewControls.radius, backgroundColor: colors.selectedSurface, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ ...reviewControls.action, color: colors.blue }}>Reconnect Google Drive</Text>
+                </View>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={{ minHeight: sizes.touch, justifyContent: 'center', marginTop: space.xs }}
+                onPress={() => refetchFolders()}
+              >
+                <View style={{ minHeight: reviewControls.actionHeight, paddingHorizontal: space.lg, borderRadius: reviewControls.radius, backgroundColor: colors.selectedSurface, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ ...reviewControls.action, color: colors.blue }}>Try again</Text>
+                </View>
+              </TouchableOpacity>
+            )}
           </View>
         ) : (
           <FlatList
@@ -291,51 +338,59 @@ export default function GDriveSyncLoginCard() {
           />
         )}
 
-        <View className="h-[1px] bg-gray-100 my-4" />
+        <View style={{ height: 1, backgroundColor: colors.divider, marginVertical: space.md }} />
 
         {showCreateFolder ? (
           <View>
-            <Text className="text-vistaNavy font-medium text-xs mb-2">
+            <Text style={{ ...type.label, color: colors.text, marginBottom: space.xs }}>
               New folder name
             </Text>
             <TextInput
+              size="compact"
               value={newFolderName}
               onChangeText={setNewFolderName}
               placeholder="e.g. VISTA OSA Archive"
-              placeholderTextColor="#9ca3af"
-              className="min-h-[48px] border border-slate-200 rounded-lg px-3 mb-3 text-xs font-semibold text-vistaNavy"
+              accessibilityLabel="New Drive folder name"
+              placeholderTextColor={colors.placeholder}
+              style={{ marginBottom: space.sm }}
             />
-            <View className="flex-row">
-              <TouchableOpacity style={panelStyles.touch}
+            <View style={{ flexDirection: 'row', gap: space.sm }}>
+              <TouchableOpacity
+                style={{ flex: 1, minHeight: sizes.touch, justifyContent: 'center' }}
                 onPress={handleCreateFolder}
                 disabled={createFolderMutation.isPending}
-                className="flex-1 bg-[#FFC342] rounded-lg py-3 items-center mr-2"
               >
-                {createFolderMutation.isPending ? (
-                  <ActivityIndicator color="white" />
-                ) : (
-                  <Text className="text-[#513600] font-medium text-xs">
-                    Create & Use
-                  </Text>
-                )}
+                <View style={{ minHeight: reviewControls.actionHeight, borderRadius: reviewControls.radius, backgroundColor: colors.yellow, alignItems: 'center', justifyContent: 'center', paddingHorizontal: reviewControls.padding }}>
+                  {createFolderMutation.isPending ? (
+                    <ActivityIndicator color={colors.onYellow} />
+                  ) : (
+                    <Text style={{ ...reviewControls.action, color: colors.onYellow }}>
+                      Create & Use
+                    </Text>
+                  )}
+                </View>
               </TouchableOpacity>
-              <TouchableOpacity style={panelStyles.touch}
+              <TouchableOpacity
+                style={{ flex: 1, minHeight: sizes.touch, justifyContent: 'center' }}
                 onPress={() => setShowCreateFolder(false)}
-                className="flex-1 border border-slate-200 rounded-lg py-3 items-center ml-2"
               >
-                <Text className="text-vistaNavy font-medium text-xs">Cancel</Text>
+                <View style={{ minHeight: reviewControls.actionHeight, borderRadius: reviewControls.radius, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.field, alignItems: 'center', justifyContent: 'center', paddingHorizontal: reviewControls.padding }}>
+                  <Text style={{ ...reviewControls.action, color: colors.navy }}>Cancel</Text>
+                </View>
               </TouchableOpacity>
             </View>
           </View>
         ) : (
-          <TouchableOpacity style={panelStyles.touch}
+          <TouchableOpacity
+            style={{ minHeight: sizes.touch, justifyContent: 'center' }}
             onPress={() => setShowCreateFolder(true)}
-            className="border border-dashed border-slate-300 rounded-lg py-3 items-center flex-row justify-center"
           >
-            <Feather name="folder-plus" size={16} color="#1e5aa0" />
-            <Text className="text-vistaNavy font-medium text-xs ml-2">
-              Create a new folder instead
-            </Text>
+            <View style={{ minHeight: reviewControls.actionHeight, borderRadius: reviewControls.radius, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.border, backgroundColor: colors.field, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm, paddingHorizontal: reviewControls.padding }}>
+              <Feather name="folder-plus" size={reviewControls.icon} color={colors.blue} />
+              <Text style={{ ...reviewControls.action, color: colors.navy }}>
+                Create a new folder instead
+              </Text>
+            </View>
           </TouchableOpacity>
         )}
       </View>
@@ -346,9 +401,7 @@ export default function GDriveSyncLoginCard() {
     <View className="bg-white rounded-3xl p-4 mb-3  border border-gray-100" style={[surfaces.card, panelStyles.card]}>
       <VistaProcessing visible={disconnectMutation.isPending} message="Disconnecting Google Drive…" />
       <View className="flex-row items-center mb-2">
-        <View className="bg-[#e7f6ec] w-10 h-10 rounded-xl items-center justify-center mr-3">
-          <Feather name="check-circle" size={18} color="#16a34a" />
-        </View>
+        <View style={{ marginRight: space.md }}><GoogleDriveLogo /></View>
         <DriveAccountIdentity email={connection.google_account_email} />
       </View>
 
@@ -362,14 +415,15 @@ export default function GDriveSyncLoginCard() {
         </Text>
       </View>
 
-      <TouchableOpacity style={panelStyles.touch}
+      <TouchableOpacity style={[panelStyles.touch, { flexDirection: 'row', justifyContent: 'center', gap: space.sm }]}
         onPress={() => setShowFolderPicker(true)}
         className="border border-vistaNavy rounded-lg py-3 items-center mb-3"
       >
+        <Feather name="folder" size={18} color={colors.blue} />
         <Text className="text-vistaNavy font-medium text-xs">Change folder</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={panelStyles.touch}
+      <TouchableOpacity style={[panelStyles.touch, { flexDirection: 'row', justifyContent: 'center', gap: space.sm }]}
         onPress={handleDisconnect}
         disabled={disconnectMutation.isPending}
         className="border border-red-200 rounded-lg py-3 items-center"
@@ -377,9 +431,10 @@ export default function GDriveSyncLoginCard() {
         {disconnectMutation.isPending ? (
           <ActivityIndicator />
         ) : (
-          <Text className="text-red-500 font-medium text-xs">
-            Disconnect Google Drive
-          </Text>
+          <>
+            <Feather name="log-out" size={18} color={colors.danger} />
+            <Text style={{ color: colors.danger }} className="font-medium text-xs">Disconnect Google Drive</Text>
+          </>
         )}
       </TouchableOpacity>
     </View>
