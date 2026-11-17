@@ -1,22 +1,23 @@
 import { View } from 'react-native';
 import { Text } from '../common/FontText';
-import { colors, type } from '../../theme/tokens';
+import { colors, type, radii, shadows, space } from '../../theme/tokens';
 
-export default function SettingsSection({ title, children, style }) {
+export default function SettingsSection({ title, children, style, variant = 'brand' }) {
+  const grouped = variant === 'grouped';
   return (
-    <View style={[{ marginBottom: 14 }, style]}>
+    <View style={[{ marginBottom: grouped ? space.xxl : space.lg }, style]}>
       {title ? (
         <Text
           style={{
             ...type.meta,
-            fontFamily: 'DMSans_600SemiBold',
-            fontSize: 10.5,
-            lineHeight: 14,
-            letterSpacing: 0.7,
-            color: '#FFFFFF',
+            fontFamily: grouped ? type.medium : 'DMSans_600SemiBold',
+            fontSize: type.meta.fontSize,
+            lineHeight: type.meta.lineHeight,
+            letterSpacing: grouped ? 0 : 0.7,
+            color: grouped ? colors.muted : colors.onBrand,
             textTransform: 'uppercase',
-            marginBottom: 5,
-            marginLeft: 3,
+            marginBottom: grouped ? space.sm : 5,
+            marginLeft: grouped ? space.lg : 3,
           }}
         >
           {title}
@@ -25,15 +26,12 @@ export default function SettingsSection({ title, children, style }) {
       <View
         style={{
           backgroundColor: colors.surface,
-          borderRadius: 16,
-          borderWidth: 1,
+          borderRadius: radii.listCard,
+          borderCurve: 'continuous',
+          borderWidth: grouped ? 0 : 1,
           borderColor: colors.border,
           overflow: 'hidden',
-          shadowColor: '#183A60',
-          shadowOffset: { width: 0, height: 1.5 },
-          shadowOpacity: 0.03,
-          shadowRadius: 6,
-          elevation: 1,
+          ...(grouped ? {} : shadows.card),
         }}
       >
         {children}
