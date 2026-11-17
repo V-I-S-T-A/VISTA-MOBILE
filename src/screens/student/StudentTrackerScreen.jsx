@@ -1,6 +1,8 @@
+import { PullRefreshScrollView as ScrollView } from '../../components/common/PullRefresh';
+import useBottomNavScroll from '../../hooks/useBottomNavScroll';
 import { useBottomNavClearance } from '../../theme/layout';
 import { Text } from "../../components/common/FontText";
-import { ActivityIndicator, ScrollView, TouchableOpacity, View, RefreshControl } from "react-native";
+import { ActivityIndicator, TouchableOpacity, View, RefreshControl } from "react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
 import SubmissionSummaryTabs from '../../components/submissions/SubmissionSummaryTabs';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -9,6 +11,7 @@ import StudentBottomNav from "../../components/students/StudentBottomNav";
 import SubmissionListCard from "../../components/submissions/SubmissionListCard";
 import SubmissionPagination from "../../components/submissions/SubmissionPagination";
 import { useSubmissions } from "../../hooks/useSubmissions";
+import useProgressiveList from '../../hooks/useProgressiveList';
 import { useScreenRefresh } from "../../hooks/useScreenRefresh";
 import { panelStyles, useStaffLayout } from '../../theme/layout';
 import PageHeading from '../../components/common/PageHeading';
@@ -27,6 +30,7 @@ const STATUS_TO_PARAM = {
 const FILTER_OPTIONS = ['All Status', 'Pending', 'Approved', 'Rejected'];
 
 export default function StudentTrackerScreen({ navigation, route }) {
+  const navScroll = useBottomNavScroll(navigation);
   const footerClearance = useBottomNavClearance();
   const insets = useSafeAreaInsets();
   const screenLayout = useStaffLayout();
@@ -73,6 +77,7 @@ export default function StudentTrackerScreen({ navigation, route }) {
 
   const { data, isLoading, isError, error, refetch } = useSubmissions(params);
   const submissions = data?.results ?? [];
+  const visibleSubmissions = useProgressiveList(submissions);
   const { refreshing, onRefresh } = useScreenRefresh([["submissions"]]);
   const hasData = submissions.length > 0;
   const isAuthError = [401, 403].includes(error?.status || error?.response?.status);
@@ -85,15 +90,16 @@ export default function StudentTrackerScreen({ navigation, route }) {
 
   return (
     <View className="flex-1 bg-[#F3F3F3]" style={{ paddingTop: insets.top }}>
-      <ScrollView
+      <ScrollView {...navScroll.scrollProps}
+        scrollHeader={<View className="pt-2"><StudentHeader /></View>}
+        alwaysBounceVertical overScrollMode="always"
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         keyboardShouldPersistTaps="handled"
-        className="flex-1 pt-2"
+        className="flex-1"
         style={screenLayout.horizontal}
         contentContainerStyle={{ paddingBottom: footerClearance }}
         showsVerticalScrollIndicator={false}
       >
-        <StudentHeader />
         <PageHeading compact title="Review Tracker" subtitle="Reviewing processing status." style={{ marginBottom: 2 }} />
         <SubmissionSummaryTabs
           showRejected
@@ -155,7 +161,7 @@ export default function StudentTrackerScreen({ navigation, route }) {
         ) : (
           <>
             {isError && hasData && !isAuthError ? <StaleWarningBanner /> : null}
-            {submissions.map((submission) => (
+            {visibleSubmissions.map((submission) => (
               <SubmissionListCard
                 key={submission.submission_id}
                 submission={submission}
@@ -176,7 +182,7 @@ export default function StudentTrackerScreen({ navigation, route }) {
           </>
         )}
       </ScrollView>
-      <StudentBottomNav
+      <StudentBottomNav scrollBehavior={navScroll}
         activeTab="tracker"
         onHomePress={() => navigation.navigate("StudentHome")}
         onTrackerPress={() => navigation.navigate("StudentTracker")}
