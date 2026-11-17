@@ -1,30 +1,13 @@
-import { AppAlert as Alert } from '../common/AppDialog';
+import { useState } from 'react';
 import { Text } from "../common/FontText";
-import { Linking, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { Feather } from "@expo/vector-icons";
+import AttachmentPreview from './AttachmentPreview';
 
 export default function SubmissionDocuments({ documents = [] }) {
+  const [selected, setSelected] = useState(null);
   const current = documents.filter((doc) => doc?.is_current !== false);
   if (!current.length) return null;
-  const openFile = async (doc) => {
-    if (!doc.file_url) {
-      Alert.alert(
-        "File unavailable",
-        "This attachment has no file URL. Contact staff for help.",
-      );
-      return;
-    }
-    try {
-      const supported = await Linking.canOpenURL(doc.file_url);
-      if (!supported) throw new Error("No app can open this file link.");
-      await Linking.openURL(doc.file_url);
-    } catch (e) {
-      Alert.alert(
-        "Could not open file",
-        e.message || "Try again or contact staff.",
-      );
-    }
-  };
   return (
     <View className="bg-white rounded-2xl p-4 mb-5 border border-gray-200">
       <Text className="text-vistaNavy text-sm font-extrabold mb-3">
@@ -37,7 +20,9 @@ export default function SubmissionDocuments({ documents = [] }) {
         return (
           <TouchableOpacity
             key={doc.document_id || doc.file_url || doc.file_name}
-            onPress={() => openFile(doc)}
+            accessibilityRole="button"
+            accessibilityLabel={`Preview ${doc.file_name || 'attached document'}`}
+            onPress={() => setSelected(doc)}
             className="flex-row items-center bg-slate-50 rounded-xl p-3 mb-2"
           >
             <Feather
@@ -51,10 +36,11 @@ export default function SubmissionDocuments({ documents = [] }) {
             >
               {doc.file_name || "Attached document"}
             </Text>
-            <Feather name="external-link" size={17} color="#64748B" />
+            <Feather name="eye" size={17} color="#64748B" />
           </TouchableOpacity>
         );
       })}
+      {selected && current.some(doc => doc === selected) ? <AttachmentPreview document={selected} onClose={() => setSelected(null)} /> : null}
     </View>
   );
 }
