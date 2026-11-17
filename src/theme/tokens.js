@@ -43,6 +43,7 @@ export const compact = { inset: 8, gutter: 8, leadingInset: 12, paddingHorizonta
 export const sizes = { touch: 48, input: 48, avatar: 34, avatarHeader: 32, avatarProfile: 84, accountHeader: 56, icon: 18, navIcon: 22, modalWidth: 340, contentWidth: 600, scrollBottom: 110 };
 export const loginLayout = { heroMinHeight: 260, heroMaxHeight: 360, heroRatio: 0.45, artWidth: 252, artHeight: 168, logoSize: 32, formWidth: 340, fieldHeight: 52, decorationSize: 16 };
 export const stateLayout = { artSize: 144, compactArtSize: 96, contentWidth: 340, noticeDuration: 8000 };
+export const onboardingLayout = { artMinHeight: 240, artMaxHeight: 380, artRatio: 0.43, roleArtWidth: 104, roleArtHeight: 96, roleMinHeight: 112, logoSize: 24, dotSize: 6, activeDotWidth: 20, featureSize: 52, mascotSize: 44, contextMascotSize: 64, headDegrees: 2.5, armDegrees: 8, motionDuration: 1600 };
 export const form = { paddingHorizontal: 12, paddingVertical: 8, labelGap: 4, fieldGap: 8, sectionGap: 12 };
 export const notificationLayout = { avatar: 30, padding: 8, paddingHorizontal: 12, paddingVertical: 8, previewLines: 1, titleLines: 1, unread: 6, radius: radii.listCard, gap: 8 };
 export const sheetLayout = { maxHeight: '80%', handleWidth: 36, handleHeight: 4, padding: 16, gap: 8, duration: 220 };
