@@ -9,6 +9,7 @@ import UserAvatar from '../common/UserAvatar';
 import { getSubmissionStatus } from './SubmissionStatusBadge';
 import { reviewLogsService } from '../../services/reviewLogsService';
 import { canReplyTo, nextPage, safeWebUrl, uniqueRows } from './conversationPolicy.cjs';
+import { SubmissionAttachmentRow } from './SubmissionTicket';
 
 const timestamp = value => value ? new Date(value).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Date unavailable';
 
@@ -61,7 +62,7 @@ function ReplyButton({ onPress, label = 'Reply', compact }) {
   </TouchableOpacity>;
 }
 
-export default function ConversationEntry({ log, latest, submissionId, scope, access, conversation, onAccessLost, onLayout }) {
+export default function ConversationEntry({ log, latest, submissionId, scope, access, conversation, onAccessLost, onLayout, attachments = [] }) {
   const [expanded, setExpanded] = useState(false);
   // Old deployments do not advertise reply_count/can_reply. Keep history readable
   // without calling endpoints that have not been deployed there.
@@ -86,7 +87,14 @@ export default function ConversationEntry({ log, latest, submissionId, scope, ac
     <View style={styles.entryBody}>
       <Author name={log.changed_by_name} image={log.changed_by_image_url} role="OSA Staff" time={log.changed_at} />
       {log.remarks_text ? <MessageText message={log.remarks_text} /> : <Text style={styles.context}>Status recorded by OSA.</Text>}
-      {log.attachment_change?.action ? <Text style={styles.context}>Attachment {log.attachment_change.action}{log.attachment_change.new_files?.length ? ` · ${log.attachment_change.new_files.join(', ')}` : ''}</Text> : null}
+      {log.attachment_change?.action ? <View>
+        <Text style={styles.context}>Attachment {log.attachment_change.action}</Text>
+        {(log.attachment_change.new_files || []).map((name, index) => {
+          const doc = access.staff && attachments.find(file => file.file_name === name);
+          return doc ? <SubmissionAttachmentRow key={doc.document_id || doc.file_url} name={name} document={doc} history />
+            : <Text key={`${name}:${index}`} style={styles.context}>{name}</Text>;
+        })}
+      </View> : null}
       <View style={styles.actions}>
         {permission ? <ReplyButton onPress={() => { setExpanded(true); conversation.selectTarget(log); }} /> : null}
         {supportsReplies && (count > 0 || expanded) ? <TouchableOpacity accessibilityRole="button" accessibilityState={{ expanded }} onPress={() => setExpanded(!expanded)} style={styles.replyButton}><Text style={styles.link}>{expanded ? 'Hide replies' : `View replies (${count})`}</Text><Feather name={expanded ? 'chevron-up' : 'chevron-down'} size={15} color="#536C92" /></TouchableOpacity> : null}
