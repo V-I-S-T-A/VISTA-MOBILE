@@ -1,19 +1,24 @@
+import { type, colors } from '../../theme/tokens';
 import { MAIN_BLUE } from "../../constants/colors";
 import TextInput from '../../components/common/AppInput';
 import AppBottomSheet from '../../components/common/AppBottomSheet';
 import { AppAlert as Alert } from '../../components/common/AppDialog';
 import { Text } from '../../components/common/FontText';
-import { View, TouchableOpacity, ImageBackground, Image, KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView, useWindowDimensions } from 'react-native';
+import { View, TouchableOpacity, ImageBackground, Image, ActivityIndicator, useWindowDimensions, RefreshControl } from 'react-native';
+import { useScreenRefresh } from '../../hooks/useScreenRefresh';
 import { useRef, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { typography } from "../../theme/layout";
 import { authService } from "../../services/authService";
 import VistaProcessing from '../../components/common/VistaProcessing';
+import AppButton from '../../components/common/AppButton';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 
 export default function LoginScreen() {
+  const { refreshing, onRefresh } = useScreenRefresh([]);
   const resetTrigger = useRef(null);
+  const passwordInput = useRef(null);
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState("");
@@ -116,11 +121,11 @@ export default function LoginScreen() {
         style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }}
         accessibilityIgnoresInvertColors
       />
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1"
-      >
-        <ScrollView
+        <KeyboardAwareScrollView
+          alwaysBounceVertical overScrollMode="always"
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          bottomOffset={16}
+          keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ flexGrow: 1, paddingTop: Math.max(insets.top, 16) + Math.max(64, height * 0.23), paddingBottom: Math.max(insets.bottom, 24) }}
@@ -137,7 +142,7 @@ export default function LoginScreen() {
           <Text
             style={{
               fontFamily: "DMSans_800ExtraBold",
-              fontSize: 24,
+              fontSize: type.display.fontSize,
               letterSpacing: 2.5,
               color: MAIN_BLUE,
               marginTop: 6,
@@ -147,10 +152,16 @@ export default function LoginScreen() {
           </Text>
         </View>
 
-        <View className="bg-white rounded-full border border-[#F0B34B] px-4 mb-3"
+        <Text style={{ ...type.label, color: colors.navy, marginBottom: 4 }}>Email address</Text>
+        <View className="bg-white rounded-xl border border-[#F0B34B] px-4 mb-3"
           style={{ minHeight: 48, justifyContent: "center" }}>
           <TextInput
             placeholder="youremail@gmail.com"
+            accessibilityLabel="Email address"
+            autoComplete="email"
+            returnKeyType="next"
+            onSubmitEditing={() => passwordInput.current?.focus()}
+            blurOnSubmit={false}
             placeholderTextColor="#9CA3AF"
             value={email}
             onChangeText={setEmail}
@@ -158,14 +169,20 @@ export default function LoginScreen() {
             autoCorrect={false}
             keyboardType="email-address"
             className="text-gray-700 text-sm"
-            style={{ flex: 1, minHeight: 48, paddingVertical: 10, borderWidth: 0, backgroundColor: "transparent", paddingHorizontal: 0, fontSize: 14 }}
+            style={{ flex: 1, minHeight: 48, paddingVertical: 10, borderWidth: 0, backgroundColor: "transparent", paddingHorizontal: 0, fontSize: type.field.fontSize }}
           />
         </View>
 
-        <View className="bg-white rounded-full border border-[#F0B34B] px-4 mb-3 flex-row items-center"
+        <Text style={{ ...type.label, color: colors.navy, marginBottom: 4 }}>Password</Text>
+        <View className="bg-white rounded-xl border border-[#F0B34B] px-4 mb-3 flex-row items-center"
           style={{ minHeight: 48 }}>
           <TextInput
             placeholder="password"
+            ref={passwordInput}
+            accessibilityLabel="Password"
+            autoComplete="current-password"
+            returnKeyType="go"
+            onSubmitEditing={() => { if (!isSubmitting) handleSignIn(); }}
             placeholderTextColor="#9CA3AF"
             value={password}
             onChangeText={setPassword}
@@ -174,7 +191,7 @@ export default function LoginScreen() {
             autoCorrect={false}
             textContentType="password"
             className="text-gray-700 text-sm"
-            style={{ flex: 1, minHeight: 48, paddingVertical: 10, borderWidth: 0, backgroundColor: "transparent", paddingHorizontal: 0, fontSize: 14 }}
+            style={{ flex: 1, minHeight: 48, paddingVertical: 10, borderWidth: 0, backgroundColor: "transparent", paddingHorizontal: 0, fontSize: type.field.fontSize }}
           />
           <TouchableOpacity
             onPress={() => setShowPassword(!showPassword)}
@@ -191,7 +208,7 @@ export default function LoginScreen() {
         </View>
 
         {errorMessage ? (
-          <Text className="text-red-600 text-sm font-semibold mb-3 px-2">
+          <Text selectable accessibilityRole="alert" className="text-red-600 text-sm font-semibold mb-3 px-2">
             {errorMessage}
           </Text>
         ) : null}
@@ -210,26 +227,10 @@ export default function LoginScreen() {
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={handleSignIn}
-          disabled={isSubmitting}
-          className={`bg-vistaOrange rounded-full py-3 items-center ${
-            isSubmitting ? "opacity-70" : ""
-          }`}
-        >
-          {isSubmitting ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <Text className="text-white"
-              style={[typography.section, { letterSpacing: 0 }]}>
-              Sign in
-            </Text>
-          )}
-        </TouchableOpacity>
+        <AppButton label="Sign in" variant="accent" onPress={handleSignIn} busy={isSubmitting} />
           </View>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+        </KeyboardAwareScrollView>
       <AppBottomSheet returnFocusRef={resetTrigger} visible={isForgotOpen} title="Reset Password" onClose={() => setIsForgotOpen(false)} busy={isResetting}>
 
             {resetStep === "email" ? (
