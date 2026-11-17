@@ -1,7 +1,8 @@
 import { AppAlert as Alert } from '../common/AppDialog';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { ActivityIndicator, Linking, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Linking, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { RepliesSkeleton } from '../common/Skeleton';
 import { Feather } from '@expo/vector-icons';
 import { type, sizes, colors, radii, space } from '../../theme/tokens';
 import { Text } from '../common/FontText';
@@ -74,7 +75,7 @@ export default function ConversationEntry({ log, latest, submissionId, scope, ac
     enabled: expanded && supportsReplies, staleTime: 0, retry: false,
   });
   useEffect(() => { if ([403, 404].includes(replies.error?.status)) onAccessLost(); }, [replies.error, onAccessLost]);
-  const rows = replies.isError ? [] : uniqueRows(replies.data?.pages, 'reply_id');
+  const rows = useMemo(() => replies.isError ? [] : uniqueRows(replies.data?.pages, 'reply_id'), [replies.isError, replies.data?.pages]);
   const count = replies.data?.pages[0]?.count ?? log.reply_count ?? 0;
   const permission = canReplyTo(log, access);
   const current = getSubmissionStatus(log.new_status);
@@ -100,7 +101,7 @@ export default function ConversationEntry({ log, latest, submissionId, scope, ac
         {supportsReplies && (count > 0 || expanded) ? <TouchableOpacity accessibilityRole="button" accessibilityState={{ expanded }} onPress={() => setExpanded(!expanded)} style={styles.replyButton}><Text style={styles.link}>{expanded ? 'Hide replies' : `View replies (${count})`}</Text><Feather name={expanded ? 'chevron-up' : 'chevron-down'} size={15} color="#536C92" /></TouchableOpacity> : null}
       </View>
       {expanded ? <View style={styles.thread}>
-        {replies.isPending ? <ActivityIndicator color="#0863E8" /> : null}
+        {replies.isPending ? <RepliesSkeleton canReply={permission} /> : null}
         {replies.isError ? <TouchableOpacity accessibilityRole="button" onPress={() => replies.refetch()} style={styles.retry}><Text style={styles.error}>Could not load replies. Tap to retry.</Text></TouchableOpacity> : null}
         {rows.map(reply => <ThreadedReply key={reply.reply_id} reply={reply} canReply={permission} onReply={parent => conversation.selectTarget(log, parent)} />)}
         {!replies.isPending && !replies.isError && !rows.length ? <Text style={styles.context}>No replies yet.</Text> : null}
