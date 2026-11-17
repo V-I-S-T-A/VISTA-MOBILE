@@ -1,8 +1,8 @@
 import { TextInput, Text } from '../../../components/common/FontText';
 import { View, Pressable, TouchableOpacity } from 'react-native';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { Feather } from '@expo/vector-icons';
-import { colors, compact, radii, type } from '../../../theme/tokens';
+import { colors, compact, radii, type, reviewControls } from '../../../theme/tokens';
 
 export default function StaffReviewSearch({
   searchQuery,
@@ -11,10 +11,11 @@ export default function StaffReviewSearch({
   isFilterActive = false,
   activeFilterLabel = null,
   filterButtonRef = null,
-  filterButtonVariant = 'yellow',
+  filterButtonVariant = 'blue',
   filterButtonColor = null,
 }) {
   const input = useRef(null);
+  const [focused, setFocused] = useState(false);
   const isBlue = filterButtonVariant === 'blue' || filterButtonColor === 'blue';
   const buttonBg = isBlue ? colors.blue : colors.yellow;
   const buttonFg = isBlue ? '#FFFFFF' : colors.navy;
@@ -45,23 +46,25 @@ export default function StaffReviewSearch({
             alignItems: 'center',
             backgroundColor: colors.field,
             borderWidth: 1,
-            borderColor: colors.border,
+            borderColor: focused ? colors.focus : colors.border,
             borderRadius: radii.field,
             paddingHorizontal: compact.leadingInset,
             minHeight: compact.inputHeight,
           }}
         >
-          <Feather name="search" size={14} color={colors.muted} />
+          <Feather name="search" size={reviewControls.icon} color={colors.muted} />
           <TextInput
             ref={input}
             accessibilityLabel="Search submissions"
             accessibilityHint="Filters the submission list by search text"
             value={searchQuery}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
             onChangeText={setSearchQuery}
             placeholder="Search submissions..."
             placeholderTextColor={colors.muted}
             style={{
-              ...type.listMeta,
+              ...type.field,
               flex: 1,
               minWidth: 0,
               minHeight: compact.inputHeight,
@@ -106,7 +109,7 @@ export default function StaffReviewSearch({
               borderColor: colors.navy,
             }}
           >
-            <Feather name="filter" size={13} color={buttonFg} />
+            <Feather name="filter" size={reviewControls.icon} color={buttonFg} />
             <Text
               style={{
                 ...type.compactLabel,
