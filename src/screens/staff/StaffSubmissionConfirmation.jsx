@@ -1,12 +1,16 @@
 import { AppAlert as Alert } from '../../components/common/AppDialog';
 import { Text } from "../../components/common/FontText";
 import { useState } from "react";
-import { ActivityIndicator, ScrollView, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, View, RefreshControl } from 'react-native';
+import { useScreenRefresh } from '../../hooks/useScreenRefresh';
 import { Feather } from "@expo/vector-icons";
-import { panelStyles, useStaffLayout } from "../../theme/layout";
+import { surfaces, useStaffLayout } from "../../theme/layout";
 import { submissionsService } from "../../services/submissionsService";
 import DraftAttachmentPreview from '../../components/submissions/DraftAttachmentPreview';
-import { type } from '../../theme/tokens';
+import SubmissionTicket from '../../components/submissions/SubmissionTicket';
+import SubPageHeader from '../../components/common/SubPageHeader';
+import PageHeading from '../../components/common/PageHeading';
+import { colors, motion, radii, reviewControls, sizes, space, type } from '../../theme/tokens';
 import VistaProcessing from '../../components/common/VistaProcessing';
 
 export default function StaffSubmissionConfirmation({ navigation, route }) {
@@ -16,6 +20,14 @@ export default function StaffSubmissionConfirmation({ navigation, route }) {
   const [busy, setBusy] = useState(false);
   const [createdSubmission, setCreatedSubmission] = useState(null);
   const [error, setError] = useState("");
+  const { refreshing, onRefresh } = useScreenRefresh([], async () => {
+    // A pull only reads an already-created submission; it never submits a draft
+    // or retries the attachment/create operation.
+    if (!busy && createdSubmission?.submission_id) {
+      const fresh = await submissionsService.getSubmission(createdSubmission.submission_id);
+      if (fresh?.submission_id === createdSubmission.submission_id) setCreatedSubmission(fresh);
+    }
+  });
 
   const confirm = async () => {
     if (busy || createdSubmission) return;
@@ -49,76 +61,56 @@ export default function StaffSubmissionConfirmation({ navigation, route }) {
     }
   };
 
-  const rows = [
-    ["Title", draft?.title],
-    ["Organization", labels.organization],
-    ["Document type", labels.docType],
-    ["Category", labels.category],
-    ["Academic year", labels.academicYear],
-    ["Submitted by", labels.submittedBy],
-    ["Priority", draft?.priority_escalation ? 'Priority review' : 'Standard review'],
-    ...(draft?.description ? [["Description", draft.description]] : []),
-  ];
+  const [submittedAt] = useState(() => new Date().toISOString());
+  const ticketSubmission = createdSubmission || {
+    title: draft?.title,
+    org_name: labels.organization,
+    doc_type_name: labels.docType,
+    category_name: labels.category,
+    academic_year: labels.academicYear,
+    submitted_by_name: labels.submittedBy,
+    priority_escalation: draft?.priority_escalation,
+    description: draft?.description,
+    status: 'under_review',
+    submitted_at: submittedAt,
+    documents: file
+      ? [{ document_id: 'draft-attachment', file_name: file.name || 'Attached document', file_url: file.uri, is_current: true }]
+      : [],
+  };
   return (
-    <View className="flex-1 bg-[#F4F6FA]" style={screenLayout.top}>
+    <View style={[{ flex: 1, backgroundColor: colors.background }, screenLayout.top]}>
+      <View style={screenLayout.horizontal}>
+        <SubPageHeader disabled={busy} />
+      </View>
       <ScrollView
-        className="flex-1"
-        style={screenLayout.horizontal}
-        contentContainerStyle={{ paddingTop: 12, paddingBottom: 36 }}
+        alwaysBounceVertical overScrollMode="always"
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} enabled={!busy} />}
+        style={[{ flex: 1 }, screenLayout.horizontal]}
+        contentContainerStyle={{ paddingBottom: space.xxxl }}
         showsVerticalScrollIndicator={false}
       >
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          disabled={busy}
-          className="flex-row items-center self-start rounded-full bg-white border border-slate-200 px-4 py-2 min-h-[48px] mb-3"
-        >
-          <Feather name="arrow-left" size={16} color="#1E3A68" />
-          <Text className="text-vistaNavy font-bold ml-2">Edit entry</Text>
-        </TouchableOpacity>
-        <View className="flex-row items-center mb-2">
-          <View className="w-10 h-10 rounded-full bg-[#E5EEF9] items-center justify-center mr-3">
-            <Feather name="clipboard" size={19} color="#245EA9" />
-          </View>
-          <View className="flex-1">
-            <Text className="text-slate-500 text-xs font-medium">
-              Final check
-            </Text>
-            <Text style={type.title} className="text-vistaNavy">
-              Review submission
-            </Text>
-          </View>
-        </View>
-        <Text className="text-slate-600 leading-5 mb-5">
-          Confirm the details below. Your submission is created only after you tap the button.
-        </Text>
+        <PageHeading compact title="Review Submission" subtitle="Confirm details before creating." />
 
-        <View style={panelStyles.card} className="bg-white border border-slate-200 shadow-sm">
-          <Text style={type.sectionTitle} className="text-vistaNavy mb-2">
-            Submission details
-          </Text>
-          {rows.map(([label, value], index) => (
-            <View
-              key={label}
-              className={`py-2 ${index < rows.length - 1 ? "border-b border-slate-100" : ""}`}
-            >
-              <Text className="text-slate-500 text-xs font-medium">
-                {label}
-              </Text>
-              <Text className="text-vistaNavy text-[13px] font-medium mt-1">
-                {value || "—"}
-              </Text>
-            </View>
-          ))}
-          <DraftAttachmentPreview file={file} onRemove={!busy && !createdSubmission ? () => setFile(null) : undefined} />
+        <View style={styles.ticketWrap}>
+          <SubmissionTicket
+            submission={ticketSubmission}
+            viewerRole="staff"
+            access={{ staff: true, owner: false }}
+          />
         </View>
+        {file && !createdSubmission ? (
+          <View style={styles.previewWrap}>
+            <DraftAttachmentPreview file={file} compact onRemove={!busy ? () => setFile(null) : undefined} />
+          </View>
+        ) : null}
         {error ? (
-          <View className="mt-4 bg-red-50 border border-red-200 rounded-2xl p-4">
-            <View className="flex-row items-start">
-              <Feather name="alert-circle" size={18} color="#B91C1C" />
-              <Text className="text-red-800 font-semibold ml-2 flex-1">{error}</Text>
+          <View style={styles.errorCard}>
+            <View style={styles.errorRow}>
+              <Feather name="alert-circle" size={18} color={colors.danger} />
+              <Text style={styles.errorText}>{error}</Text>
             </View>
             {createdSubmission ? (
-              <Text className="text-red-700 text-xs mt-2">
+              <Text style={styles.errorHint}>
                 Submission {createdSubmission.submission_id} was created, but
                 its attachment was not fully saved. Retry to finish attaching
                 it.
@@ -129,6 +121,7 @@ export default function StaffSubmissionConfirmation({ navigation, route }) {
         {createdSubmission && error ? (
           <TouchableOpacity
             disabled={busy}
+            activeOpacity={motion.pressedOpacity}
             onPress={async () => {
               setBusy(true);
               setError("");
@@ -155,15 +148,17 @@ export default function StaffSubmissionConfirmation({ navigation, route }) {
                 setBusy(false);
               }
             }}
-            className="bg-[#245EA9] rounded-xl p-4 mt-4 items-center"
+            style={[styles.actionTarget, busy && { opacity: motion.disabledOpacity }]}
           >
-            {busy ? <ActivityIndicator color="white" /> : <Text className="text-white font-bold">Retry attachment upload</Text>}
+            <View style={[styles.actionSurface, { backgroundColor: colors.blue }]}>
+              {busy ? <ActivityIndicator color={colors.onBrand} /> : <Text style={[styles.actionText, { color: colors.onBrand }]}>Retry attachment upload</Text>}
+            </View>
           </TouchableOpacity>
         ) : null}
         {createdSubmission && !error ? (
-          <View className="mt-5 items-center">
-            <Feather name="check-circle" size={34} color="#15803D" />
-            <Text className="text-green-800 font-bold mt-2">
+          <View style={styles.successWrap}>
+            <Feather name="check-circle" size={32} color={colors.success} />
+            <Text style={styles.successText}>
               Submission created successfully
             </Text>
           </View>
@@ -172,23 +167,26 @@ export default function StaffSubmissionConfirmation({ navigation, route }) {
           <TouchableOpacity
             onPress={confirm}
             disabled={busy}
-            className={`rounded-xl min-h-[48px] px-3 py-2 mt-3 items-center shadow-sm ${busy ? "bg-[#D6A83B]" : "bg-[#FFC342]"}`}
+            activeOpacity={motion.pressedOpacity}
+            style={[styles.actionTarget, busy && { opacity: motion.disabledOpacity }]}
           >
-            {busy ? (
-              <View className="flex-row items-center">
-                <ActivityIndicator color="#142D55" />
-                <Text className="text-[#142D55] font-medium ml-2">Creating submission…</Text>
-              </View>
-            ) : (
-              <View className="flex-row items-center">
-                <Text className="text-[#142D55] font-medium text-[13px]">Confirm and submit</Text>
-                <Feather name="arrow-right" size={17} color="#142D55" style={{ marginLeft: 8 }} />
-              </View>
-            )}
+            <View style={[styles.actionSurface, { backgroundColor: colors.yellow }]}>
+              {busy ? (
+                <View style={styles.actionInner}>
+                  <ActivityIndicator color={colors.onYellow} />
+                  <Text style={[styles.actionText, { color: colors.onYellow, marginLeft: space.sm }]}>Creating submission…</Text>
+                </View>
+              ) : (
+                <View style={styles.actionInner}>
+                  <Text style={[styles.actionText, { color: colors.onYellow }]}>Confirm and submit</Text>
+                  <Feather name="arrow-right" size={reviewControls.icon} color={colors.onYellow} style={{ marginLeft: space.sm }} />
+                </View>
+              )}
+            </View>
           </TouchableOpacity>
         ) : null}
         {!createdSubmission ? (
-          <Text className="text-slate-500 text-xs text-center mt-3">
+          <Text style={styles.helperText}>
             You can go back to edit before confirming.
           </Text>
         ) : null}
@@ -197,3 +195,71 @@ export default function StaffSubmissionConfirmation({ navigation, route }) {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  ticketWrap: {
+    marginBottom: space.md,
+  },
+  previewWrap: {
+    marginBottom: space.md,
+  },
+  errorCard: {
+    marginBottom: space.md,
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    borderRadius: reviewControls.radius,
+    padding: space.md,
+  },
+  errorRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  errorText: {
+    ...reviewControls.value,
+    color: colors.danger,
+    marginLeft: space.sm,
+    flex: 1,
+  },
+  errorHint: {
+    ...reviewControls.label,
+    color: colors.danger,
+    marginTop: space.xs,
+  },
+  actionTarget: {
+    minHeight: sizes.touch,
+    justifyContent: 'center',
+  },
+  actionSurface: {
+    minHeight: reviewControls.actionHeight,
+    borderRadius: reviewControls.radius,
+    paddingVertical: 4,
+    paddingHorizontal: reviewControls.padding,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionText: {
+    ...reviewControls.action,
+    textAlign: 'center',
+  },
+  successWrap: {
+    marginTop: space.lg,
+    alignItems: 'center',
+  },
+  successText: {
+    ...type.sectionTitle,
+    color: colors.success,
+    marginTop: space.sm,
+  },
+  helperText: {
+    ...type.meta,
+    color: colors.muted,
+    textAlign: 'center',
+    marginTop: space.xs,
+  },
+});
