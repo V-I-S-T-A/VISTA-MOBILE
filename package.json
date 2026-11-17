@@ -57,5 +57,12 @@
     "knip": "^6.24.0",
     "typescript": "^5.9.3"
   },
+  "expo": {
+    "autolinking": {
+      "android": {
+        "buildFromSource": ["expo-splash-screen"]
+      }
+    }
+  },
   "private": true
 }
