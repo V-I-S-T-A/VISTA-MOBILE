@@ -9,6 +9,7 @@ import { useNavigation } from "@react-navigation/native";
 import { useSubmissions } from "../../../../hooks/useSubmissions";
 import SubmissionPagination from "../../../../components/submissions/SubmissionPagination";
 import StaleWarningBanner from '../../../../components/common/StaleWarningBanner';
+import ContentState from '../../../../components/common/ContentState';
 
 const STATUS_TO_PARAM = {
   Pending: "pending",
@@ -51,28 +52,15 @@ export default function SubmissionHistoryList({
 
   if (isError && (!hasData || isAuthError)) {
     return (
-      <View style={panelStyles.state}>
-        <Text accessibilityRole="alert" style={{ ...type.body, color: colors.muted, marginBottom: compact.gutter }}>
-          Could not load submission history.
-        </Text>
-        <TouchableOpacity
-          accessibilityRole="button" accessibilityLabel="Retry loading submissions" style={{ minHeight: compact.touch, justifyContent: 'center' }} onPress={refetch}
-          className="bg-vistaNavy rounded-full px-4 py-2"
-        >
-          <Text className="text-white font-semibold text-xs">Retry</Text>
-        </TouchableOpacity>
-      </View>
+      <ContentState variant="error" title="Could not load submission history" error={error} onRetry={refetch} />
     );
   }
 
   if (submissions.length === 0) {
     return (
-      <View style={[panelStyles.state, { gap: 8 }]}>
-        <Text style={{ ...type.body, color: colors.muted, textAlign: 'center' }}>
-          {academicYearId
+      <ContentState title={searchQuery.trim() || academicYearId || statusFilter !== 'All Status' ? 'No matching submissions' : 'No submissions yet'} message={academicYearId
             ? "No submissions found for the selected academic year and status."
-            : "No submissions found."}
-        </Text>
+            : searchQuery.trim() || statusFilter !== 'All Status' ? "Try another search or filter." : "Your submission history will appear here."}>
         {academicYearId && onClearFilter ? (
           <TouchableOpacity
             accessibilityRole="button"
@@ -90,7 +78,7 @@ export default function SubmissionHistoryList({
             <Text style={{ ...type.compactLabel, color: colors.blue }}>Clear Filter</Text>
           </TouchableOpacity>
         ) : null}
-      </View>
+      </ContentState>
     );
   }
 
