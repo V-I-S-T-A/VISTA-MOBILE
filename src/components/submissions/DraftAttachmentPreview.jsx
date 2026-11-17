@@ -1,11 +1,12 @@
 import { AppAlert as Alert } from '../common/AppDialog';
 import { useState } from 'react';
-import { ActivityIndicator, Image, Linking, Modal, Platform, TouchableOpacity, View, ScrollView, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, Image, Linking, Modal, Platform, StatusBar, TouchableOpacity, View, ScrollView, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { requireOptionalNativeModule } from 'expo-modules-core';
 import * as FileSystem from 'expo-file-system/legacy';
 import { Feather } from '@expo/vector-icons';
 import { Text } from '../common/FontText';
+import { colors, reviewControls, space } from '../../theme/tokens';
 
 export default function DraftAttachmentPreview({ file, onRemove, compact = false }) {
   const { width } = useWindowDimensions();
@@ -43,22 +44,39 @@ export default function DraftAttachmentPreview({ file, onRemove, compact = false
   };
 
   return <>
-    <TouchableOpacity onPress={open} disabled={!file || opening} accessibilityRole="button"
-      accessibilityLabel={file ? `Preview attachment: ${name}` : 'No file attached'}
-      accessibilityHint={file ? 'Opens the attachment for review before submitting' : undefined}
-      className="rounded-2xl bg-slate-50 border border-slate-100 flex-row items-center" style={{ padding: compact ? 8 : 12, marginTop: compact ? 0 : 16 }}>
-      <View className="w-10 h-10 rounded-xl bg-white items-center justify-center border border-slate-200">
-        <Feather name={file ? (isImage ? 'image' : 'file-text') : 'paperclip'} size={18} color={file ? '#245EA9' : '#94A3B8'} />
-      </View>
-      <View className="flex-1 ml-3 mr-2">
-        <Text className="text-slate-500 text-[11px] font-medium">Attachment</Text>
-        <Text numberOfLines={2} className="text-vistaNavy text-[13px] font-medium mt-1">{file ? name : 'No file attached'}</Text>
-        {file ? <Text className="text-[#245EA9] text-xs mt-1">Tap to preview</Text> : null}
-      </View>
-      {opening ? <ActivityIndicator color="#245EA9" /> : file ? <Feather name="external-link" size={18} color="#245EA9" /> : <Text className="text-xs text-slate-500 font-bold">Optional</Text>}
-    </TouchableOpacity>
-    {file && onRemove ? <TouchableOpacity onPress={onRemove} accessibilityLabel="Remove attachment" className="self-end min-h-[48px] justify-center px-3"><Text className="text-red-700 text-sm font-bold">Remove attachment</Text></TouchableOpacity> : null}
-    <Modal visible={visible} animationType="fade" onRequestClose={() => setVisible(false)}>
+    <View style={compact ? { flexDirection: 'row', alignItems: 'center', gap: space.xs } : undefined}>
+      <TouchableOpacity onPress={open} disabled={!file || opening} accessibilityRole="button"
+        accessibilityLabel={file ? `Preview attachment: ${name}` : 'No file attached'}
+        accessibilityHint={file ? 'Opens the attachment for review before submitting' : undefined}
+        className="bg-slate-50 border border-slate-100 flex-row items-center"
+        style={{
+          flex: compact ? 1 : undefined,
+          borderRadius: compact ? reviewControls.radius : 16,
+          padding: compact ? 8 : 12,
+          marginTop: compact ? 0 : 16,
+        }}>
+        <View className="w-10 h-10 bg-white items-center justify-center border border-slate-200" style={{ borderRadius: compact ? reviewControls.radius - 2 : 12 }}>
+          <Feather name={file ? (isImage ? 'image' : 'file-text') : 'paperclip'} size={compact ? reviewControls.icon : 18} color={file ? '#245EA9' : '#94A3B8'} />
+        </View>
+        <View className="flex-1 ml-3 mr-2">
+          <Text className="text-slate-500 text-[11px] font-medium">Attachment</Text>
+          <Text numberOfLines={1} ellipsizeMode="tail" className="text-vistaNavy text-[13px] font-medium mt-0.5">{file ? name : 'No file attached'}</Text>
+          {file ? <Text className="text-[#245EA9] text-xs mt-0.5">Tap to preview</Text> : null}
+        </View>
+        {opening ? <ActivityIndicator color="#245EA9" /> : file ? <Feather name="external-link" size={compact ? reviewControls.icon : 18} color="#245EA9" /> : <Text className="text-xs text-slate-500 font-bold">Optional</Text>}
+      </TouchableOpacity>
+      {file && onRemove && compact ? (
+        <TouchableOpacity onPress={onRemove} accessibilityRole="button" accessibilityLabel="Remove attachment"
+          style={{ minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: reviewControls.actionHeight, height: reviewControls.actionHeight, borderRadius: reviewControls.radius, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.field, alignItems: 'center', justifyContent: 'center' }}>
+            <Feather name="trash-2" size={reviewControls.icon} color={colors.danger} />
+          </View>
+        </TouchableOpacity>
+      ) : null}
+    </View>
+    {file && onRemove && !compact ? <TouchableOpacity onPress={onRemove} accessibilityLabel="Remove attachment" className="self-end min-h-[48px] justify-center px-3"><Text className="text-red-700 text-sm font-bold">Remove attachment</Text></TouchableOpacity> : null}
+    <Modal visible={visible} statusBarTranslucent navigationBarTranslucent animationType="fade" onRequestClose={() => setVisible(false)}>
+      {visible ? <StatusBar barStyle="light-content" /> : null}
       <View style={{ flex: 1, backgroundColor: '#10213A', paddingTop: insets.top, paddingBottom: Math.max(insets.bottom, 12) }}>
         <View className="flex-row items-center px-4">
           <Text className="text-white text-sm flex-1 mr-3" numberOfLines={2}>{name}</Text>
