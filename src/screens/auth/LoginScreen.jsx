@@ -13,6 +13,7 @@ import { authService } from "../../services/authService";
 import VistaProcessing from '../../components/common/VistaProcessing';
 import AppButton from '../../components/common/AppButton';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import useConnectivity from '../../hooks/useConnectivity';
 
 export default function LoginScreen() {
   const { refreshing, onRefresh } = useScreenRefresh([]);
@@ -34,6 +35,7 @@ export default function LoginScreen() {
   const [resetStep, setResetStep] = useState("email");
   const [isResetting, setIsResetting] = useState(false);
   const { login } = useAuth();
+  const online = useConnectivity();
 
   const handleSignIn = async () => {
     if (!email.trim() || !password) {
@@ -126,7 +128,7 @@ export default function LoginScreen() {
           <View style={[styles.hero, { minHeight: Math.min(loginLayout.heroMaxHeight, Math.max(loginLayout.heroMinHeight, height * loginLayout.heroRatio)), paddingLeft: Math.max(insets.left, space.xxl), paddingRight: Math.max(insets.right, space.xxl) }]}>
             <View pointerEvents="none" accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.artwork}>
               <View style={[styles.dot, styles.dotLeft]} /><View style={[styles.dot, styles.dotRight]} />
-              <Image source={require('../../assets/login-students.png')} resizeMode="contain" accessibilityIgnoresInvertColors
+              <Image source={require('../../assets/login-students.webp')} resizeMode="contain" accessibilityIgnoresInvertColors
                 style={{ width: Math.min(loginLayout.artWidth, width - space.xxxl * 2), height: loginLayout.artHeight }} />
             </View>
             <Text accessibilityRole="header" style={styles.welcome}>Let’s get you{'\n'}signed in!</Text>
@@ -137,6 +139,7 @@ export default function LoginScreen() {
               <Image source={require('../../assets/logo.webp')} style={styles.logo} resizeMode="contain" accessibilityLabel="VISTA Logo" />
               <Text style={styles.brandName}>VISTA</Text>
             </View>
+            {!online ? <Text accessibilityLiveRegion="polite" style={styles.connectionHint}>Connect to the internet to sign in.</Text> : null}
 
         <Text style={styles.label}>Email address</Text>
           <TextInput
@@ -328,6 +331,7 @@ const styles = StyleSheet.create({
   logo: { width: loginLayout.logoSize, height: loginLayout.logoSize },
   brandName: { ...type.display, color: colors.blue },
   label: { ...type.label, color: colors.navy, marginBottom: space.sm },
+  connectionHint: { ...type.meta, color: colors.muted, textAlign: 'center', marginBottom: space.lg },
   emailInput: { minHeight: loginLayout.fieldHeight, marginBottom: space.lg },
   passwordField: { flexDirection: 'row', alignItems: 'center', minHeight: loginLayout.fieldHeight, backgroundColor: colors.field, borderWidth: 1, borderColor: colors.border, borderRadius: radii.field, borderCurve: 'continuous' },
   passwordInput: { flex: 1, minWidth: 0, minHeight: loginLayout.fieldHeight, borderWidth: 0, backgroundColor: 'transparent' },
