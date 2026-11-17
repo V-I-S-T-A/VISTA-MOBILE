@@ -31,7 +31,7 @@ export default function SubmissionHistoryList({
     setPage(1);
   }, [searchQuery, statusFilter, academicYearId]);
 
-  const params = { page };
+  const params = { page, page_size: 30 };
   if (searchQuery.trim()) params.search = searchQuery.trim();
   if (statusFilter !== "All Status")
     params.status = STATUS_TO_PARAM[statusFilter];
@@ -95,11 +95,12 @@ export default function SubmissionHistoryList({
   }
 
   return (
-    <View className="mb-2">
+    <View>
       {isError && hasData && !isAuthError ? <StaleWarningBanner /> : null}
       {submissions.map(item => <SubmissionListCard key={item.submission_id} submission={item} compact showSubmitterEmail onPress={() => navigation.navigate("ReviewPanelDetails", { submission: item })} />)}
       {(data?.total_pages ?? 1) > 1 && (
         <SubmissionPagination
+          variant="history"
           currentPage={page}
           totalPages={data.total_pages}
           onPageChange={setPage}
