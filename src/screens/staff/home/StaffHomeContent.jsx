@@ -1,10 +1,11 @@
+import { PullRefreshScrollView as ScrollView } from '../../../components/common/PullRefresh';
 import { useBottomNavClearance } from '../../../theme/layout';
 import RecentSubmissionsHeading from '../../../components/submissions/RecentSubmissionsHeading';
 import UserAvatar from '../../../components/common/UserAvatar';
 import { typography, panelStyles } from "../../../theme/layout";
 import PageHeading from "../../../components/common/PageHeading";
 import { Text } from "../../../components/common/FontText";
-import { View, Image, TouchableOpacity, ScrollView, ActivityIndicator, RefreshControl } from "react-native";
+import { View, Image, TouchableOpacity, ActivityIndicator, RefreshControl } from "react-native";
 import { SubmissionListSkeleton } from '../../../components/common/Skeleton';
 import { Feather, FontAwesome6, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -18,6 +19,7 @@ import SubmissionDashboardCards from "../../../components/submissions/Submission
 import { MAIN_BLACK } from "../../../constants/colors";
 import { useScreenRefresh } from "../../../hooks/useScreenRefresh";
 import StaleWarningBanner from '../../../components/common/StaleWarningBanner';
+import { isConnectionError } from '../../../lib/connectivityState.cjs';
 
 function StaffHomeHeader() {
   const navigation = useNavigation();
@@ -68,26 +70,32 @@ function useSubmissionCounts() {
           }),
         enabled: !!user,
       },
+      {
+        queryKey: ["submissions", "count", userId, "rejected"],
+        queryFn: () => submissionsService.listSubmissions({ page_size: 1, status: "rejected" }),
+        enabled: !!user,
+      },
     ],
   });
 
-  const [all, pending, approved] = results;
+  const [all, pending, approved, rejected] = results;
   const isLoading = results.some((r) => r.isLoading && !r.data);
 
   return {
     isLoading,
-    total: all.data?.count ?? 0,
-    pending: pending.data?.count ?? 0,
-    approved: approved.data?.count ?? 0,
+    total: all.data?.count ?? (isConnectionError(all.error) ? '—' : 0),
+    pending: pending.data?.count ?? (isConnectionError(pending.error) ? '—' : 0),
+    approved: approved.data?.count ?? (isConnectionError(approved.error) ? '—' : 0),
+    rejected: rejected.data?.count ?? (isConnectionError(rejected.error) ? '—' : 0),
   };
 }
 
 function SubmissionSummary() {
   const navigation = useNavigation();
-  const { isLoading, total, pending, approved } = useSubmissionCounts();
+  const { isLoading, total, pending, approved, rejected } = useSubmissionCounts();
 
   const openReviews = (statusFilter) =>
-    navigation.navigate("StaffSubmissionHistory", { statusFilter });
+    navigation.navigate("StaffReviewPanel", { statusFilter });
 
   return (
     <SubmissionDashboardCards
@@ -95,9 +103,11 @@ function SubmissionSummary() {
       total={total}
       pending={pending}
       approved={approved}
+      rejected={rejected}
       totalOnPress={() => openReviews("All Status")}
       pendingOnPress={() => openReviews("Pending")}
       approvedOnPress={() => openReviews("Approved")}
+      rejectedOnPress={() => openReviews("Rejected")}
       showTotalLoader
     />
   );
@@ -142,24 +152,26 @@ function RecentSubmissions() {
   );
 }
 
-export default function StaffHomeContent() {
+export default function StaffHomeContent({ navScroll }) {
   const footerClearance = useBottomNavClearance();
   const { user } = useAuth();
   const firstName = user?.first_name?.trim();
   const { refreshing, onRefresh } = useScreenRefresh([["submissions"]]);
   return (
-    <ScrollView
+    <View className="flex-1">
+    <ScrollView {...navScroll?.scrollProps}
+      scrollHeader={<View className="pt-2"><AccountHeader profileRoute="StaffProfile" /></View>}
+      alwaysBounceVertical overScrollMode="always"
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      className="flex-1 pt-2"
+      className="flex-1"
       contentContainerStyle={{ paddingBottom: footerClearance }}
       showsVerticalScrollIndicator={false}
     >
-      <AccountHeader profileRoute="StaffProfile" />
-
       <PageHeading title="Staff Dashboard" subtitle={firstName ? `Welcome back, ${firstName}` : 'Welcome back!'} />
 
       <SubmissionSummary />
       <RecentSubmissions />
     </ScrollView>
+    </View>
   );
 }
