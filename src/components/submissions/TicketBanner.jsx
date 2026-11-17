@@ -1,3 +1,4 @@
+import { radii } from '../../theme/tokens';
 import { useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 
@@ -19,7 +20,7 @@ export default function TicketBanner() {
 }
 
 const styles = StyleSheet.create({
-  frame: { width: '100%', flexShrink: 0, borderRadius: 16, overflow: 'hidden', backgroundColor: '#D7E8FA' },
+  frame: { width: '100%', flexShrink: 0, borderRadius: radii.listCard, overflow: 'hidden', backgroundColor: '#D7E8FA' },
   // Android prepends the asset's intrinsic width/height to Image styles. Both
   // dimensions must be overridden, even when aspectRatio is specified elsewhere.
   // Keep the source's proportions and favor the lower part of both scenes so
