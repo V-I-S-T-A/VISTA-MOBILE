@@ -23,6 +23,7 @@ import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "./FontText";
 import useReducedMotion from '../../hooks/useReducedMotion';
+import useOverlayPresence from '../../hooks/useOverlayPresence';
 import {
   colors,
   radii,
@@ -54,6 +55,7 @@ function SheetSurface({
   contentStyle,
   insets,
   density,
+  onHidden,
 }) {
   const { height } = useWindowDimensions();
   const topLayer = useOverlayActive();
@@ -63,17 +65,23 @@ function SheetSurface({
   const heading = useRef(null);
   const started = useRef(false);
   const entered = useRef(false);
+  const presented = useRef(false);
   const mounted = useRef(true);
   const active = useRef(visible);
   const measured = useRef(0);
   const animationRun = useRef(0);
   const entryFrame = useRef(null);
+  const hiddenCallback = useRef(onHidden);
+  hiddenCallback.current = onHidden;
   active.current = visible && topLayer;
   useEffect(() => {
     mounted.current = true;
     return () => {
       mounted.current = false;
+      animationRun.current++;
+      started.current = false; entered.current = false; presented.current = false;
       if (entryFrame.current !== null) cancelAnimationFrame(entryFrame.current);
+      entryFrame.current = null;
       offset.stopAnimation();
       scrim.stopAnimation();
     };
@@ -81,16 +89,27 @@ function SheetSurface({
   useEffect(() => {
     if (!visible) {
       animationRun.current++;
+      const waitingForEntry = entryFrame.current !== null;
       if (entryFrame.current !== null) cancelAnimationFrame(entryFrame.current);
       entryFrame.current = null;
+      offset.stopAnimation();
+      scrim.stopAnimation();
       started.current = false;
       entered.current = false;
-      offset.stopAnimation();
-      offset.setValue(height);
-      scrim.stopAnimation();
-      scrim.setValue(0);
+      const run = animationRun.current;
+      const finish = () => {
+        if (!mounted.current || run !== animationRun.current) return;
+        presented.current = false;
+        hiddenCallback.current?.();
+      };
+      if (reducedMotion || !presented.current || waitingForEntry) {
+        offset.setValue(measured.current || height); scrim.setValue(0); finish();
+      } else {
+        Animated.timing(scrim, { toValue: 0, duration: motion.sheet, easing: Easing.in(Easing.cubic), useNativeDriver: true }).start();
+        Animated.timing(offset, { toValue: measured.current || height, duration: motion.sheet, easing: Easing.in(Easing.cubic), useNativeDriver: true }).start(({ finished }) => { if (finished) finish(); });
+      }
     } else if (measured.current) enter();
-  }, [visible, offset, scrim]);
+  }, [visible, reducedMotion, offset, scrim]);
   useEffect(() => {
     if (topLayer && visible && entered.current) focusAccessibility(heading);
   }, [topLayer, visible]);
@@ -113,7 +132,10 @@ function SheetSurface({
     if (started.current) return;
     started.current = true;
     const run = ++animationRun.current;
-    offset.setValue(measured.current || height);
+    // An interrupted dismissal resumes from the native presentation position.
+    if (!presented.current) offset.setValue(measured.current || height);
+    presented.current = true;
+    offset.stopAnimation(); scrim.stopAnimation();
     // Never wait for a native preference Promise. Commit the measured starting
     // pose before native timing begins so mounting cannot consume the animation.
     if (reducedMotion) {
@@ -178,6 +200,9 @@ function SheetSurface({
         <Pressable accessible={false} onPress={close} style={StyleSheet.absoluteFillObject} />
       </Animated.View>
       <Animated.View
+        pointerEvents={visible ? 'auto' : 'none'}
+        accessibilityElementsHidden={!visible}
+        importantForAccessibility={visible ? 'auto' : 'no-hide-descendants'}
         onLayout={enter}
         accessibilityViewIsModal
         onAccessibilityEscape={close}
@@ -239,50 +264,52 @@ export default function AppBottomSheet({
   const insets = useSafeAreaInsets();
   const available = useOverlayAvailable();
   const usePortal = portal || (Platform.OS === "android" && available);
+  const presence = useOverlayPresence(visible, { title, children, contentStyle });
   const wasVisible = useRef(false);
   const returnTarget = useRef(returnFocusRef);
   const close = () => {
-    if (!busy && dismissible) onClose?.();
+    if (visible && !busy && dismissible) onClose?.();
   };
   useEffect(() => {
     if (visible) returnTarget.current = returnFocusRef;
     // Effects run after the dismissal commit. Do not queue focus into a later
     // frame, when navigation may already have removed the opening view.
-    if (wasVisible.current && !visible)
+    if (wasVisible.current && !presence.present)
       focusAccessibility(returnTarget.current);
-    wasVisible.current = visible;
-  }, [visible, returnFocusRef]);
+    wasVisible.current = presence.present;
+  }, [visible, presence.present, returnFocusRef]);
   useEffect(() => {
-    if (!usePortal || !visible || available) return;
+    if (!usePortal || !presence.present || available) return;
     const listener = BackHandler.addEventListener("hardwareBackPress", () => {
       close();
       return true;
     });
     return () => listener.remove();
-  }, [usePortal, available, visible, busy, dismissible, onClose]);
+  }, [usePortal, available, presence.present, busy, dismissible, onClose, visible]);
   // Preserve the existing native Modal child lifecycle; React Native owns its
   // platform-specific mounting. Portal previews still mount only while open.
   const sheet = (
     <SheetSurface
       density={density}
       visible={visible}
-      title={title}
+      title={presence.content.title}
       close={close}
       busy={busy || !dismissible}
       scroll={scroll}
-      contentStyle={contentStyle}
+      contentStyle={presence.content.contentStyle}
       insets={insets}
+      onHidden={presence.onHidden}
     >
-      {children}
+      {presence.content.children}
     </SheetSurface>
   );
   if (usePortal)
-    return visible ? (
+    return presence.present ? (
       <OverlayPortal onRequestClose={close}>{sheet}</OverlayPortal>
     ) : null;
   return (
     <Modal
-      visible={visible}
+      visible={presence.present}
       transparent
       statusBarTranslucent
       navigationBarTranslucent
