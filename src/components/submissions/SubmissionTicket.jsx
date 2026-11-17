@@ -1,4 +1,5 @@
 import { AppAlert as Alert } from "../common/AppDialog";
+import { useState } from 'react';
 import { Linking, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { Text } from "../common/FontText";
@@ -8,6 +9,7 @@ import TicketBanner from "./TicketBanner";
 import { safeWebUrl } from "./conversationPolicy.cjs";
 import { colors, type, radii } from '../../theme/tokens';
 import { visibleSubmissionDescription } from "../../utils/documentCode.cjs";
+import AttachmentPreview from './AttachmentPreview';
 
 async function openFile(value) {
   const url = safeWebUrl(value);
@@ -22,19 +24,23 @@ async function openFile(value) {
   }
 }
 
-export function SubmissionAttachmentRow({ name, url }) {
-  return (
+export function SubmissionAttachmentRow({ name, url, document, history = false, external = false }) {
+  const [preview, setPreview] = useState(false);
+  const file = document || { file_name: name, file_url: url };
+  const ink = history ? colors.blue : colors.onBrand;
+  return <>
     <TouchableOpacity
-      accessibilityRole="link"
-      accessibilityLabel={`Open ${name}`}
-      onPress={() => openFile(url)}
-      style={styles.file}
+      accessibilityRole={external ? 'link' : 'button'}
+      accessibilityLabel={`${external ? 'Open' : 'Preview'} ${name}`}
+      onPress={() => external ? openFile(url) : setPreview(true)}
+      style={[styles.file, history && { backgroundColor: colors.selectedSurface, borderRadius: radii.chip }]}
     >
-      <Feather name="paperclip" size={20} color="white" />
-      <Text style={styles.fileName}>{name}</Text>
-      <Feather name="external-link" size={18} color="white" />
+      <Feather name="paperclip" size={20} color={ink} />
+      <Text style={[styles.fileName, { color: ink }]}>{name}</Text>
+      <Feather name={external ? 'external-link' : 'eye'} size={18} color={ink} />
     </TouchableOpacity>
-  );
+    {preview ? <AttachmentPreview document={file} onClose={() => setPreview(false)} /> : null}
+  </>;
 }
 
 export default function SubmissionTicket({
@@ -153,6 +159,7 @@ export default function SubmissionTicket({
             key={doc.document_id || doc.file_name}
             name={doc.file_name || "Attached document"}
             url={doc.file_url}
+            document={doc}
           />
         ))}
         {archives.map((archive) => (
@@ -160,6 +167,7 @@ export default function SubmissionTicket({
             key={archive.archive_id}
             name={`Archived · ${archive.file_name}`}
             url={archive.drive_view_link}
+            external
           />
         ))}
         {!files.length && !archives.length ? (
