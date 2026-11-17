@@ -35,7 +35,7 @@ function ScopedDetails({ navigation, user, scope, id }) {
   const client = useQueryClient();
   const layout = useStaffLayout();
   const insets = useSafeAreaInsets();
-  const footerClearance = Math.max(insets.bottom, space.sm);
+  const footerClearance = insets.bottom;
   const [sheet, setSheet] = useState(false);
   const [lost, setLost] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -43,7 +43,7 @@ function ScopedDetails({ navigation, user, scope, id }) {
   const conversationTop = useRef(0);
   const entryOffsets = useRef({});
   const { progress } = useReanimatedKeyboardAnimation();
-  const footerStyle = useAnimatedStyle(() => ({ height: footerClearance * (1 - progress.value) }), [footerClearance]);
+  const footerStyle = useAnimatedStyle(() => ({ height: footerClearance * (1 - progress.value), backgroundColor: colors.surface }), [footerClearance]);
   const tasksKey = ['drive', 'review-tasks', scope, id];
   const [driveTasks, setDriveTasks] = useState(() => client.getQueryData?.(tasksKey) || []);
   const trackUpload = task => setDriveTasks(current => {
@@ -119,7 +119,7 @@ function ScopedDetails({ navigation, user, scope, id }) {
             {access.viewOnly ? <View style={{ backgroundColor: colors.selectedSurface, borderRadius: radii.field, padding: 12, marginBottom: 12 }}><Text style={{ color: '#38557B', fontSize: type.meta.fontSize }}>Organization Submission — View Only</Text></View> : null}
             <SubmissionTicket submission={detail.data} viewerRole={user.role} access={access} user={user} submitter={access.staff ? submitter.data : undefined} handler={conversation.entries[0]} />
             <View onLayout={event => { conversationTop.current = event.nativeEvent.layout.y; }}>
-              <SubmissionConversation conversation={conversation} submissionId={id} scope={scope} access={access} onAccessLost={onAccessLost} onEntryLayout={(key, y) => { entryOffsets.current[key] = y; }} />
+              <SubmissionConversation conversation={conversation} submissionId={id} scope={scope} access={access} documents={access.staff && detail.data.status !== 'rejected' ? detail.data.documents : []} onAccessLost={onAccessLost} onEntryLayout={(key, y) => { entryOffsets.current[key] = y; }} />
             </View>
             {access.staff ? driveTasks.map(task => <ReviewDriveTask key={task.taskId} task={task} onComplete={archiveComplete} />) : null}
             {access.staff ? <DriveArchiveCard submission={detail.data} /> : null}
