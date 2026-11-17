@@ -24,6 +24,7 @@ import { openDocumentEntryWithAttachment } from '../../utils/openDocumentEntryWi
 import NotificationDetailSheet from '../../components/students/NotificationDetailSheet';
 import { colors, space, type } from '../../theme/tokens';
 import StaleWarningBanner from '../../components/common/StaleWarningBanner';
+import ContentState from '../../components/common/ContentState';
 
 export default function NotificationsScreen({ navigation, route }) {
   const navScroll = useBottomNavScroll(navigation);
@@ -175,18 +176,9 @@ export default function NotificationsScreen({ navigation, route }) {
         </>}
         ListEmptyComponent={isPending && !hasData ? <NotificationsSkeleton />
           : isError && (!hasData || isAuthError) ? (
-        <View style={{ paddingVertical: space.xxl, gap: space.sm, alignItems: 'flex-start' }}>
-          <VistaIcon name="alert-circle" size={18} color={colors.danger} />
-          <Text accessibilityRole="alert" style={{ ...type.notificationTitle, color: colors.text }}>Could not load notifications</Text>
-          <Text style={{ ...type.body, color: colors.muted }}>Check your connection and try again.</Text>
-          <AppButton label="Try again" busy={isFetching} onPress={() => refetch()} />
-        </View>
+        <ContentState variant="error" title="Could not load notifications" error={error} busy={isFetching} onRetry={() => refetch()} />
       ) : (
-              <View style={{ alignItems: 'flex-start', paddingVertical: 24, gap: space.sm }}>
-                <VistaIcon name="bell" size={18} color={colors.muted} />
-                <Text style={{ ...type.notificationTitle, color: colors.text }}>You’re all caught up</Text>
-                <Text style={{ ...type.body, color: colors.muted }}>New updates will appear here.</Text>
-              </View>
+              <ContentState title="You’re all caught up" message="New updates will appear here." />
       )}
       />
       {role === ROLES.STUDENT ? (
