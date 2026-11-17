@@ -5,8 +5,9 @@ import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radii, sizes, space, shadows, motion } from '../../theme/tokens';
 import useReducedMotion from '../../hooks/useReducedMotion';
+import useOverlayPresence from '../../hooks/useOverlayPresence';
 
-function modalContent({ insets, close, children, progress }) {
+function modalContent({ insets, close, children, progress, visible = true }) {
   const Card = progress ? Animated.View : View;
   return <>
     <KeyboardAvoidingView behavior="padding" style={[styles.host, { paddingTop: Math.max(insets.top, 16), paddingBottom: Math.max(insets.bottom, 16) }]}>
@@ -15,7 +16,7 @@ function modalContent({ insets, close, children, progress }) {
           <Pressable accessible={false} onPress={close} style={StyleSheet.absoluteFillObject} />
         </Animated.View>
       ) : <Pressable accessible={false} onPress={close} style={styles.backdrop} />}
-      <Card accessibilityViewIsModal style={progress ? [styles.card, {
+      <Card pointerEvents={visible ? 'auto' : 'none'} accessibilityElementsHidden={!visible} importantForAccessibility={visible ? 'auto' : 'no-hide-descendants'} accessibilityViewIsModal onAccessibilityEscape={close} style={progress ? [styles.card, {
         opacity: progress,
         transform: [{ scale: progress.interpolate({ inputRange: [0, 1], outputRange: [motion.modalScale, 1] }) }],
       }] : styles.card}>
@@ -25,33 +26,45 @@ function modalContent({ insets, close, children, progress }) {
   </>;
 }
 
-// The Android portal shares the activity window, so the native Modal fade does
-// not run there. Animate its scrim and card together without delaying actions.
-function PortalModalSurface({ insets, close, children, reducedMotion }) {
-  const progress = useRef(new Animated.Value(reducedMotion ? 1 : 0)).current;
+// Animate the card and scrim inside their window on both platforms. Native
+// Modal window animation stays off so entry/exit never play twice.
+function ModalSurface({ insets, close, children, reducedMotion, visible, onHidden }) {
+  const progress = useRef(new Animated.Value(reducedMotion && visible ? 1 : 0)).current;
+  const callback = useRef(onHidden);
+  callback.current = onHidden;
   useEffect(() => {
+    let active = true;
     progress.stopAnimation();
-    if (reducedMotion) progress.setValue(1);
+    if (reducedMotion) {
+      progress.setValue(visible ? 1 : 0);
+      if (!visible) callback.current();
+    }
     else Animated.timing(progress, {
-      toValue: 1,
-      duration: motion.page,
-      easing: Easing.out(Easing.cubic),
+      toValue: visible ? 1 : 0,
+      duration: motion.modal,
+      easing: visible ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
       useNativeDriver: true,
-    }).start();
-    return () => progress.stopAnimation();
-  }, [progress, reducedMotion]);
-  return modalContent({ insets, close, children, progress });
+    }).start(({ finished }) => { if (active && finished && !visible) callback.current(); });
+    return () => { active = false; progress.stopAnimation(); };
+  }, [progress, reducedMotion, visible]);
+  return modalContent({ insets, close, children, progress, visible });
 }
 
-export default function AppModal({ visible, onClose, children, dismissible = true }) {
+export default function AppModal({ visible, onClose, onDismiss, children, dismissible = true }) {
   const insets = useSafeAreaInsets();
   const reducedMotion = useReducedMotion();
   const available = useOverlayAvailable();
   const portal = Platform.OS === 'android' && available;
-  const close = () => { if (dismissible) onClose?.(); };
-  if (portal) return visible ? <OverlayPortal onRequestClose={close}><PortalModalSurface insets={insets} close={close} reducedMotion={reducedMotion}>{children}</PortalModalSurface></OverlayPortal> : null;
-  const content = modalContent({ insets, close, children });
-  return <Modal visible={visible} transparent statusBarTranslucent navigationBarTranslucent animationType={reducedMotion ? 'none' : 'fade'} onRequestClose={close}>{content}</Modal>;
+  const presence = useOverlayPresence(visible, children);
+  const wasPresent = useRef(false);
+  useEffect(() => {
+    if (wasPresent.current && !presence.present) onDismiss?.();
+    wasPresent.current = presence.present;
+  }, [presence.present, onDismiss]);
+  const close = () => { if (visible && dismissible) onClose?.(); };
+  const content = <ModalSurface insets={insets} close={close} reducedMotion={reducedMotion} visible={visible} onHidden={presence.onHidden}>{presence.content}</ModalSurface>;
+  if (portal) return presence.present ? <OverlayPortal onRequestClose={close}>{content}</OverlayPortal> : null;
+  return <Modal visible={presence.present} transparent statusBarTranslucent navigationBarTranslucent animationType="none" onRequestClose={close}>{content}</Modal>;
 }
 const styles = StyleSheet.create({
   host: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 16 },
