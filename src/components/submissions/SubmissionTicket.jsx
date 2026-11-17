@@ -6,7 +6,7 @@ import UserAvatar from "../common/UserAvatar";
 import SubmissionStatusBadge from "./SubmissionStatusBadge";
 import TicketBanner from "./TicketBanner";
 import { safeWebUrl } from "./conversationPolicy.cjs";
-import { colors, type } from "../../theme/tokens";
+import { colors, type, radii } from '../../theme/tokens';
 import { visibleSubmissionDescription } from "../../utils/documentCode.cjs";
 
 async function openFile(value) {
@@ -185,7 +185,7 @@ export default function SubmissionTicket({
 const styles = StyleSheet.create({
   ticket: {
     backgroundColor: colors.ticket,
-    borderRadius: 20,
+    borderRadius: radii.card,
     marginBottom: 16,
     shadowColor: colors.navy,
     shadowOpacity: 0.12,
@@ -194,14 +194,14 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   content: { padding: 12, gap: 6 },
-  category: { color: colors.ticketText, fontSize: 12, marginTop: 6 },
-  title: { ...type.heading, color: "white", fontSize: 18, lineHeight: 24 },
+  category: { color: colors.ticketText, fontSize: type.meta.fontSize, marginTop: 6 },
+  title: { ...type.heading, color: "white", fontSize: type.navigationTitle.fontSize, lineHeight: type.navigationTitle.lineHeight },
   meta: { flexDirection: "row", flexWrap: "wrap", gap: 14, marginTop: 6 },
   metaCell: { flexGrow: 1, flexBasis: 115 },
-  label: { color: colors.ticketMuted, fontSize: 12 },
-  value: { color: "white", fontSize: 14, lineHeight: 21 },
+  label: { color: colors.ticketMuted, fontSize: type.meta.fontSize },
+  value: { color: "white", fontSize: type.field.fontSize, lineHeight: type.field.lineHeight },
   organization: { marginTop: 4 },
-  description: { color: colors.ticketText, fontSize: 13, lineHeight: 20 },
+  description: { color: colors.ticketText, fontSize: type.field.fontSize, lineHeight: type.field.lineHeight },
   handler: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 4 },
   handlerName: { ...type.meta, color: colors.ticketText, flex: 1 },
   profileSection: {
@@ -222,9 +222,9 @@ const styles = StyleSheet.create({
     gap: 10,
     alignItems: "center",
   },
-  name: { fontFamily: "DMSans_700Bold", color: "white", fontSize: 14 },
-  email: { color: colors.ticketMuted, fontSize: 11, lineHeight: 17 },
-  role: { color: colors.ticketMuted, fontSize: 11, marginTop: 3 },
+  name: { fontFamily: "DMSans_700Bold", color: "white", fontSize: type.field.fontSize },
+  email: { color: colors.ticketMuted, fontSize: type.meta.fontSize, lineHeight: type.meta.lineHeight },
+  role: { color: colors.ticketMuted, fontSize: type.meta.fontSize, marginTop: 3 },
   statusRow: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
     maxWidth: "100%",
     flexShrink: 1,
   },
-  priority: { color: "#FFF0A6", fontSize: 11, fontFamily: "DMSans_700Bold" },
+  priority: { color: colors.priorityOnTicket, fontSize: type.meta.fontSize, fontFamily: "DMSans_700Bold" },
   tear: {
     borderTopWidth: 1,
     borderColor: colors.ticketMuted,
@@ -244,8 +244,8 @@ const styles = StyleSheet.create({
   cutout: {
     width: 20,
     height: 20,
-    borderRadius: 10,
-    backgroundColor: "#F3F3F3",
+    borderRadius: radii.chip,
+    backgroundColor: colors.background,
     position: "absolute",
     top: -10,
   },
@@ -258,14 +258,14 @@ const styles = StyleSheet.create({
   },
   file: {
     backgroundColor: "#FFFFFF22",
-    borderRadius: 14,
+    borderRadius: radii.field,
     padding: 12,
     minHeight: 48,
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
   },
-  fileName: { color: "white", flex: 1, fontSize: 13 },
+  fileName: { color: "white", flex: 1, fontSize: type.field.fontSize },
   emptyFile: {
     flexDirection: "row",
     alignItems: "center",
@@ -274,8 +274,8 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     color: colors.ticketText,
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: type.meta.fontSize,
+    lineHeight: type.meta.lineHeight,
     flexShrink: 1,
   },
 });
