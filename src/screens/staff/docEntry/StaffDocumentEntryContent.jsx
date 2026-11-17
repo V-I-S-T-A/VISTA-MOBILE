@@ -306,7 +306,7 @@ export default function StaffDocumentEntryContent({ navigation, initialAttachmen
 
       {!online || referenceError ? <ContentState compact variant="error" title="Could not load form options"
         error={!online ? { code: 'OFFLINE' } : referenceError} onRetry={onRefresh} /> : null}
-      {online && (loadingOrgs || loadingCategories || loadingDocTypes || loadingAcademicYear) ? <FormSkeleton compact /> : <View style={styles.form}>
+      {online && (loadingOrgs || loadingCategories || loadingDocTypes || loadingAcademicYear) ? <FormSkeleton compact hasAttachment={!!scannedFile} /> : <View style={styles.form}>
         <SelectField
           size="compact"
           label="Organization"
