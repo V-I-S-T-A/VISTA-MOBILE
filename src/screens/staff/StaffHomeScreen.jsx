@@ -1,3 +1,4 @@
+import useBottomNavScroll from '../../hooks/useBottomNavScroll';
 import { View } from "react-native";
 import { useStaffLayout } from "../../theme/layout";
 import StaffBottomNav from "../../components/staff/StaffBottomNav";
@@ -5,6 +6,7 @@ import StaffHomeContent from "./home/StaffHomeContent";
 import { openDocumentEntryWithAttachment } from "../../utils/openDocumentEntryWithAttachment";
 
 export default function StaffHomeScreen({ navigation }) {
+  const navScroll = useBottomNavScroll(navigation);
   const screenLayout = useStaffLayout();
 
   return (
@@ -13,9 +15,9 @@ export default function StaffHomeScreen({ navigation }) {
         className="flex-1 bg-[#F3F3F3]"
         style={screenLayout.body}
       >
-        <StaffHomeContent />
+        <StaffHomeContent navScroll={navScroll} />
       </View>
-      <StaffBottomNav
+      <StaffBottomNav scrollBehavior={navScroll}
         activeTab="home"
         onScanPress={() => openDocumentEntryWithAttachment(navigation)}
         onHomePress={() => navigation.navigate("StaffHome")}
