@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
-import { Keyboard, View, useWindowDimensions } from 'react-native';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { AccessibilityInfo, Animated, Easing, Keyboard, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useIsOverlayOpen } from './OverlayPortal';
+import useReducedMotion from '../../hooks/useReducedMotion';
+import { compact, motion, nav, space } from '../../theme/tokens';
 
 // Edge-to-edge single positioning authority across all screens.
 // Maintains stable safe-area resting coordinates and provides keyboard shrink compensation
@@ -60,15 +62,49 @@ export function resetRestingBottomAuthority() {
 
 // Keep the existing edge-to-edge placement and the iOS home-indicator gap.
 // Overlays (dropdowns, sheets, modals) must not cause transient system navigation-bar insets to jump the navbar.
-export default function BottomNavFrame({ children, docked = false }) {
+export default function BottomNavFrame({ children, docked = false, scrollBehavior }) {
   const insets = useSafeAreaInsets();
   const isOverlayOpen = typeof useIsOverlayOpen === 'function' ? useIsOverlayOpen() : false;
   const dimensions = useWindowDimensions();
   const { width, height } = dimensions;
   const [keyboard, setKeyboard] = useState(false);
+  const [scrollHidden, setScrollHidden] = useState(() => scrollBehavior?.isHidden() || false);
+  const [screenReader, setScreenReader] = useState(true);
+  const [barHeight, setBarHeight] = useState(compact.navHeight);
+  const reducedMotion = useReducedMotion();
+  const visibility = useRef(new Animated.Value(0)).current;
+  const hidden = scrollHidden && !screenReader && !isOverlayOpen;
+
+  useEffect(() => {
+    setScrollHidden(scrollBehavior?.isHidden() || false);
+    return scrollBehavior?.subscribe(setScrollHidden);
+  }, [scrollBehavior]);
+  useEffect(() => {
+    let active = true;
+    let revision = 0;
+    const subscription = AccessibilityInfo.addEventListener('screenReaderChanged', value => {
+      revision++;
+      if (active) setScreenReader(value);
+    });
+    const readRevision = revision;
+    AccessibilityInfo.isScreenReaderEnabled?.().then(value => {
+      if (active && readRevision === revision) setScreenReader(value);
+    }).catch(() => {});
+    return () => { active = false; subscription.remove(); };
+  }, []);
+  useLayoutEffect(() => {
+    visibility.stopAnimation();
+    if (reducedMotion) visibility.setValue(hidden ? 1 : 0);
+    else Animated.timing(visibility, {
+      toValue: hidden ? 1 : 0, duration: 240,
+      easing: hidden ? Easing.in(Easing.cubic) : Easing.out(Easing.cubic), useNativeDriver: true,
+      isInteraction: false,
+    }).start();
+    return () => visibility.stopAnimation();
+  }, [hidden, reducedMotion, visibility]);
 
   const restingBottom = getStableRestingBottom(insets, { width, height }, isOverlayOpen);
-  const effectiveBottom = Math.max(restingBottom, 4);
+  const effectiveBottom = Math.max(restingBottom, nav.bottomGap);
 
   useEffect(() => {
     const show = Keyboard.addListener('keyboardDidShow', () => setKeyboard(true));
@@ -83,14 +119,21 @@ export default function BottomNavFrame({ children, docked = false }) {
   const shrinkOffset = isKeyboardShrunk ? (restingState.height - height) : 0;
   const bottomPosition = effectiveBottom - shrinkOffset;
 
-  return <View pointerEvents={keyboard ? 'none' : 'box-none'} accessibilityElementsHidden={keyboard}
-    importantForAccessibility={keyboard ? 'no-hide-descendants' : 'auto'}
+  return <Animated.View pointerEvents={keyboard || hidden ? 'none' : 'box-none'} accessibilityElementsHidden={keyboard || hidden}
+    importantForAccessibility={keyboard || hidden ? 'no-hide-descendants' : 'auto'}
+    onLayout={event => {
+      const measured = event.nativeEvent.layout.height;
+      if (measured > 0) setBarHeight(measured);
+    }}
     style={[
       docked
         ? { paddingTop: 2, paddingBottom: effectiveBottom }
         : { position: 'absolute', left: 0, right: 0, bottom: bottomPosition },
-      { paddingHorizontal: Math.max(12, insets.left, insets.right), opacity: keyboard ? 0 : 1 }
+      { paddingHorizontal: Math.max(space.md, insets.left, insets.right),
+        opacity: keyboard ? 0 : visibility.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
+        transform: [{ translateY: visibility.interpolate({ inputRange: [0, 1], outputRange: [0, barHeight + effectiveBottom + nav.hideGap] }) }],
+      }
     ]}>
     {children}
-  </View>;
+  </Animated.View>;
 }
