@@ -94,17 +94,6 @@ export default function UserAvatar({ uri, size = sizes.avatar, style, fallbackIc
 
   const activeSource = isLoaded && optimizedUri ? { uri: optimizedUri } : fallback;
 
-  if (!optimizedUri || isFailed) {
-    return (
-      <Image
-        accessibilityIgnoresInvertColors
-        source={fallback}
-        resizeMode="cover"
-        style={containerStyle}
-      />
-    );
-  }
-
   return (
     <View
       accessibilityRole="image"
@@ -125,9 +114,12 @@ export default function UserAvatar({ uri, size = sizes.avatar, style, fallbackIc
           position: 'absolute',
           top: 0,
           left: 0,
+          // The bundled 980px artwork has ~100px white padding on each edge.
+          // Crop that inset inside the fixed circle, leaving the outer border unchanged.
+          transform: [{ scale: 980 / 780 }],
         }}
       />
-      <Image
+      {optimizedUri && !isFailed ? <Image
         key={`${optimizedUri}-try-${currentRetryCount}`}
         accessibilityIgnoresInvertColors
         source={{ uri: optimizedUri }}
@@ -143,7 +135,7 @@ export default function UserAvatar({ uri, size = sizes.avatar, style, fallbackIc
           left: 0,
           opacity: isLoaded ? 1 : 0,
         }}
-      />
+      /> : null}
     </View>
   );
 }
