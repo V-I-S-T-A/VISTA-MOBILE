@@ -84,6 +84,6 @@ export const composerLayout = { minHeight: 48, maxHeight: 112, padding: 8, gap: 
 // Opt-in geometry for dense review/archive tools; default forms stay unchanged.
 export const reviewControls = { fieldHeight: 42, attachmentHeight: 44, actionHeight: 42, optionHeight: 40, segmentHeight: 36, touch: 48, radius: 10, padding: 10, gap: 8, icon: 16, value: { fontFamily: 'DMSans_400Regular', fontSize: 13, lineHeight: 18 }, label: { fontFamily: 'DMSans_500Medium', fontSize: 11, lineHeight: 16 }, action: { fontFamily: 'DMSans_500Medium', fontSize: 12, lineHeight: 18 }, heading: { fontFamily: 'DMSans_600SemiBold', fontSize: 13, lineHeight: 18 }, sheetTitle: { fontFamily: 'DMSans_600SemiBold', fontSize: 15, lineHeight: 20 } };
 
-// Opt-in inset settings groups; existing blue settings subpages retain their styling.
-export const settingsLayout = { iconSize: space.xxxl, iconRadius: space.sm, rowMinHeight: compact.touch + space.lg, separatorWidth: 1 };
+// Shared inset groups and quiet outline icons throughout Settings.
+export const settingsLayout = { iconSize: space.xxl, iconRadius: 0, rowMinHeight: compact.touch + space.lg, separatorWidth: 1, cardRadius: radii.field, profileAvatar: sizes.touch };
 export const settingsTones = { notification: colors.danger, update: colors.blue, guide: colors.blue, help: colors.profileBlue, support: colors.success, issue: colors.warning, privacy: colors.success, document: colors.blue, community: colors.navy, about: colors.muted };
