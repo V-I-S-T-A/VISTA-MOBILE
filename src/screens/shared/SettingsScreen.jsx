@@ -8,7 +8,7 @@ import SettingsSection from '../../components/settings/SettingsSection';
 import SettingsRow from '../../components/settings/SettingsRow';
 import AppBottomSheet from '../../components/common/AppBottomSheet';
 import AppButton from '../../components/common/AppButton';
-import { colors, type } from '../../theme/tokens';
+import { colors, type, radii, sizes, space, settingsTones } from '../../theme/tokens';
 import { useAuth } from '../../context/AuthContext';
 import { authService } from '../../services/authService';
 import { queryClient } from '../../lib/queryClient';
@@ -16,8 +16,6 @@ import { ROLES } from '../../constants/roles';
 import { CONTACT_EMAIL, APP_VERSION } from '../../data/legalContent';
 import { useUpdateManager } from '../../components/common/UpdateManager';
 import { useToast } from '../../components/common/Toast';
-
-const PROFILE_BLUE = '#245EA9';
 
 const FAQ_ITEMS = [
   {
@@ -120,33 +118,36 @@ export default function SettingsScreen({ navigation }) {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: PROFILE_BLUE, paddingTop: insets.top }}>
-      {/* 1. Symmetrical Top Header: Back arrow & Title in white, VISTA icon on right */}
+    <View style={{ flex: 1, backgroundColor: colors.background, paddingTop: insets.top }}>
       <SettingsHeader
         title="Settings"
         onBack={handleBack}
         showVistaIcon
+        variant="grouped"
       />
 
       <ScrollView
+        alwaysBounceVertical overScrollMode="always"
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            colors={['#1a59a5', '#fdc849']}
-            tintColor="#FFFFFF"
+            colors={[colors.blue, colors.yellow]}
+            tintColor={colors.blue}
           />
         }
         contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingTop: 2,
-          paddingBottom: Math.max(insets.bottom, 16) + 12,
+          paddingHorizontal: space.lg,
+          paddingTop: space.lg,
+          paddingBottom: Math.max(insets.bottom, space.lg) + space.md,
         }}
       >
         {/* Section 1 — Preferences */}
-        <SettingsSection title="PREFERENCES">
+        <SettingsSection title="PREFERENCES" variant="grouped">
           <SettingsRow
+            variant="grouped"
+            iconColor={settingsTones.notification}
             icon="bell"
             label="Notifications"
             description="Push and in-app alerts"
@@ -154,8 +155,12 @@ export default function SettingsScreen({ navigation }) {
           />
         </SettingsSection>
 
-        <SettingsSection title="APP UPDATE">
+        <SettingsSection title="APP UPDATE" variant="grouped">
           <SettingsRow
+            variant="grouped"
+            iconColor={settingsTones.update}
+            busy={checkingUpdates}
+            showChevron={false}
             icon="download"
             label={checkingUpdates ? 'Checking for updates…' : 'Check for updates'}
             description="Get the latest version of VISTA Mobile"
@@ -164,8 +169,10 @@ export default function SettingsScreen({ navigation }) {
         </SettingsSection>
 
         {/* Section 2 — Help & Support */}
-        <SettingsSection title="HELP & SUPPORT">
+        <SettingsSection title="HELP & SUPPORT" variant="grouped">
           <SettingsRow
+            variant="grouped"
+            iconColor={settingsTones.guide}
             icon="book-open"
             label="User Guide"
             description={
@@ -177,21 +184,30 @@ export default function SettingsScreen({ navigation }) {
             onPress={() => navigation.navigate('UserGuide')}
           />
           <SettingsRow
+            variant="grouped"
+            iconColor={settingsTones.help}
             icon="help-circle"
+            triggerRef={faqTrigger}
             label="Frequently Asked Questions"
             description="Answers to common questions"
             hasDivider
             onPress={() => setFaqOpen(true)}
           />
           <SettingsRow
+            variant="grouped"
+            iconColor={settingsTones.support}
             icon="mail"
+            triggerRef={contactTrigger}
             label="Contact OSA Support"
             description="Office of Student Affairs assistance"
             hasDivider
             onPress={() => setContactOpen(true)}
           />
           <SettingsRow
+            variant="grouped"
+            iconColor={settingsTones.issue}
             icon="alert-circle"
+            triggerRef={reportTrigger}
             label="Report a Technical Issue"
             description="Report bugs or connection problems"
             onPress={() => setReportOpen(true)}
@@ -199,8 +215,10 @@ export default function SettingsScreen({ navigation }) {
         </SettingsSection>
 
         {/* Section 3 — Legal & Information */}
-        <SettingsSection title="LEGAL & INFORMATION">
+        <SettingsSection title="LEGAL & INFORMATION" variant="grouped">
           <SettingsRow
+            variant="grouped"
+            iconColor={settingsTones.privacy}
             icon="shield"
             label="Privacy Policy"
             description="How VISTA handles your information"
@@ -208,6 +226,8 @@ export default function SettingsScreen({ navigation }) {
             onPress={() => navigation.navigate('LegalDocument', { documentType: 'privacy' })}
           />
           <SettingsRow
+            variant="grouped"
+            iconColor={settingsTones.document}
             icon="file-text"
             label="Terms of Service"
             description="Responsibilities and usage terms"
@@ -215,6 +235,8 @@ export default function SettingsScreen({ navigation }) {
             onPress={() => navigation.navigate('LegalDocument', { documentType: 'terms' })}
           />
           <SettingsRow
+            variant="grouped"
+            iconColor={settingsTones.community}
             icon="award"
             label="Community & Submission Guidelines"
             description="Submission authenticity and etiquette"
@@ -222,6 +244,8 @@ export default function SettingsScreen({ navigation }) {
             onPress={() => navigation.navigate('LegalDocument', { documentType: 'guidelines' })}
           />
           <SettingsRow
+            variant="grouped"
+            iconColor={settingsTones.about}
             icon="info"
             label="About VISTA"
             description="Platform purpose, version & build"
@@ -230,13 +254,13 @@ export default function SettingsScreen({ navigation }) {
         </SettingsSection>
 
         {/* Footer Branding: Version and Office Caption */}
-        <View style={{ alignItems: 'center', marginTop: 12, marginBottom: 4 }}>
+        <View style={{ alignItems: 'center', marginTop: space.xs, marginBottom: space.xs }}>
           <Text
             style={{
               fontFamily: 'DMSans_500Medium',
-              fontSize: 11,
-              lineHeight: 15,
-              color: '#FFFFFF',
+              fontSize: type.meta.fontSize,
+              lineHeight: type.meta.lineHeight,
+              color: colors.muted,
               textAlign: 'center',
             }}
           >
@@ -245,10 +269,10 @@ export default function SettingsScreen({ navigation }) {
           <Text
             style={{
               fontFamily: 'DMSans_400Regular',
-              fontSize: 10,
-              lineHeight: 14,
-              color: 'rgba(255, 255, 255, 0.75)',
-              marginTop: 1.5,
+              fontSize: type.meta.fontSize,
+              lineHeight: type.meta.lineHeight,
+              color: colors.muted,
+              marginTop: space.xs,
               textAlign: 'center',
             }}
           >
@@ -271,21 +295,25 @@ export default function SettingsScreen({ navigation }) {
               return (
                 <TouchableOpacity
                   key={idx}
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded: isOpen }}
                   onPress={() => toggleFaq(idx)}
                   activeOpacity={0.7}
                   style={{
-                    backgroundColor: '#F8FAFC',
-                    borderRadius: 10,
+                    backgroundColor: colors.field,
+                    borderRadius: radii.chip,
                     padding: 10,
+                    minHeight: sizes.touch,
+                    justifyContent: 'center',
                     borderWidth: 1,
-                    borderColor: '#E2E8F0',
+                    borderColor: colors.border,
                   }}
                 >
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                     <Text
                       style={{
                         fontFamily: 'DMSans_600SemiBold',
-                        fontSize: 12.5,
+                        fontSize: type.field.fontSize,
                         color: colors.navy,
                         flex: 1,
                         marginRight: 6,
@@ -299,13 +327,13 @@ export default function SettingsScreen({ navigation }) {
                     <Text
                       style={{
                         ...type.body,
-                        fontSize: 11.5,
-                        lineHeight: 16,
+                        fontSize: type.meta.fontSize,
+                        lineHeight: type.meta.lineHeight,
                         color: '#475569',
                         marginTop: 5,
                         paddingTop: 5,
                         borderTopWidth: 1,
-                        borderTopColor: '#E2E8F0',
+                        borderTopColor: colors.border,
                       }}
                     >
                       {item.a}
@@ -329,29 +357,29 @@ export default function SettingsScreen({ navigation }) {
         <View style={{ gap: 8, paddingBottom: 10 }}>
           <View
             style={{
-              backgroundColor: '#F8FAFC',
-              borderRadius: 10,
+              backgroundColor: colors.field,
+              borderRadius: radii.chip,
               padding: 10,
               borderWidth: 1,
-              borderColor: '#E2E8F0',
+              borderColor: colors.border,
               gap: 6,
             }}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
               <Feather name="map-pin" size={14} color={colors.blue} />
-              <Text style={{ fontFamily: 'DMSans_600SemiBold', fontSize: 12.5, color: colors.navy }}>
+              <Text style={{ fontFamily: 'DMSans_600SemiBold', fontSize: type.field.fontSize, color: colors.navy }}>
                 Student Center Building, Ground Floor
               </Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
               <Feather name="clock" size={14} color={colors.blue} />
-              <Text style={{ ...type.body, fontSize: 11.5, color: colors.muted }}>
+              <Text style={{ ...type.body, fontSize: type.meta.fontSize, color: colors.muted }}>
                 Monday – Friday: 8:00 AM – 5:00 PM
               </Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
               <Feather name="mail" size={14} color={colors.blue} />
-              <Text style={{ ...type.body, fontSize: 11.5, color: colors.blue }}>
+              <Text style={{ ...type.body, fontSize: type.meta.fontSize, color: colors.blue }}>
                 {CONTACT_EMAIL}
               </Text>
             </View>
@@ -375,23 +403,23 @@ export default function SettingsScreen({ navigation }) {
         returnFocusRef={reportTrigger}
       >
         <View style={{ gap: 8, paddingBottom: 10 }}>
-          <Text style={{ ...type.body, fontSize: 12, lineHeight: 17, color: '#334155' }}>
+          <Text style={{ ...type.body, fontSize: type.meta.fontSize, lineHeight: type.meta.lineHeight, color: '#334155' }}>
             Encountered a bug, display glitch, or network problem? Sending a report will include basic diagnostics
             to help resolve it quickly.
           </Text>
           <View
             style={{
-              backgroundColor: '#F8FAFC',
-              borderRadius: 10,
+              backgroundColor: colors.field,
+              borderRadius: radii.chip,
               padding: 8,
               borderWidth: 1,
-              borderColor: '#E2E8F0',
+              borderColor: colors.border,
             }}
           >
-            <Text style={{ ...type.meta, fontSize: 10.5, color: colors.muted }}>
+            <Text style={{ ...type.meta, fontSize: type.meta.fontSize, color: colors.muted }}>
               App: VISTA Mobile v{APP_VERSION} ({Platform.OS})
             </Text>
-            <Text style={{ ...type.meta, fontSize: 10.5, color: colors.muted, marginTop: 1.5 }}>
+            <Text style={{ ...type.meta, fontSize: type.meta.fontSize, color: colors.muted, marginTop: 1.5 }}>
               Account: {user?.email || 'N/A'} ({role || 'guest'})
             </Text>
           </View>
