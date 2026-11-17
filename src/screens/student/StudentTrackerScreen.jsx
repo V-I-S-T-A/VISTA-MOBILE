@@ -17,6 +17,7 @@ import { panelStyles, useStaffLayout } from '../../theme/layout';
 import PageHeading from '../../components/common/PageHeading';
 import { SubmissionListSkeleton } from '../../components/common/Skeleton';
 import StaleWarningBanner from '../../components/common/StaleWarningBanner';
+import ContentState from '../../components/common/ContentState';
 import StaffReviewSearch from '../staff/reviewPanel/StaffReviewSearch';
 import AcademicYearFilterSheet from '../../components/submissions/AcademicYearFilterSheet';
 import { colors, compact, radii, type } from '../../theme/tokens';
@@ -117,26 +118,13 @@ export default function StudentTrackerScreen({ navigation, route }) {
         {isLoading && !hasData ? (
           <SubmissionListSkeleton count={5} />
         ) : isError && (!hasData || isAuthError) ? (
-          <View style={panelStyles.state}>
-            <Text className="text-gray-500 mb-3">
-              Could not load submissions.
-            </Text>
-            <TouchableOpacity
-              onPress={refetch}
-              style={panelStyles.touch} className="bg-vistaNavy rounded-full px-4 py-2"
-            >
-              <Text className="text-white font-semibold">Retry</Text>
-            </TouchableOpacity>
-          </View>
+          <ContentState variant="error" title="Could not load submissions" error={error} onRetry={refetch} />
         ) : submissions.length === 0 ? (
-          <View style={{ paddingVertical: 24, alignItems: 'center', gap: 8 }}>
-            <Text className="text-gray-500 text-center" style={{ ...type.body, color: colors.muted }}>
-              {academicYearId
+          <ContentState title={academicYearId || searchQuery.trim() || filter !== 'All Status' ? 'No matching submissions' : 'No submissions yet'} message={academicYearId
                 ? "No submissions found for the selected academic year and status."
                 : searchQuery.trim()
                 ? "No submissions match your search."
-                : "No submissions to track yet."}
-            </Text>
+                : "No submissions to track yet."}>
             {academicYearId ? (
               <TouchableOpacity
                 accessibilityRole="button"
@@ -157,7 +145,7 @@ export default function StudentTrackerScreen({ navigation, route }) {
                 <Text style={{ ...type.compactLabel, color: colors.blue }}>Clear Filter</Text>
               </TouchableOpacity>
             ) : null}
-          </View>
+          </ContentState>
         ) : (
           <>
             {isError && hasData && !isAuthError ? <StaleWarningBanner /> : null}
