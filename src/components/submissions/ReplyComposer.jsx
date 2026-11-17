@@ -14,6 +14,7 @@ export default function ReplyComposer({ conversation, onStatus, user }) {
   const input = useRef(null);
   const linkInput = useRef(null);
   const validationLock = useRef(false);
+  const validationFocus = useRef(null);
   const [validation, setValidation] = useState(null);
   const [focused, setFocused] = useState(false);
   const [linkOpen, setLinkOpen] = useState(false);
@@ -29,7 +30,7 @@ export default function ReplyComposer({ conversation, onStatus, user }) {
     const frame = requestAnimationFrame(() => input.current?.focus());
     return () => cancelAnimationFrame(frame);
   }, [target]);
-  useEffect(() => { setLinkOpen(!!conversation.link); setValidation(null); validationLock.current = false; }, [target]);
+  useEffect(() => { setLinkOpen(!!conversation.link); setValidation(null); validationLock.current = false; validationFocus.current = null; }, [target]);
   const count = [...message].length;
   const linkCount = [...url].length;
   const valid = (!!message.trim() || !!url.trim()) && (updating || (count <= REPLY_MAX_LENGTH && linkCount <= REPLY_LINK_MAX_LENGTH));
@@ -54,9 +55,13 @@ export default function ReplyComposer({ conversation, onStatus, user }) {
     }
   };
   const dismissValidation = () => {
-    const field = validation?.field;
+    validationFocus.current = validation?.field;
     validationLock.current = false; setValidation(null);
-    requestAnimationFrame(() => (field === 'link' ? linkInput : input).current?.focus());
+  };
+  const restoreValidationFocus = () => {
+    const field = validationFocus.current;
+    validationFocus.current = null;
+    if (field) (field === 'link' ? linkInput : input).current?.focus();
   };
   const send = () => {
     if (disabled) return;
@@ -104,12 +109,12 @@ export default function ReplyComposer({ conversation, onStatus, user }) {
       <AppInput ref={linkInput} accessibilityLabel="Web link" value={url} onChangeText={changeUrl} placeholder="https://example.com" autoCapitalize="none" autoCorrect={false} keyboardType="url" editable={!sending} error={linkCount > REPLY_LINK_MAX_LENGTH} style={styles.linkInput} />
       <Text accessibilityLabel={`Link characters: ${linkCount} of ${REPLY_LINK_MAX_LENGTH}`} style={[styles.counter, linkCount > REPLY_LINK_MAX_LENGTH && styles.limitError]}>{linkCount}/{REPLY_LINK_MAX_LENGTH}</Text>
     </View> : null}
-    {validation ? <AppModal visible onClose={dismissValidation}>
+    <AppModal visible={!!validation} onClose={dismissValidation} onDismiss={restoreValidationFocus}>
       <View style={styles.validationIcon}><Feather name={validation?.field === 'link' ? 'link' : 'message-square'} size={space.xxl} color={colors.blue} /></View>
       <Text accessibilityRole="header" style={styles.validationTitle}>{validation?.title}</Text>
       <Text accessibilityRole="alert" style={styles.validationDetail}>{validation?.detail}</Text>
       <AppButton label={validation?.field === 'link' ? 'Edit link' : 'Edit reply'} onPress={dismissValidation} />
-    </AppModal> : null}
+    </AppModal>
   </View>;
 }
 const styles = StyleSheet.create({
