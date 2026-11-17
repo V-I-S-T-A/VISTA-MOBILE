@@ -24,11 +24,12 @@ export default function StudentNotificationBell() {
   const [tab, setTab] = useState('All');
   const markRead = useMarkNotificationRead();
   const items = filterNotifications(data?.results || [], tab).slice(0, 5);
-  const openItem = async item => {
+  const openItem = item => {
     returnTrigger.current = null;
     setOpen(false);
-    if (!item.is_read) { try { await markRead.mutateAsync(item.notification_id); } catch {} }
     if (item.submission_id) navigation.navigate(role === ROLES.STUDENT ? 'StudentSubmissionDetails' : 'ReviewPanelDetails', { submission: { submission_id: item.submission_id } });
+    // Read-state persistence must not hold navigation behind a network round trip.
+    if (!item.is_read) void markRead.mutateAsync(item.notification_id).catch(() => {});
   };
   const unreadCount = data?.unread_count || 0;
 
