@@ -6,11 +6,9 @@ import { Text } from '../../components/common/FontText';
 import SettingsHeader from '../../components/settings/SettingsHeader';
 import SettingsSection from '../../components/settings/SettingsSection';
 import SettingsRow from '../../components/settings/SettingsRow';
-import { colors, radii, type } from '../../theme/tokens';
+import { colors, radii, type, space } from '../../theme/tokens';
 import { useAuth } from '../../context/AuthContext';
 import { ROLES } from '../../constants/roles';
-
-const PROFILE_BLUE = colors.profileBlue;
 
 function StatusPill({ label = 'Enabled' }) {
   return (
@@ -62,9 +60,10 @@ export default function NotificationPreferencesScreen({ navigation }) {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: PROFILE_BLUE, paddingTop: insets.top }}>
+    <View style={{ flex: 1, backgroundColor: colors.background, paddingTop: insets.top }}>
       {/* Symmetrical Header */}
       <SettingsHeader
+        variant="grouped"
         title="Notification Preferences"
         onBack={() => navigation.goBack()}
       />
@@ -76,18 +75,18 @@ export default function NotificationPreferencesScreen({ navigation }) {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            colors={['#1a59a5', '#fdc849']}
-            tintColor="#FFFFFF"
+            colors={[colors.blue, colors.yellow]}
+            tintColor={colors.blue}
           />
         }
         contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingTop: 2,
-          paddingBottom: Math.max(insets.bottom, 16) + 12,
+          paddingHorizontal: space.lg,
+          paddingTop: space.lg,
+          paddingBottom: Math.max(insets.bottom, space.lg) + space.md,
         }}
       >
         {/* Section 1 — Delivery Channels */}
-        <SettingsSection title="DELIVERY CHANNELS">
+        <SettingsSection title="Delivery channels">
           <SettingsRow
             icon="smartphone"
             label="Push Notifications"
@@ -114,7 +113,7 @@ export default function NotificationPreferencesScreen({ navigation }) {
         </SettingsSection>
 
         {/* Section 2 — Trigger Events */}
-        <SettingsSection title="TRIGGER EVENTS">
+        <SettingsSection title="Trigger events">
           <SettingsRow
             icon="check-circle"
             label="Status Transitions"
@@ -141,7 +140,7 @@ export default function NotificationPreferencesScreen({ navigation }) {
         </SettingsSection>
 
         {/* Section 3 — Notification Inbox */}
-        <SettingsSection title="NOTIFICATION INBOX">
+        <SettingsSection title="Notification inbox">
           <SettingsRow
             icon="inbox"
             label="Open Notification Center"
@@ -159,7 +158,7 @@ export default function NotificationPreferencesScreen({ navigation }) {
               ...type.meta,
               fontSize: type.meta.fontSize,
               lineHeight: type.meta.lineHeight,
-              color: 'rgba(255, 255, 255, 0.8)',
+              color: colors.muted,
               textAlign: 'center',
             }}
           >
