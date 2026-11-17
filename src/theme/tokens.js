@@ -42,6 +42,7 @@ export const radii = { field: 16, button: 24, card: 20, sheet: 28, pill: 999, li
 export const compact = { inset: 8, gutter: 8, leadingInset: 12, paddingHorizontal: 12, paddingVertical: 8, rowGap: 4, iconGap: 4, avatar: 30, accent: 3, chipInset: 8, chipHeight: 32, inputHeight: 40, touch: 48, footerGap: 16, navHeight: 56 };
 export const sizes = { touch: 48, input: 48, avatar: 34, avatarHeader: 32, avatarProfile: 84, accountHeader: 56, icon: 18, navIcon: 22, modalWidth: 340, contentWidth: 600, scrollBottom: 110 };
 export const loginLayout = { heroMinHeight: 260, heroMaxHeight: 360, heroRatio: 0.45, artWidth: 252, artHeight: 168, logoSize: 32, formWidth: 340, fieldHeight: 52, decorationSize: 16 };
+export const stateLayout = { artSize: 144, compactArtSize: 96, contentWidth: 340, noticeDuration: 8000 };
 export const form = { paddingHorizontal: 12, paddingVertical: 8, labelGap: 4, fieldGap: 8, sectionGap: 12 };
 export const notificationLayout = { avatar: 30, padding: 8, paddingHorizontal: 12, paddingVertical: 8, previewLines: 1, titleLines: 1, unread: 6, radius: radii.listCard, gap: 8 };
 export const sheetLayout = { maxHeight: '80%', handleWidth: 36, handleHeight: 4, padding: 16, gap: 8, duration: 220 };
