@@ -1,5 +1,6 @@
 import { apiClient, unwrapApiError } from "../lib/apiClient";
 import { API_ENDPOINTS } from "../config/api";
+import { connectivity, offlineError } from '../lib/connectivityState.cjs';
 
 export const submissionsService = {
   /**
@@ -48,6 +49,11 @@ export const submissionsService = {
   },
 
   async uploadSubmissionDocument(submissionId, file) {
+    if (!connectivity.isOnline()) {
+      const error = offlineError();
+      error.message = 'Submission created, but the attachment needs a connection. Retry the attachment from the submission details.';
+      throw error;
+    }
     const uploadData = new FormData();
     uploadData.append("file", { uri: file.uri, name: file.name, type: file.type || "application/octet-stream" });
     uploadData.append("upload_preset", "vista_uploads");
@@ -100,6 +106,7 @@ export const submissionsService = {
   // Stage the asset only. The status endpoint associates it transactionally and
   // records add/replace in review history, unlike the creation document endpoint.
   async prepareStatusAttachment(file) {
+    if (!connectivity.isOnline()) throw offlineError();
     const body = new FormData();
     body.append('file', { uri: file.uri, name: file.name, type: file.type || 'application/octet-stream' });
     body.append('upload_preset', 'vista_uploads');
