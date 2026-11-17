@@ -11,6 +11,8 @@ Role-based (Student / Staff) React Native app using Expo, NativeWind (Tailwind),
 
 ## Setup
 
+For automated checks and contributor failure guidance, see [Mobile CI](docs/ci.md).
+
 ```bash
 npm install
 npx expo start

@@ -8,7 +8,7 @@ const BottomNavContext = createContext(null);
 export function PersistentBottomNav({ children }) {
   const store = useContext(BottomNavContext);
   const owner = useRef({}).current;
-  const focused = typeof useIsFocused === 'function' ? useIsFocused() : true;
+  const focused = useIsFocused();
   useLayoutEffect(() => {
     if (store && focused) store.publish(owner, children);
   }, [store, owner, focused, children]);

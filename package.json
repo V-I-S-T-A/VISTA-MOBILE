@@ -10,7 +10,13 @@
     "web": "expo start --web",
     "knip": "knip",
     "postinstall": "node scripts/apply-native-patches.js",
-    "test:push": "node --test tests/*.test.cjs"
+    "lint": "eslint . --max-warnings 0",
+    "validate:project": "node scripts/ci/validate-project.cjs",
+    "validate:expo": "expo config --type public && expo install --check",
+    "test": "node scripts/ci/run-tests.cjs",
+    "test:push": "npm test",
+    "bundle:android:ci": "expo export:embed --entry-file node_modules/expo/AppEntry.js --platform android --dev false --minify true --max-workers 2 --bundle-output dist/ci/index.android.bundle --assets-dest dist/ci/assets",
+    "audit:ci": "npm audit --package-lock-only --omit=dev --audit-level=high"
   },
   "dependencies": {
     "@expo-google-fonts/dm-sans": "^0.4.2",
@@ -53,14 +59,41 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.0",
+    "@babel/parser": "^7.29.14",
+    "@babel/plugin-transform-modules-commonjs": "^7.29.14",
+    "@babel/plugin-transform-react-jsx": "^7.29.7",
+    "@eslint/js": "^10.0.1",
     "@types/node": "^26.1.0",
+    "eslint": "^10.15.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^16.5.0",
     "knip": "^6.24.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "yaml": "^2.9.1"
+  },
+  "overrides": {
+    "postcss": "8.5.33",
+    "metro": "0.83.8",
+    "metro-babel-transformer": "0.83.8",
+    "metro-cache": "0.83.8",
+    "metro-cache-key": "0.83.8",
+    "metro-config": "0.83.8",
+    "metro-core": "0.83.8",
+    "metro-file-map": "0.83.8",
+    "metro-minify-terser": "0.83.8",
+    "metro-resolver": "0.83.8",
+    "metro-runtime": "0.83.8",
+    "metro-source-map": "0.83.8",
+    "metro-symbolicate": "0.83.8",
+    "metro-transform-plugins": "0.83.8",
+    "metro-transform-worker": "0.83.8"
   },
   "expo": {
     "autolinking": {
       "android": {
-        "buildFromSource": ["expo-splash-screen"]
+        "buildFromSource": [
+          "expo-splash-screen"
+        ]
       }
     }
   },

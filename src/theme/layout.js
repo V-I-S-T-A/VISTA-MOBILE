@@ -5,7 +5,7 @@ import { getStableRestingBottom } from '../components/common/BottomNavFrame';
 
 export function useBottomNavClearance() {
   const insets = useSafeAreaInsets();
-  const dimensions = typeof useWindowDimensions === 'function' ? useWindowDimensions() : null;
+  const dimensions = useWindowDimensions();
   const restingBottom = getStableRestingBottom(insets, dimensions);
   return compact.navHeight + Math.max(restingBottom, nav.bottomGap) + compact.footerGap;
 }

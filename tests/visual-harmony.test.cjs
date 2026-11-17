@@ -1,0 +1,31 @@
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+const { createHarness, nodes, textOf } = require('./helpers/mobileComponentHarness.cjs');
+const flat = value => Object.assign({}, ...(Array.isArray(value) ? value : [value]));
+test('inline status options cancel without changing parent selection and select exactly once without a nested sheet', () => {
+ const h = createHarness(); const Select = h.load('src/components/staff/SelectField.jsx').default;
+ const choices = [{id:'under_review',label:'On Process'},{id:'approved',label:'Approved'},{id:'rejected',label:'Returned'}];
+ const changes=[]; const props={presentation:'inline',label:'Document status',value:choices[0],options:choices,onChange:v=>changes.push(v)};
+ const field=h.instance(Select,props);
+ const trigger=()=>nodes(field.output).find(n=>n.props?.accessibilityLabel==='Document status');
+ trigger().props.onPress(); field.render();
+ assert.equal(trigger().props.accessibilityState.expanded,true);
+ assert.ok(!nodes(field.output).some(n=>n.type?.name==='AppBottomSheet'));
+ const options=nodes(field.output).filter(n=>n.props?.accessibilityRole==='radio');
+ assert.equal(options.length,3); assert.equal(options[0].props.accessibilityState.checked,true);
+ assert.ok(options.every(n=>flat(n.props.style).minHeight>=48));
+ nodes(field.output).find(n=>n.props?.accessibilityRole==='button' && textOf(n)==='Cancel').props.onPress(); field.render();
+ assert.equal(changes.length,0); assert.equal(trigger().props.accessibilityState.expanded,false);
+ trigger().props.onPress(); field.render();
+ nodes(field.output).find(n=>n.props?.accessibilityRole==='radio' && textOf(n)==='Approved').props.onPress(); field.render();
+ assert.equal(changes.length,1); assert.equal(changes[0],choices[1]); assert.equal(trigger().props.accessibilityState.expanded,false);
+ field.render({...props,disabled:true}); assert.equal(trigger().props.disabled,true);
+});
+test('shared compact forms and buttons retain full Android targets and scalable medium text',()=>{
+ const h=createHarness(); const {form,type}=h.load('src/theme/tokens.js');
+ assert.equal(form.labelGap,4); assert.equal(form.fieldGap,8); assert.equal(type.label.fontFamily,type.medium);
+ const Button=h.load('src/components/common/AppButton.jsx').default;
+ const tree=h.instance(Button,{label:'Save',onPress(){}}).output;
+ assert.ok(flat(tree.props.style).minHeight>=48);
+ assert.equal(flat(nodes(tree).find(n=>n.type==='Text').props.style).fontFamily,type.button.fontFamily);
+});

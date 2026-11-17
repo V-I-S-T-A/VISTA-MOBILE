@@ -64,7 +64,7 @@ export function resetRestingBottomAuthority() {
 // Overlays (dropdowns, sheets, modals) must not cause transient system navigation-bar insets to jump the navbar.
 export default function BottomNavFrame({ children, docked = false, scrollBehavior }) {
   const insets = useSafeAreaInsets();
-  const isOverlayOpen = typeof useIsOverlayOpen === 'function' ? useIsOverlayOpen() : false;
+  const isOverlayOpen = useIsOverlayOpen();
   const dimensions = useWindowDimensions();
   const { width, height } = dimensions;
   const [keyboard, setKeyboard] = useState(false);
