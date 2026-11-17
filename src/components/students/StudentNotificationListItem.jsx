@@ -14,10 +14,10 @@ export function getStatus(status = "", itemType = "") {
     return { label: "Uploaded", color: "#15803D", background: "#DCFCE7" };
   }
   if (itemType === "drive_upload_error") {
-    return { label: "Upload failed", color: "#B91C1C", background: "#FEE2E2" };
+    return { label: "Upload failed", color: colors.danger, background: "#FEE2E2" };
   }
   if (itemType === "submission_priority_changed") {
-    return { label: "Priority", color: "#765700", background: "#FFF0C2" };
+    return { label: "Priority", color: colors.priorityText, background: colors.prioritySurface };
   }
   if (status) {
     const saved = getSubmissionStatus(status);
@@ -74,9 +74,9 @@ export default function StudentNotificationListItem({ notification, onPress }) {
         paddingVertical: notificationLayout.paddingVertical || 7.5,
         marginBottom: notificationLayout.gap || 5,
         borderRadius: notificationLayout.radius || 14,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: colors.surface,
         borderWidth: 1,
-        borderColor: '#E2E8F0',
+        borderColor: colors.border,
         shadowColor: '#183A60',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.03,
@@ -87,19 +87,6 @@ export default function StudentNotificationListItem({ notification, onPress }) {
       <UserAvatar
         uri={notification.actor_image_url}
         size={notificationLayout.avatar || 30}
-        fallbackIcon={
-          <VistaIcon
-            name={
-              notification.type?.startsWith('drive_')
-                ? 'upload-cloud'
-                : isPriority
-                  ? 'flag'
-                  : 'file-text'
-            }
-            size={16}
-            color={colors.muted}
-          />
-        }
       />
       <View style={{ flex: 1, minWidth: 0, justifyContent: 'center' }}>
         {/* Line 1: Title & Unread indicator */}
@@ -124,7 +111,7 @@ export default function StudentNotificationListItem({ notification, onPress }) {
                 width: notificationLayout.unread || 6,
                 height: notificationLayout.unread || 6,
                 borderRadius: (notificationLayout.unread || 6) / 2,
-                backgroundColor: isPriority ? '#DC2626' : '#1A59A5',
+                backgroundColor: isPriority ? colors.priorityText : '#1A59A5',
                 flexShrink: 0,
               }}
             />
@@ -147,31 +134,41 @@ export default function StudentNotificationListItem({ notification, onPress }) {
         </Text>
 
         {/* Line 3: Compact Status & Timestamp on the same line */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
           <View
             style={{
-              paddingHorizontal: 6,
-              paddingVertical: 1.5,
-              borderRadius: radii.pill,
-              backgroundColor: status.background,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 5,
+              backgroundColor: 'transparent',
             }}
           >
+            <View
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: 3,
+                backgroundColor: status.color,
+              }}
+            />
             <Text
               style={{
                 ...type.notificationBadge,
+                fontFamily: type.bold,
                 color: status.color,
+                includeFontPadding: false,
               }}
             >
               {status.label}
             </Text>
           </View>
-          <Text style={{ fontSize: 8, color: '#94A3B8' }}>•</Text>
+          <Text style={{ fontSize: type.meta.fontSize, color: '#94A3B8' }}>•</Text>
           <Text
             numberOfLines={1}
             ellipsizeMode="tail"
             style={{
               ...type.notificationMeta,
-              color: '#64748B',
+              color: colors.muted,
               flexShrink: 1,
             }}
           >
