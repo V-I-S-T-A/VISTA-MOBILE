@@ -44,11 +44,10 @@ export const surfaces = {
 };
 // Shared shell and hit areas; route-specific bars retain their own actions.
 export const navigationStyles = {
-  shell: { flexDirection: 'row', alignItems: 'center', width: '100%', maxWidth: sizes.contentWidth, alignSelf: 'center', paddingVertical: nav.padding, paddingHorizontal: space.xs, minHeight: compact.navHeight, borderRadius: nav.radius, borderCurve: 'continuous', backgroundColor: colors.surface, ...shadows.navigation },
+  shell: { flexDirection: 'row', alignItems: 'center', width: '100%', maxWidth: sizes.contentWidth, alignSelf: 'center', paddingVertical: nav.padding, paddingHorizontal: space.xs, minHeight: compact.navHeight, borderRadius: nav.radius, borderCurve: 'continuous', backgroundColor: nav.background, ...shadows.navigation },
   item: { flex: 1, minWidth: sizes.touch, minHeight: sizes.touch, alignItems: 'center', justifyContent: 'center', borderRadius: radii.pill },
   indicator: { minWidth: nav.indicator, height: nav.indicator, borderRadius: radii.pill, flexDirection: 'row', gap: space.xs, paddingHorizontal: space.sm, alignItems: 'center', justifyContent: 'center' },
-  selected: { backgroundColor: nav.selectedSurface },
-  action: { minWidth: nav.actionSize, width: nav.actionSize, height: nav.actionSize, borderWidth: nav.actionRing, borderColor: colors.surface, backgroundColor: colors.blue, ...shadows.indicator },
+  action: { minWidth: nav.actionSize, width: nav.actionSize, height: nav.actionSize, marginVertical: -(nav.actionSize - sizes.touch) / 2, borderWidth: nav.actionRing, borderColor: colors.onBrand, backgroundColor: nav.background, ...shadows.indicator },
 };
 export const typography = {
   title: { ...type.title, fontWeight: 'normal' },
