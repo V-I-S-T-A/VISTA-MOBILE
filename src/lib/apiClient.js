@@ -1,16 +1,18 @@
 import axios from "axios";
 import { API_CONFIG, API_ENDPOINTS } from "../config/api";
 import { tokenStore } from "./tokenStore";
+import { connectivity, offlineError, isConnectionError } from './connectivityState.cjs';
 
 // Each client owns its refresh queue. Production uses the same instance as before;
 // the factory also permits isolated physical-device verification without user tokens.
-export function createAuthenticatedApiClient({ baseURL = API_CONFIG.BASE_URL, store = tokenStore, timeout = API_CONFIG.DEFAULT_TIMEOUT_MS } = {}) {
+export function createAuthenticatedApiClient({ baseURL = API_CONFIG.BASE_URL, store = tokenStore, timeout = API_CONFIG.DEFAULT_TIMEOUT_MS, connection = connectivity } = {}) {
   const client = axios.create({
     baseURL: baseURL,
     timeout: timeout,
   });
 
   client.interceptors.request.use((config) => {
+    if (!connection.isOnline()) throw offlineError();
     const token = store.getAccessToken();
     if (token) {
       config.headers = config.headers || {};
@@ -35,11 +37,13 @@ export function createAuthenticatedApiClient({ baseURL = API_CONFIG.BASE_URL, st
     (response) => response,
     async (error) => {
       const { config, response } = error;
+      if (isConnectionError(error)) connection.setOnline(false);
 
       if (
         !response ||
         !config ||
         response.status !== 401 ||
+        response.data?.code === 'drive_reauth_required' ||
         config?._retry ||
         !store.getRefreshToken()
       ) {
@@ -99,6 +103,7 @@ export function unwrapApiError(error) {
     "Request failed.";
   const wrapped = new Error(message);
   wrapped.code = data?.code;
+  if (!wrapped.code) wrapped.code = error?.code;
   wrapped.status = error?.response?.status;
   return wrapped;
 }
