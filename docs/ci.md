@@ -21,6 +21,8 @@ ESLint uses the core recommended correctness rules plus React hook ordering. Unu
 
 When required, it builds the checked-in Android project using Java 17, the Gradle wrapper, SDK 36 and one ARM64 ABI, then runs Android lint. It does not run Expo prebuild or regenerate/replace the approved native project. Native changes and check names are covered by regression tests.
 
+SDK setup resolves `cmdline-tools/latest/bin/sdkmanager` under the runner's `ANDROID_SDK_ROOT` or `ANDROID_HOME`, and fails clearly when unavailable. The first hosted run showed that the SDK manager is not necessarily on the shell's PATH; this does not require a change to the application's Android project.
+
 The debug APK is only a compile/package verification result, not a distributable release. Debug builds omit production Firebase setup; release validation remains protected by the existing Firebase guard. Actual splash rendering, gestures, keyboard behavior, camera/scanner integration, signing/update continuity and device notification delivery still need device/release checks. No emulator or production service is contacted by these regression tests.
 
 ## Contributor setup

@@ -57,6 +57,11 @@ test('native verification uses the committed debug variant, independent caches a
   const gradle = steps.find(step => step.uses?.startsWith('gradle/actions/setup-gradle@'));
   assert.match(gradle.with['cache-read-only'], /github.ref != 'refs\/heads\/main'/);
   assert.ok(steps.some(step => step.run?.includes('test ! -f android/app/google-services.json')));
+  const sdk = steps.find(step => step.name === 'Install Android SDK components');
+  assert.match(sdk.run, /ANDROID_SDK_ROOT:-\$\{ANDROID_HOME:-\}/);
+  assert.match(sdk.run, /cmdline-tools\/latest\/bin\/sdkmanager/);
+  assert.match(sdk.run, /! -x "\$sdk_manager"/);
+  assert.match(sdk.run, /"\$sdk_manager" 'platforms;android-36'/, 'SDK installation must not depend on sdkmanager being on PATH');
   assert.equal(steps.find(step => step.id === 'changes').run, 'node scripts/ci/native-changes.cjs');
   assert.equal(steps.find(step => step.uses?.startsWith('actions/checkout@')).with['fetch-depth'], 0);
   assert.ok(steps.some(step => step.if === "steps.changes.outputs.required == 'false'" && step.run.includes('GITHUB_STEP_SUMMARY')));

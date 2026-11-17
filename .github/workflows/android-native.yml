@@ -60,7 +60,18 @@ jobs:
       - name: Install Android SDK components
         if: steps.changes.outputs.required == 'true'
         shell: bash
-        run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0' 'ndk;27.1.12297006' 'cmake;3.22.1'
+        run: |
+          sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
+          if [[ -z "$sdk_root" ]]; then
+            echo '::error::The runner did not provide an Android SDK directory.'
+            exit 1
+          fi
+          sdk_manager="$sdk_root/cmdline-tools/latest/bin/sdkmanager"
+          if [[ ! -x "$sdk_manager" ]]; then
+            echo '::error::Android sdkmanager is missing from the runner SDK directory.'
+            exit 1
+          fi
+          "$sdk_manager" 'platforms;android-36' 'build-tools;36.0.0' 'ndk;27.1.12297006' 'cmake;3.22.1'
       - name: Compile debug APK and run Android lint
         if: steps.changes.outputs.required == 'true'
         working-directory: android
