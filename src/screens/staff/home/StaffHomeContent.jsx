@@ -19,6 +19,7 @@ import SubmissionDashboardCards from "../../../components/submissions/Submission
 import { MAIN_BLACK } from "../../../constants/colors";
 import { useScreenRefresh } from "../../../hooks/useScreenRefresh";
 import StaleWarningBanner from '../../../components/common/StaleWarningBanner';
+import ContentState from '../../../components/common/ContentState';
 import { isConnectionError } from '../../../lib/connectivityState.cjs';
 
 function StaffHomeHeader() {
@@ -115,7 +116,7 @@ function SubmissionSummary() {
 
 function RecentSubmissions() {
   const navigation = useNavigation();
-  const { data, isLoading, isError, error } = useSubmissions({ page_size: 5 });
+  const { data, isLoading, isError, error, refetch } = useSubmissions({ page_size: 5 });
   const submissions = data?.results ?? [];
   const hasData = submissions.length > 0;
   const isAuthError = [401, 403].includes(error?.status || error?.response?.status);
@@ -127,11 +128,9 @@ function RecentSubmissions() {
       {isLoading && !hasData ? (
         <SubmissionListSkeleton compact />
       ) : isError && (!hasData || isAuthError) ? (
-        <Text style={[typography.body, panelStyles.inlineState]}>
-          Could not load recent submissions.
-        </Text>
+        <ContentState compact variant="error" title="Could not load recent submissions" error={error} onRetry={refetch} />
       ) : submissions.length === 0 ? (
-        <Text style={[typography.body, panelStyles.inlineState]}>No submissions yet.</Text>
+        <ContentState compact title="No submissions yet" message="Recent submissions will appear here." />
       ) : (
         <>
           {isError && hasData && !isAuthError ? <StaleWarningBanner /> : null}
