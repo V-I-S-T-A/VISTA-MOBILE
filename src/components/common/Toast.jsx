@@ -1,3 +1,5 @@
+import { colors, radii, sizes, type, shadows, motion } from '../../theme/tokens';
+import useReducedMotion from '../../hooks/useReducedMotion';
 import { Text } from "./FontText";
 import {
   createContext,
@@ -7,16 +9,16 @@ import {
   useRef,
   useState,
 } from "react";
-import { Animated, Pressable, StyleSheet, View } from "react-native";
+import { Animated, TouchableOpacity, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 
 const ToastContext = createContext(null);
 
 const VARIANTS = {
-  success: { bg: "#16a34a", icon: "check-circle" },
-  error: { bg: "#dc2626", icon: "alert-circle" },
-  info: { bg: "#1e5aa0", icon: "info" },
+  success: { bg: colors.success, icon: "check-circle" },
+  error: { bg: colors.danger, icon: "alert-circle" },
+  info: { bg: colors.blue, icon: "info" },
 };
 
 let idCounter = 0;
@@ -75,20 +77,24 @@ export function ToastProvider({ children }) {
 
 function ToastItem({ toast, onPress }) {
   const opacity = useRef(new Animated.Value(0)).current;
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
-    Animated.timing(opacity, {
+    if (reducedMotion) opacity.setValue(1);
+    else Animated.timing(opacity, {
       toValue: 1,
-      duration: 180,
+      duration: motion.fast,
       useNativeDriver: true,
     }).start();
-  }, [opacity]);
+    return () => opacity.stopAnimation();
+  }, [opacity, reducedMotion]);
 
   const variant = VARIANTS[toast.variant] || VARIANTS.info;
 
   return (
     <Animated.View style={{ opacity }}>
       <View
+        accessibilityLiveRegion="polite"
         onTouchEnd={toast.action ? undefined : onPress}
         style={[styles.toast, { backgroundColor: variant.bg }]}
       >
@@ -97,16 +103,17 @@ function ToastItem({ toast, onPress }) {
           {toast.message}
         </Text>
         {toast.action ? (
-          <Pressable
+          <TouchableOpacity
             accessibilityRole="button"
             onPress={() => {
               onPress();
               toast.action.onPress();
             }}
+            activeOpacity={motion.pressedOpacity}
             style={styles.action}
           >
             <Text style={styles.actionText}>{toast.action.label}</Text>
-          </Pressable>
+          </TouchableOpacity>
         ) : null}
       </View>
     </Animated.View>
@@ -123,32 +130,29 @@ const styles = StyleSheet.create({
   toast: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: 12,
+    borderRadius: radii.field,
+    borderCurve: 'continuous',
     paddingVertical: 10,
     paddingHorizontal: 14,
     marginBottom: 8,
-    shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 4,
+    ...shadows.raised,
   },
   text: {
-    color: "white",
-    fontSize: 13,
-    fontWeight: "600",
+    ...type.button,
+    color: colors.onBrand,
     marginLeft: 8,
     flex: 1,
   },
   action: {
+    minHeight: sizes.touch,
+    justifyContent: 'center',
     marginLeft: 12,
     paddingVertical: 6,
     paddingHorizontal: 8,
   },
   actionText: {
-    color: "white",
-    fontSize: 13,
-    fontWeight: "700",
+    ...type.button,
+    color: colors.onBrand,
   },
 });
 
