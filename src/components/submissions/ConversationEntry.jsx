@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { ActivityIndicator, Linking, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { type, sizes } from '../../theme/tokens';
+import { type, sizes, colors, radii, space } from '../../theme/tokens';
 import { Text } from '../common/FontText';
 import UserAvatar from '../common/UserAvatar';
 import { getSubmissionStatus } from './SubmissionStatusBadge';
@@ -23,7 +23,7 @@ export const relativeTimestamp = (value, now = Date.now()) => {
 };
 
 export function MessageText({ message }) {
-  return <Text style={styles.message}>{message.split(/(https?:\/\/[^\s]+)/g).map((part, index) => {
+  return <Text selectable style={styles.message}>{message.split(/(https?:\/\/[^\s]+)/g).map((part, index) => {
     const url = /^https?:\/\//.test(part) && safeWebUrl(part);
     return url ? <Text key={index} accessibilityRole="link" style={{ color: '#165BAB', textDecorationLine: 'underline' }} onPress={async () => {
       try { await Linking.openURL(url); } catch { Alert.alert('Could not open link', 'Please check the link and try again.'); }
@@ -54,14 +54,14 @@ function ReplyButton({ onPress, label = 'Reply', compact }) {
     onPress={onPress}
     accessibilityRole="button"
     accessibilityLabel={label}
-    hitSlop={compact ? { top: 8, bottom: 8, left: 6, right: 6 } : undefined}
+    hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
     style={compact ? styles.replyButtonCompact : styles.replyButton}
   >
     <Feather name="corner-up-left" size={compact ? 13 : 16} color="#536C92" /><Text style={compact ? styles.linkCompact : styles.link}>Reply</Text>
   </TouchableOpacity>;
 }
 
-export default function ConversationEntry({ log, latest, submissionId, scope, access, conversation, onAccessLost }) {
+export default function ConversationEntry({ log, latest, submissionId, scope, access, conversation, onAccessLost, onLayout }) {
   const [expanded, setExpanded] = useState(false);
   // Old deployments do not advertise reply_count/can_reply. Keep history readable
   // without calling endpoints that have not been deployed there.
@@ -77,7 +77,7 @@ export default function ConversationEntry({ log, latest, submissionId, scope, ac
   const count = replies.data?.pages[0]?.count ?? log.reply_count ?? 0;
   const permission = canReplyTo(log, access);
   const current = getSubmissionStatus(log.new_status);
-  return <View style={styles.card}>
+  return <View onLayout={onLayout} style={styles.card}>
     <View style={styles.transition}>
       <View style={[styles.dot, { backgroundColor: current.foreground }]} />
       <Text style={styles.transitionText}>{log.old_status && log.old_status !== log.new_status ? `${getSubmissionStatus(log.old_status).label} → ` : ''}<Text style={{ color: current.foreground, fontFamily: 'DMSans_700Bold' }}>{current.label}</Text>{log.old_status === log.new_status ? ' · Review update' : ''}</Text>
@@ -103,20 +103,20 @@ export default function ConversationEntry({ log, latest, submissionId, scope, ac
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: 'white', borderRadius: 18, borderWidth: 1, borderColor: '#E4EBF4', paddingVertical: 6, paddingHorizontal: 12, marginBottom: 4 },
-  transition: { backgroundColor: '#EDF5FF', borderRadius: 12, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', paddingVertical: 4, paddingHorizontal: 6, gap: 4 },
-  dot: { width: 8, height: 8, borderRadius: 4 }, transitionText: { color: '#61708D', fontSize: 12, flex: 1, lineHeight: 18 }, latest: { color: '#165BAB', fontSize: 11, fontFamily: 'DMSans_700Bold' },
+  card: { backgroundColor: colors.surface, borderRadius: radii.card, borderCurve: 'continuous', borderWidth: 1, borderColor: colors.border, paddingVertical: space.sm, paddingHorizontal: space.md, marginBottom: space.sm },
+  transition: { backgroundColor: '#EDF5FF', borderRadius: radii.field, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', paddingVertical: 4, paddingHorizontal: 6, gap: 4 },
+  dot: { width: 8, height: 8, borderRadius: 4 }, transitionText: { color: '#61708D', fontSize: type.meta.fontSize, flex: 1, lineHeight: type.meta.lineHeight }, latest: { color: '#165BAB', fontSize: type.meta.fontSize, fontFamily: 'DMSans_700Bold' },
   entryBody: { padding: 0, paddingTop: 4 }, author: { flexDirection: 'row', gap: 8, alignItems: 'center', marginBottom: 4 },
   nameRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 5, alignItems: 'center' }, name: { color: '#173866', ...type.notificationTitle, flexShrink: 1 },
-  role: { backgroundColor: '#EDF5FF', color: '#1D62B0', fontSize: 11, borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2 },
-  time: { color: '#73819A', fontSize: 11, marginTop: 2 },
-  replyTime: { color: '#73819A', fontSize: 11, marginTop: 0 },
-  message: { color: '#203759', fontSize: 12, lineHeight: 16 },
-  context: { color: '#64748B', fontSize: 12, lineHeight: 17, marginBottom: 5 }, actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  replyButton: { minHeight: sizes.touch, flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 4 },
-  replyButtonCompact: { minHeight: 20, flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 1, paddingHorizontal: 0, alignSelf: 'flex-start' },
-  link: { color: '#536C92', fontSize: 12 },
-  linkCompact: { color: '#536C92', fontSize: 11, lineHeight: 14, fontFamily: 'DMSans_500Medium' },
+  role: { backgroundColor: '#EDF5FF', color: '#1D62B0', fontSize: type.meta.fontSize, borderRadius: radii.chip, paddingHorizontal: 6, paddingVertical: 2 },
+  time: { color: '#73819A', fontSize: type.meta.fontSize, marginTop: 2 },
+  replyTime: { color: '#73819A', fontSize: type.meta.fontSize, marginTop: 0 },
+  message: { ...type.conversation, color: colors.text },
+  context: { color: colors.muted, fontSize: type.meta.fontSize, lineHeight: type.meta.lineHeight, marginBottom: 5 }, actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  replyButton: { minHeight: sizes.touch, flexDirection: 'row', alignItems: 'center', gap: space.xs, paddingHorizontal: space.xs },
+  replyButtonCompact: { minHeight: sizes.touch, flexDirection: 'row', alignItems: 'center', gap: space.xs, paddingHorizontal: 0, alignSelf: 'flex-start' },
+  link: { color: '#536C92', fontSize: type.meta.fontSize },
+  linkCompact: { color: '#536C92', fontSize: type.meta.fontSize, lineHeight: type.meta.lineHeight, fontFamily: 'DMSans_500Medium' },
   thread: { borderLeftWidth: 1, borderLeftColor: '#B9D6F7', paddingLeft: 6, gap: 2 }, reply: { paddingVertical: 2, paddingHorizontal: 0, paddingRight: 10 },
-  followup: { borderLeftWidth: 1, borderLeftColor: '#97BFE9', marginLeft: 6 }, retry: { minHeight: sizes.touch, justifyContent: 'center' }, error: { color: '#B91C1C', fontSize: 12 },
+  followup: { borderLeftWidth: 1, borderLeftColor: '#97BFE9', marginLeft: 6 }, retry: { minHeight: sizes.touch, justifyContent: 'center' }, error: { color: colors.danger, ...type.meta },
 });
