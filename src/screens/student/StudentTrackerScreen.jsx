@@ -5,13 +5,13 @@ import { Text } from "../../components/common/FontText";
 import { ActivityIndicator, TouchableOpacity, View, RefreshControl } from "react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
 import SubmissionSummaryTabs from '../../components/submissions/SubmissionSummaryTabs';
+import SubmissionFilterResults from '../../components/submissions/SubmissionFilterResults';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import StudentHeader from "../../components/students/StudentHeader";
 import StudentBottomNav from "../../components/students/StudentBottomNav";
 import SubmissionListCard from "../../components/submissions/SubmissionListCard";
 import SubmissionPagination from "../../components/submissions/SubmissionPagination";
 import { useSubmissions } from "../../hooks/useSubmissions";
-import useProgressiveList from '../../hooks/useProgressiveList';
 import { useScreenRefresh } from "../../hooks/useScreenRefresh";
 import { panelStyles, useStaffLayout } from '../../theme/layout';
 import PageHeading from '../../components/common/PageHeading';
@@ -38,7 +38,7 @@ export default function StudentTrackerScreen({ navigation, route }) {
 
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filter, setFilter] = useState(() =>
+  const [selectedStatus, setFilter] = useState(() =>
     FILTER_OPTIONS.includes(route?.params?.statusFilter)
       ? route.params.statusFilter
       : 'All Status'
@@ -46,6 +46,13 @@ export default function StudentTrackerScreen({ navigation, route }) {
   const [academicYearId, setAcademicYearId] = useState(() => route?.params?.academicYearId || null);
   const [filterSheetVisible, setFilterSheetVisible] = useState(false);
   const filterButtonRef = useRef(null);
+
+  // Apply incoming dashboard filters before querying a retained tracker tab.
+  const requestedStatus = FILTER_OPTIONS.includes(route?.params?.statusFilter)
+    ? route.params.statusFilter : null;
+  const filter = requestedStatus ?? selectedStatus;
+  const currentPage = requestedStatus ? 1 : page;
+  const currentSearch = requestedStatus ? '' : searchQuery;
 
   useEffect(() => {
     const requested = route?.params?.statusFilter;
@@ -67,8 +74,8 @@ export default function StudentTrackerScreen({ navigation, route }) {
     setPage(1);
   };
 
-  const params = { page };
-  if (searchQuery.trim()) params.search = searchQuery.trim();
+  const params = { page: currentPage };
+  if (currentSearch.trim()) params.search = currentSearch.trim();
   if (filter !== 'All Status') {
     params.status = STATUS_TO_PARAM[filter];
   }
@@ -78,7 +85,6 @@ export default function StudentTrackerScreen({ navigation, route }) {
 
   const { data, isLoading, isError, error, refetch } = useSubmissions(params);
   const submissions = data?.results ?? [];
-  const visibleSubmissions = useProgressiveList(submissions);
   const { refreshing, onRefresh } = useScreenRefresh([["submissions"]]);
   const hasData = submissions.length > 0;
   const isAuthError = [401, 403].includes(error?.status || error?.response?.status);
@@ -108,21 +114,22 @@ export default function StudentTrackerScreen({ navigation, route }) {
           onChange={changeFilter}
         />
         <StaffReviewSearch
-          searchQuery={searchQuery}
+          searchQuery={currentSearch}
           setSearchQuery={handleSearchChange}
           onFilterPress={() => setFilterSheetVisible(true)}
           isFilterActive={!!academicYearId}
           activeFilterLabel={selectedYearLabel}
           filterButtonRef={filterButtonRef}
         />
+        <SubmissionFilterResults filterKey={filter} loading={isLoading && !hasData}>
         {isLoading && !hasData ? (
           <SubmissionListSkeleton count={5} />
         ) : isError && (!hasData || isAuthError) ? (
           <ContentState variant="error" title="Could not load submissions" error={error} onRetry={refetch} />
         ) : submissions.length === 0 ? (
-          <ContentState title={academicYearId || searchQuery.trim() || filter !== 'All Status' ? 'No matching submissions' : 'No submissions yet'} message={academicYearId
+          <ContentState title={academicYearId || currentSearch.trim() || filter !== 'All Status' ? 'No matching submissions' : 'No submissions yet'} message={academicYearId
                 ? "No submissions found for the selected academic year and status."
-                : searchQuery.trim()
+                : currentSearch.trim()
                 ? "No submissions match your search."
                 : "No submissions to track yet."}>
             {academicYearId ? (
@@ -149,7 +156,7 @@ export default function StudentTrackerScreen({ navigation, route }) {
         ) : (
           <>
             {isError && hasData && !isAuthError ? <StaleWarningBanner /> : null}
-            {visibleSubmissions.map((submission) => (
+            {submissions.map((submission) => (
               <SubmissionListCard
                 key={submission.submission_id}
                 submission={submission}
@@ -162,13 +169,14 @@ export default function StudentTrackerScreen({ navigation, route }) {
             ))}
             {(data?.total_pages ?? 1) > 1 && (
               <SubmissionPagination
-                currentPage={page}
+                currentPage={currentPage}
                 totalPages={data.total_pages}
                 onPageChange={setPage}
               />
             )}
           </>
         )}
+        </SubmissionFilterResults>
       </ScrollView>
       <StudentBottomNav scrollBehavior={navScroll}
         activeTab="tracker"

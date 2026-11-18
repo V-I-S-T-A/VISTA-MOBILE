@@ -21,6 +21,7 @@ import { useAuth } from '../../context/AuthContext';
 import StaleWarningBanner from '../../components/common/StaleWarningBanner';
 import ContentState from '../../components/common/ContentState';
 import { isConnectionError } from '../../lib/connectivityState.cjs';
+import useNavigationContentReady from '../../hooks/useNavigationContentReady';
 
 function useSubmissionCounts() {
   const { user } = useAuth();
@@ -75,6 +76,7 @@ export default function StudentHomeScreen({ navigation }) {
   const screenLayout = useStaffLayout();
   const counts = useSubmissionCounts();
   const { data, isLoading, isError, error, refetch } = useSubmissions({ page_size: 5 });
+  const contentReady = useNavigationContentReady();
   const submissions = data?.results ?? [];
   const { refreshing, onRefresh } = useScreenRefresh([["student-submissions"], ["submissions"]]);
   const hasData = submissions.length > 0;
@@ -108,7 +110,7 @@ export default function StudentHomeScreen({ navigation }) {
         />
 
         <RecentSubmissionsHeading onViewAll={() => navigation.navigate("StudentTracker")} />
-        {isLoading && !hasData ? (
+        {!contentReady || isLoading && !hasData ? (
           <SubmissionListSkeleton compact />
         ) : isError && (!hasData || isAuthError) ? (
           <ContentState compact variant="error" title="Could not load submissions" error={error} onRetry={refetch} />

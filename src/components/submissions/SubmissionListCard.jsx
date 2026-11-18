@@ -5,12 +5,21 @@ import SubmissionStatusBadge, { getSubmissionStatus } from './SubmissionStatusBa
 import { surfaces } from '../../theme/layout';
 import { colors, compact, type, cardTones, space, motion, notificationLayout } from '../../theme/tokens';
 
+// Intl formatter construction is expensive in Hermes. Share it across cards
+// instead of reconstructing one for every card on each navigation render.
+const submissionDateFormatter = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+
+function formatSubmissionDate(value) {
+  if (!value) return '—';
+  const date = new Date(value);
+  // Preserve the existing malformed-date fallback rather than throwing in render.
+  return Number.isNaN(date.getTime()) ? date.toLocaleDateString() : submissionDateFormatter.format(date);
+}
+
 export default function SubmissionListCard({ submission, onPress, showSubmitterEmail = false }) {
   const { fontScale } = useWindowDimensions();
   const title = submission.title || 'Untitled submission';
-  const date = submission.submitted_at
-    ? new Date(submission.submitted_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
-    : '—';
+  const date = formatSubmissionDate(submission.submitted_at);
   const tone = submission.priority_escalation
     ? cardTones.priority
     : cardTones[submission.status] || cardTones.default;

@@ -42,7 +42,8 @@ test('the staff reports-tab history renders its entire 30-card page with the his
   assert.equal(f.frames.length, 0, 'No incremental render frames should add cards while scrolling');
   assert.equal(f.pagination().props.variant, 'history');
   const scroll = nodes(f.screen.output).find(node => node.type === 'ScrollView');
-  const children = scroll.props.children.filter(Boolean);
+  const body = nodes(scroll).find(node => node.type?.name === 'SubmissionFilterResults');
+  const children = body.props.children.filter(Boolean);
   assert.equal(children.at(-2).type.name, 'StaffReviewList');
   assert.equal(children.at(-1).type.name, 'SubmissionPagination');
   f.cards()[0].props.onPress();

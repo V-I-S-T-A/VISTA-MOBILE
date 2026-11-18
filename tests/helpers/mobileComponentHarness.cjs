@@ -33,10 +33,14 @@ function createHarness(overrides = {}, frameScheduler = {}) {
       return active.memos[index].value;
     },
     forwardRef(render) { return function Forwarded(props) { return render(props, null); }; },
+    memo: component => component,
   };
   const jsx = (type, props, key) => ({ type, props: props || {}, key });
   hooks.useLayoutEffect = hooks.useEffect;
   hooks.startTransition = callback => callback();
+  // Default to a settled render. Concurrency tests override this explicitly to
+  // exercise the pending skeleton before the latest filter catches up.
+  hooks.useDeferredValue = value => value;
   hooks.createContext = value => ({ value, Provider: 'ContextProvider' });
   hooks.useContext = context => context.value;
   const native = Object.fromEntries(['View', 'Image', 'TouchableOpacity', 'Pressable', 'ScrollView', 'FlatList', 'KeyboardAvoidingView', 'Modal', 'RefreshControl', 'ActivityIndicator', 'Switch', 'Text', 'TextInput'].map(name => [name, name]));
@@ -98,6 +102,9 @@ function createHarness(overrides = {}, frameScheduler = {}) {
       requestAnimationFrame: frameScheduler.requestAnimationFrame || (callback => callback()),
       cancelAnimationFrame: frameScheduler.cancelAnimationFrame || (() => {}), require(name) {
       if (Object.hasOwn(mocks, name)) return mocks[name];
+      // Most component tests inspect settled content. Dedicated transition tests
+      // load the real hook and explicitly model native completion/deferred work.
+      if (name.endsWith('/useNavigationContentReady')) return { __esModule: true, default: () => true };
       if (name.endsWith('/PullRefresh')) return { PullRefreshScrollView: 'ScrollView', PullRefreshFlatList: 'FlatList', PullRefreshKeyboardAwareScrollView: 'ScrollView' };
       if (name.endsWith('/FontText')) return { Text: 'Text', TextInput: 'TextInput' };
       if (/\.(webp|png)$/.test(name)) return name;

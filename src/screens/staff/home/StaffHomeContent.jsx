@@ -21,6 +21,7 @@ import { useScreenRefresh } from "../../../hooks/useScreenRefresh";
 import StaleWarningBanner from '../../../components/common/StaleWarningBanner';
 import ContentState from '../../../components/common/ContentState';
 import { isConnectionError } from '../../../lib/connectivityState.cjs';
+import useNavigationContentReady from '../../../hooks/useNavigationContentReady';
 
 function StaffHomeHeader() {
   const navigation = useNavigation();
@@ -117,6 +118,7 @@ function SubmissionSummary() {
 function RecentSubmissions() {
   const navigation = useNavigation();
   const { data, isLoading, isError, error, refetch } = useSubmissions({ page_size: 5 });
+  const contentReady = useNavigationContentReady();
   const submissions = data?.results ?? [];
   const hasData = submissions.length > 0;
   const isAuthError = [401, 403].includes(error?.status || error?.response?.status);
@@ -125,7 +127,7 @@ function RecentSubmissions() {
     <>
       <RecentSubmissionsHeading onViewAll={() => navigation.navigate("StaffReviewPanel")} />
 
-      {isLoading && !hasData ? (
+      {!contentReady || isLoading && !hasData ? (
         <SubmissionListSkeleton compact />
       ) : isError && (!hasData || isAuthError) ? (
         <ContentState compact variant="error" title="Could not load recent submissions" error={error} onRetry={refetch} />

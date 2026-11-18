@@ -55,7 +55,8 @@ test('staff summary tabs use the four requested status queries', () => {
   };
   for (const name of ['StaffReviewHeader', 'StaffReviewBanner', 'StaffReviewSearch', 'StaffReviewList']) overrides[`./reviewPanel/${name}`] = { default: name, __esModule: true };
   const h = createHarness(overrides), Screen = h.load('src/screens/staff/StaffReviewPanel.jsx').default;
-  const screen = h.instance(Screen, { navigation: { setParams() {} }, route: { params: { statusFilter: 'Approved' } } });
+  const route = { params: { statusFilter: 'Approved' } };
+  const screen = h.instance(Screen, { navigation: { setParams: params => Object.assign(route.params, params) }, route });
   screen.render(); assert.equal(params.status, 'approved');
   nodes(screen.output).find(n => n.type?.name === 'SubmissionSummaryTabs').props.onChange('Rejected'); screen.render();
   assert.equal(params.status, 'rejected');
@@ -90,8 +91,9 @@ test('student tracker applies dashboard route filters, resets pagination and cle
     '../../hooks/useScreenRefresh': { useScreenRefresh: () => ({ refreshing: false, onRefresh() {} }) },
   };
   const h = createHarness(overrides), Screen = h.load('src/screens/student/StudentTrackerScreen.jsx').default;
-  const navigation = { setParams() {}, navigate() {} };
-  const screen = h.instance(Screen, { navigation, route: { params: { statusFilter: 'Approved' } } });
+  const route = { params: { statusFilter: 'Approved' } };
+  const navigation = { setParams: params => Object.assign(route.params, params), navigate() {} };
+  const screen = h.instance(Screen, { navigation, route });
   screen.render(); assert.equal(params.status, 'approved');
   const heading = nodes(screen.output).find(n => n.type?.name === 'PageHeading');
   assert.equal(heading.props.compact, true, 'PageHeading should be compact');

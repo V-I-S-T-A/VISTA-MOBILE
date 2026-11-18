@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { memo, useRef } from 'react';
 import VistaIcon from '../common/VistaIcon';
 import UserAvatar from '../common/UserAvatar';
 import { colors, radii, type, notificationLayout, sizes } from '../../theme/tokens';
@@ -37,20 +37,22 @@ export function relativeTimestamp(value, now = Date.now()) {
   return `${Math.floor(minutes / 1440)}d ago`;
 }
 
-export function formatTime(value) {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleString(undefined, {
+const timestampFormatter = new Intl.DateTimeFormat(undefined, {
     month: "short",
     day: "numeric",
     year: "numeric",
     hour: "numeric",
     minute: "2-digit",
-  });
+});
+
+export function formatTime(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return timestampFormatter.format(date);
 }
 
-export default function StudentNotificationListItem({ notification, onPress }) {
+function StudentNotificationListItem({ notification, onPress, onOpen }) {
   const trigger = useRef(null);
   const status = getStatus(notification.submission_status, notification.type);
   const fallbackId = notification.submission_id?.slice(0, 8);
@@ -62,7 +64,7 @@ export default function StudentNotificationListItem({ notification, onPress }) {
   return (
     <TouchableOpacity
       ref={trigger}
-      onPress={() => onPress?.(trigger)}
+      onPress={() => onOpen ? onOpen(notification, trigger) : onPress?.(trigger)}
       accessibilityRole="button"
       accessibilityLabel={`${title}, ${notification.is_read ? 'Read' : 'Unread'}, ${status.label}, ${notification.message || 'There is an update on your submission.'}${notification.actor_name ? `, Updated by ${notification.actor_name}` : ''}, ${formatTime(notification.created_at)}`}
       style={{
@@ -179,3 +181,5 @@ export default function StudentNotificationListItem({ notification, onPress }) {
     </TouchableOpacity>
   );
 }
+
+export default memo(StudentNotificationListItem);

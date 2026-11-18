@@ -2,6 +2,7 @@ import { typography } from "../../theme/layout";
 import { View } from "react-native";
 import PressableCard from '../common/PressableCard';
 import useDashboardGrid from '../../hooks/useDashboardGrid';
+import useNavigationContentReady from '../../hooks/useNavigationContentReady';
 import DashboardCardIllustration from './DashboardCardIllustration';
 import { Text } from "../common/FontText";
 import { DashboardCardsSkeletonContent } from '../common/Skeleton';
@@ -36,7 +37,8 @@ export default function SubmissionDashboardCards({
   showTotalLoader = false,
 }) {
   const { columns, fontScale, onLayout } = useDashboardGrid();
-  if (isLoading) return <DashboardCardsSkeletonContent columns={columns} fontScale={fontScale} onLayout={onLayout} />;
+  const contentReady = useNavigationContentReady();
+  if (isLoading || !contentReady) return <DashboardCardsSkeletonContent columns={columns} fontScale={fontScale} onLayout={onLayout} />;
   const artScale = dashboardLayout.artScale / (columns === 2 ? Math.max(1, fontScale) : 1);
   const artSize = dashboardLayout.artSize * artScale;
   const cards = [

@@ -165,3 +165,40 @@ test('nested push and closing scenes keep their underlying native page visible a
   assert.equal(frame.output.props.pointerEvents,'none');
   frame.render({...frame.props,visible:false});assert.equal(flat(frame.output.props.style).opacity,0,'Inactive independent tabs remain hidden');
 });
+
+test('settling a tab cannot blank the page through a late incoming mapper, and cached revisits seed correctly', () => {
+  const frames = new Map(), shared = [], mappers = [], timings = []; let next = 0;
+  const h = createHarness({}, {
+    requestAnimationFrame(callback) { frames.set(++next, callback); return next; },
+    cancelAnimationFrame(id) { frames.delete(id); },
+  });
+  h.mocks['react-native-reanimated'] = { __esModule: true, default: { View: 'TabView' },
+    Easing: { cubic: x => x, out: f => f }, runOnUI: f => f, runOnJS: f => f, cancelAnimation() {},
+    useSharedValue(initial) { const ref = h.mocks.react.useRef({ value: initial }); if (!shared.includes(ref.current)) shared.push(ref.current); return ref.current; },
+    useAnimatedStyle(callback) { mappers.push(callback); return callback(); },
+    withTiming(target) { timings.push({ target, from: shared[0].value }); return target; },
+  };
+  const transition = { scenes: new Map([['tracker', { exitDirection: 1 }]]), to: 'tracker', direction: 1, revision: 1, ready: true, reduced: false };
+  const view = h.instance(h.load('src/navigation/TabScene.jsx').default, { sceneKey: 'tracker', transition, width: 360, current: true, children: 'Existing content', onFinish() {} });
+  const advance = () => { const callbacks = [...frames.values()]; frames.clear(); callbacks.forEach(callback => callback()); };
+  advance(); view.render();
+  const incomingMapper = mappers.at(-1);
+  assert.equal(incomingMapper().opacity, 1);
+  assert.equal(incomingMapper().transform[0].translateX, 0);
+  view.render({ ...view.props, transition: null });
+  assert.equal(incomingMapper().opacity, 1, 'A previous native mapper may run during Fabric handoff; it must not hide the settled screen');
+  assert.equal(incomingMapper().transform[0].translateX, 0);
+  assert.equal(flat(view.output.props.style).opacity, 1);
+
+  view.render({ ...view.props, transition: { ...transition, revision: 2, ready: false } });
+  assert.equal(flat(view.output.props.style).opacity, 0, 'A cached destination waits offscreen for its new starting pose');
+  assert.equal(flat(view.output.props.style).transform[0].translateX, 360);
+  view.render({ ...view.props, transition: { ...transition, revision: 2 } }); advance(); view.render();
+  assert.equal(timings.at(-1).from, 360, 'Revisits restart from the correct side, not a previous outgoing offset');
+  const secondIncomingMapper = mappers.at(-1);
+  shared[0].value = 123;
+  view.render({ ...view.props, transition: { ...transition, to: 'home', direction: -1, revision: 3 } }); advance();
+  assert.equal(timings.at(-1).from, 123, 'A rapid reversal retains its live native pose');
+  assert.equal(secondIncomingMapper().opacity, 1, 'Advancing a revision cannot hide the scene through a previous mapper');
+  view.unmount();
+});
