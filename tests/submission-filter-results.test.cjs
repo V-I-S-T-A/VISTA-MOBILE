@@ -33,30 +33,29 @@ test('filter changes show a skeleton immediately and never expose the previous f
   view.unmount();
 });
 
-test('result fades use the native driver, cancel on a new selection, and respect live reduced motion', () => {
-  let reduced = false, stops = 0;
-  const animations = [];
-  const h = createHarness({ '../../hooks/useReducedMotion': { __esModule: true, default: () => reduced } });
-  const BaseValue = h.native.Animated.Value;
-  h.native.Animated.Value = class extends BaseValue { stopAnimation() { stops++; } };
-  h.native.Animated.timing = (value, config) => ({ start() { animations.push(config); value.setValue(config.toValue); } });
+test('loaded results remain fully opaque through filter changes, refresh, and remount without an animation completion', () => {
+  const h = createHarness();
+  h.native.Animated.timing = () => { throw Error('Result visibility must not depend on a native fade'); };
   const Results = h.load('src/components/submissions/SubmissionFilterResults.jsx').default;
-  const view = h.instance(Results, { filterKey: 'All Status', loading: true, children: 'rows' });
-  const opacity = view.output.props.style.opacity;
-  assert.equal(animations.length, 0);
-  view.render({ filterKey: 'All Status', children: 'rows' });
-  assert.equal(animations.length, 1);
-  assert.equal(animations[0].useNativeDriver, true);
-  assert.equal(animations[0].duration, h.load('src/theme/tokens.js').motion.fast);
-  const before = stops;
-  view.render({ filterKey: 'Approved', loading: true, children: 'rows' });
-  assert.ok(stops > before); assert.equal(opacity.value, 1);
-  assert.equal(view.output.props.style.opacity, opacity, 'A new filter does not replace the animation graph');
-  reduced = true;
-  view.render({ filterKey: 'Approved', children: 'rows' });
-  assert.equal(animations.length, 1); assert.equal(opacity.value, 1);
-  const beforeUnmount = stops;
-  view.unmount(); assert.ok(stops > beforeUnmount);
+  let opened = 0;
+  const rows = { type: 'SavedRows', props: { onPress: () => opened++ } };
+  for (let restart = 0; restart < 2; restart++) {
+    const view = h.instance(Results, { filterKey: 'All Status', loading: true, children: rows });
+    for (const filterKey of ['All Status', 'Approved', 'Pending', 'Rejected', 'Approved']) {
+      for (const loading of [true, false]) {
+        view.render({ filterKey, loading, children: rows });
+        assert.equal(view.output.type, 'View', 'The result container has no native opacity driver');
+        assert.equal(view.output.props.style?.opacity ?? 1, 1);
+        if (loading) assert.equal(view.output.props.children.type.name, 'SubmissionListSkeleton');
+        else {
+          assert.equal(view.output.props.children, rows);
+          view.output.props.children.props.onPress();
+        }
+      }
+    }
+    view.unmount();
+  }
+  assert.equal(opened, 10, 'Rows remain usable after refresh, rapid selection and remount');
 });
 
 for (const role of ['staff', 'student']) test(`${role} filter selection starts its own query immediately and defers only result rendering`, () => {
@@ -78,7 +77,7 @@ for (const role of ['staff', 'student']) test(`${role} filter selection starts i
     const body = find('SubmissionFilterResults');
     assert.equal(body.props.filterKey, filter);
     assert.ok(!nodes(body).some(n => /BottomNav|Header|SubmissionSummaryTabs/.test(n.type?.name || '')),
-      'Loading/fading must never include navigation, headers or filter controls');
+      'Result loading must never include navigation, headers or filter controls');
   }
   view.unmount();
 });
