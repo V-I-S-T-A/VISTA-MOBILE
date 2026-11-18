@@ -3,11 +3,11 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const {createHarness,nodes,textOf}=require('./helpers/mobileComponentHarness.cjs');
 
-test('startup holds the native splash until session restoration then lays out onboarding directly',()=>{
-  let auth={user:null,role:null,isRestoring:true},hidden=0;
+test('startup holds the native splash until session and tour preferences restore, then lays out content directly',()=>{
+  let auth={user:null,role:null,isRestoring:true},hidden=0,onboardingReady=false;
   const h=createHarness({
     '../context/AuthContext':{useAuth:()=>auth},
-    '../hooks/useOnboarding':{__esModule:true,default:()=>({ready:true,completed:false,complete(){}})},
+    '../hooks/useOnboarding':{__esModule:true,default:()=>({ready:onboardingReady,completed:false,complete(){}})},
     '../screens/SplashScreen':{__esModule:true,default:'Splash'},
     './AuthNavigator':{__esModule:true,default:'Auth'},
     './StudentNavigator':{__esModule:true,default:'Student'},
@@ -19,6 +19,8 @@ test('startup holds the native splash until session restoration then lays out on
   let root=h.instance(Root);
   assert.equal(root.output,null);assert.equal(hidden,0);
   auth={...auth,isRestoring:false};root.render();
+  assert.equal(root.output,null);assert.equal(hidden,0,'No login or intro flash while preferences are pending');
+  onboardingReady=true;root.render();
   assert.ok(nodes(root.output).some(n=>n.type==='Auth'));
   assert.ok(!nodes(root.output).some(n=>n.type==='Splash'));
   root.output.props.onLayout();assert.equal(hidden,1);

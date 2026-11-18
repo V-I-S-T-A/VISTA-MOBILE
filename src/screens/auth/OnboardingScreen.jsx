@@ -8,10 +8,10 @@ import OnboardingStudents from '../../components/common/OnboardingStudents';
 import { ONBOARDING_TOURS, ONBOARDING_MASCOTS } from '../../data/onboardingContent';
 import { colors, motion, onboardingLayout, radii, sizes, space, type } from '../../theme/tokens';
 
-export default function OnboardingScreen({ onComplete }) {
+export default function OnboardingScreen({ onComplete, initialAudience = 'student', replay = false }) {
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
-  const [audience, setAudience] = useState('student');
+  const [audience, setAudience] = useState(initialAudience === 'staff' ? 'staff' : 'student');
   const [step, setStep] = useState(-1);
   const [finishing, setFinishing] = useState(false);
   const finishingRef = useRef(false);
@@ -115,9 +115,9 @@ export default function OnboardingScreen({ onComplete }) {
             {step >= 0 ? <TouchableOpacity onPress={back} disabled={finishing} accessibilityRole="button" accessibilityLabel="Previous onboarding page" style={styles.back}>
               <Feather name="arrow-left" size={sizes.navIcon} color={colors.navy} />
             </TouchableOpacity> : null}
-            <AppButton style={styles.next} label={step < 0 ? `Explore the ${audience === 'student' ? 'Student' : 'Staff'} tour` : step === slides.length - 1 ? 'Get started' : 'Next'} onPress={next} busy={finishing} />
+            <AppButton style={styles.next} label={step < 0 ? `Explore the ${audience === 'student' ? 'Student' : 'Staff'} tour` : step === slides.length - 1 ? replay ? 'Done' : 'Get started' : 'Next'} onPress={next} busy={finishing} />
           </View>
-          {step < 0 ? <AppButton label="I already have an account" variant="secondary" onPress={finish} disabled={finishing} /> : null}
+          {step < 0 ? <AppButton label={replay ? 'Back to Settings' : 'I already have an account'} variant="secondary" onPress={finish} disabled={finishing} /> : null}
         </View>
       </View>
     </View>

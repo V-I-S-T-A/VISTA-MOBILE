@@ -14,6 +14,7 @@ import StaffSubmissionConfirmation from "../screens/staff/StaffSubmissionConfirm
 import NotificationsScreen from "../screens/student/StudentNotificationsScreen";
 import SettingsScreen from "../screens/shared/SettingsScreen";
 import UserGuideScreen from "../screens/shared/UserGuideScreen";
+import AppTourScreen from '../screens/shared/AppTourScreen';
 import LegalDocumentScreen from "../screens/shared/LegalDocumentScreen";
 import NotificationPreferencesScreen from "../screens/shared/NotificationPreferencesScreen";
 import { useAuth } from '../context/AuthContext';
@@ -75,6 +76,7 @@ export default function StaffNavigator() {
       <Stack.Screen name="Settings" component={SettingsScreen} options={detailOptions} />
       <Stack.Screen name="StaffSettings" component={SettingsScreen} options={detailOptions} />
       <Stack.Screen name="UserGuide" component={UserGuideScreen} options={detailOptions} />
+      <Stack.Screen name="AppTour" component={AppTourScreen} options={detailOptions} />
       <Stack.Screen name="LegalDocument" component={LegalDocumentScreen} options={detailOptions} />
       <Stack.Screen name="NotificationPreferences" component={NotificationPreferencesScreen} options={detailOptions} />
     </Stack.Navigator>

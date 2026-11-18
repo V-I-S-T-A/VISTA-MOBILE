@@ -108,14 +108,15 @@ test('SettingsScreen uses neutral inset groups while preserving every action and
   assert.equal(cardContainer.props.style.borderWidth, 1);
   assert.equal(cardContainer.props.style.boxShadow, undefined, 'Inset settings groups do not float as individual cards');
 
-  // 4. Verify all 9 rows exist
+  // 4. Preserve every existing action and expose the optional replay tour.
   const rows = nodes(tree).filter(n => n.type?.name === 'SettingsRow');
-  assert.equal(rows.length, 10, 'Preserve every settings row, including existing updates');
+  assert.equal(rows.length, 11, 'Preserve existing rows alongside the optional app tour');
 
   const rowLabels = rows.map(r => r.props.label);
   assert.deepEqual(rowLabels, [
     'Notifications',
     'Check for updates',
+    'View app tour',
     'User Guide',
     'Frequently Asked Questions',
     'Contact OSA Support',
@@ -132,6 +133,9 @@ test('SettingsScreen uses neutral inset groups while preserving every action and
 
   rows.find(row => row.props.label === 'User Guide').props.onPress();
   assert.equal(navigatedTo.at(-1).route, 'UserGuide');
+
+  rows.find(row => row.props.label === 'View app tour').props.onPress();
+  assert.equal(navigatedTo.at(-1).route, 'AppTour');
 
   rows.find(row => row.props.label === 'Privacy Policy').props.onPress();
   assert.equal(navigatedTo.at(-1).route, 'LegalDocument');

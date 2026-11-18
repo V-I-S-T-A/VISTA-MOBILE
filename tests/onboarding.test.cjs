@@ -5,22 +5,26 @@ const { createHarness, nodes, textOf } = require('./helpers/mobileComponentHarne
 const settle = async () => { for (let i=0;i<6;i++) await Promise.resolve(); };
 const button = (tree, label) => nodes(tree).find(n => n.props?.label === label);
 
-test('every cold app session shows welcome again without reading or writing stored preferences or tokens', async () => {
-  const values = new Map(); let writes=0;
+test('completion is persisted once, survives a cold restart and resets for a fresh Android installation', async () => {
+  const values = new Map([['vista.accessToken','existing-access'],['vista.refreshToken','existing-refresh']]); let writes=0;
   const h = createHarness({ 'expo-secure-store': { getItemAsync: async key => values.get(key), setItemAsync: async (key,value) => { writes++; values.set(key,value); } } });
   const { default: useOnboarding } = h.load('src/hooks/useOnboarding.js');
   let view = h.instance(useOnboarding);
-  assert.equal(view.output.ready, true);
+  assert.equal(view.output.ready, false);
   await settle(); view.render();
   assert.equal(view.output.ready, true); assert.equal(view.output.completed, false);
   await Promise.all([view.output.complete(), view.output.complete()]); view.render();
-  assert.equal(view.output.completed, true); assert.equal(writes,0);
-  assert.deepEqual([...values.keys()], []);
+  assert.equal(view.output.completed, true); assert.equal(writes,1);
+  assert.equal(values.get('vista.accessToken'),'existing-access');
+  assert.equal(values.get('vista.refreshToken'),'existing-refresh');
   view.unmount(); view=h.instance(useOnboarding); await settle(); view.render();
+  assert.equal(view.output.completed,true);
+  view.unmount(); values.clear(); // Android removes this non-backed-up store on uninstall.
+  view=h.instance(useOnboarding); await settle(); view.render();
   assert.equal(view.output.completed,false);
 });
 
-test('storage availability and authentication never bypass the welcome page on a new session', async () => {
+test('storage failures allow the tour and sign-in without authenticating or trapping the user', async () => {
   for (const authenticated of [false,true]) {
     const h=createHarness({ 'expo-secure-store': { getItemAsync:async()=>{throw Error('unavailable');}, setItemAsync:async()=>{throw Error('unavailable');} } });
     const hook=h.load('src/hooks/useOnboarding.js').default;
@@ -28,6 +32,64 @@ test('storage availability and authentication never bypass the welcome page on a
     assert.equal(view.output.ready,true);
     assert.equal(view.output.completed,false);await view.output.complete();view.render();
     assert.equal(view.output.completed,true);
+  }
+});
+
+test('pending storage keeps startup unresolved and concurrent completion waits for one persisted write', async () => {
+  let read, save, writes=0;
+  const h=createHarness({'expo-secure-store':{
+    getItemAsync:()=>new Promise(resolve=>{read=resolve;}),
+    setItemAsync:()=>{writes++;return new Promise(resolve=>{save=resolve;});},
+  }});
+  const hook=h.load('src/hooks/useOnboarding.js').default;
+  const view=h.instance(hook);assert.equal(view.output.ready,false);
+  read(null);await settle();view.render();assert.equal(view.output.ready,true);
+  const first=view.output.complete(), second=view.output.complete();
+  assert.equal(first,second);assert.equal(writes,1);
+  view.render();assert.equal(view.output.completed,false);
+  save();await first;view.render();assert.equal(view.output.completed,true);
+});
+
+test('unfinished or malformed completion never skips the tour and late reads do not update unmounted hooks', async () => {
+  for(const saved of [null,'false','invalid']){
+    const h=createHarness({'expo-secure-store':{getItemAsync:async()=>saved}});
+    const view=h.instance(h.load('src/hooks/useOnboarding.js').default);
+    await settle();view.render();assert.equal(view.output.completed,false);assert.equal(view.output.ready,true);
+  }
+  let read;
+  const h=createHarness({'expo-secure-store':{getItemAsync:()=>new Promise(resolve=>{read=resolve;})}});
+  const view=h.instance(h.load('src/hooks/useOnboarding.js').default);
+  view.unmount();read('true');await settle();view.render();
+  assert.equal(view.output.ready,false);assert.equal(view.output.completed,false);
+});
+
+test('sign-out clears credentials but preserves the installation completion flag', async () => {
+  const values=new Map();
+  const h=createHarness({'expo-secure-store':{
+    getItemAsync:async key=>values.get(key),setItemAsync:async(key,value)=>{values.set(key,value);},
+    deleteItemAsync:async key=>{values.delete(key);},
+  }});
+  const {default:hook,ONBOARDING_COMPLETED_KEY}=h.load('src/hooks/useOnboarding.js');
+  const view=h.instance(hook);await settle();await view.output.complete();
+  const {tokenStore}=h.load('src/lib/tokenStore.js');
+  await tokenStore.setTokens({access:'access',refresh:'refresh'});
+  await tokenStore.clear();
+  assert.equal(values.get(ONBOARDING_COMPLETED_KEY),'true');
+  assert.equal(values.has('vista.accessToken'),false);assert.equal(values.has('vista.refreshToken'),false);
+  view.unmount();const restarted=h.instance(hook);await settle();restarted.render();
+  assert.equal(restarted.output.completed,true);
+});
+
+test('Android excludes the completion store from cloud backup and device transfer using existing native rules', () => {
+  const manifest=fs.readFileSync('android/app/src/main/AndroidManifest.xml','utf8');
+  assert.match(manifest,/android:fullBackupContent="@xml\/secure_store_backup_rules"/);
+  assert.match(manifest,/android:dataExtractionRules="@xml\/secure_store_data_extraction_rules"/);
+  const base='node_modules/expo-secure-store/android/src/main/res/xml/';
+  const exclude=/<exclude domain="sharedpref" path="SecureStore"\s*\/>/;
+  assert.match(fs.readFileSync(base+'secure_store_backup_rules.xml','utf8'),exclude);
+  const extraction=fs.readFileSync(base+'secure_store_data_extraction_rules.xml','utf8');
+  for(const domain of ['cloud-backup','device-transfer']){
+    assert.match(extraction.split(`<${domain}>`)[1].split(`</${domain}>`)[0],exclude);
   }
 });
 
@@ -69,6 +131,53 @@ test('welcome has no Skip; existing-account action and Skip within a selected to
   }
 });
 
+test('Settings replay defaults to the saved role and exits back to Settings on close, Skip or Done', async () => {
+  for(const role of ['student','staff','admin']){
+    for(const exit of ['Back to Settings','Skip','Done']){
+      let back=0, writes=0;
+      const h=createHarness({
+        '../../context/AuthContext':{useAuth:()=>({role,user:{user_id:1,role}})},
+        'expo-secure-store':{setItemAsync:async()=>{writes++;}},
+      });
+      const Tour=h.load('src/screens/shared/AppTourScreen.jsx').default;
+      const wrapper=h.instance(Tour,{navigation:{goBack(){back++;}}}).output;
+      const screen=h.instance(wrapper.type,wrapper.props);
+      const audience=role==='student'?'Student':'Staff';
+      assert.ok(button(screen.output,`Explore the ${audience} tour`));
+      assert.equal(button(screen.output,'I already have an account'),undefined);
+      assert.equal(button(screen.output,'Skip'),undefined);
+      if(exit!=='Back to Settings'){
+        button(screen.output,`Explore the ${audience} tour`).props.onPress();screen.render();
+        if(exit==='Done')for(let i=1;i<(role==='student'?3:4);i++){
+          button(screen.output,'Next').props.onPress();screen.render();
+        }
+      }
+      await button(screen.output,exit).props.onPress();
+      assert.equal(back,1);assert.equal(writes,0,'Replay must not change storage or credentials');
+    }
+  }
+});
+
+test('both authenticated role stacks register the optional replay route without changing initial destinations', () => {
+  for(const role of ['Student','Staff']){
+    const source=fs.readFileSync(`src/navigation/${role}Navigator.jsx`,'utf8');
+    const screenMocks=Object.fromEntries([...source.matchAll(/import (\w+) from ["'](\.\.\/screens\/[^"']+)["']/g)]
+      .map(([,name,specifier])=>[specifier,{__esModule:true,default:name}]));
+    const h=createHarness({
+      ...screenMocks,
+      './createPushStackNavigator':{createPushStackNavigator:()=>({Navigator:'RoleStack',Screen:'RoleScreen'})},
+      './PersistentBottomNav':{bottomNavLayout:()=>null},
+      '../context/AuthContext':{useAuth:()=>({user:{is_first_login:false}})},
+      '../hooks/useReducedMotion':{__esModule:true,default:()=>false},
+    });
+    const Navigator=h.load(`src/navigation/${role}Navigator.jsx`).default;
+    let tree=h.instance(Navigator).output;
+    assert.equal(tree.props.initialRouteName,`${role}Home`);
+    const replay=nodes(tree).find(n=>n.props.name==='AppTour');
+    assert.equal(replay.props.component,'AppTourScreen');
+  }
+});
+
 test('native artwork motion runs only for active foreground cards and cleans up on page changes', () => {
   const base=createHarness().native;let reduced=false,foreground='active',stateChange,starts=0,stops=0;
   const native={...base,AppState:{currentState:foreground,addEventListener:(_,fn)=>{stateChange=fn;return{remove(){}};}},Easing:{...base.Easing,sin:x=>x},Animated:{...base.Animated,sequence:x=>x,loop:()=>({start(){starts++;},stop(){stops++;}})}};
@@ -96,7 +205,7 @@ test('all art is a bundled WebP and tour remains scrollable with larger text and
   }
 });
 
-test('root shows onboarding for returning users before preserving each authenticated role dashboard', () => {
+test('root waits for preferences, shows incomplete tours, and routes completed installations to login or their saved role', () => {
   let auth={user:null,role:null,isRestoring:false},onboarding={ready:false,completed:false,complete(){}};
   const h=createHarness({
     '../context/AuthContext':{useAuth:()=>auth},

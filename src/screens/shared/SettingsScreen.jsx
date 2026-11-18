@@ -184,6 +184,15 @@ export default function SettingsScreen({ navigation }) {
           <SettingsRow
             variant="grouped"
             iconColor={settingsTones.guide}
+            icon="play-circle"
+            label="View app tour"
+            description="Explore VISTA's Student and Staff features"
+            hasDivider
+            onPress={() => navigation.navigate('AppTour')}
+          />
+          <SettingsRow
+            variant="grouped"
+            iconColor={settingsTones.guide}
             icon="book-open"
             label="User Guide"
             description={
