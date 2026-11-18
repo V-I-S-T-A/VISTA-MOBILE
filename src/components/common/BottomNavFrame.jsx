@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { AccessibilityInfo, Animated, Easing, Keyboard, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useIsOverlayOpen } from './OverlayPortal';
@@ -105,6 +105,10 @@ export default function BottomNavFrame({ children, docked = false, scrollBehavio
 
   const restingBottom = getStableRestingBottom(insets, { width, height }, isOverlayOpen);
   const effectiveBottom = Math.max(restingBottom, nav.bottomGap);
+  // Keep the native animation graph attached when scroll direction or parent
+  // content changes. Only a real geometry change needs a new slide range.
+  const fadeOpacity = useMemo(() => visibility.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }), [visibility]);
+  const slideOffset = useMemo(() => visibility.interpolate({ inputRange: [0, 1], outputRange: [0, barHeight + effectiveBottom + nav.hideGap] }), [visibility, barHeight, effectiveBottom]);
 
   useEffect(() => {
     const show = Keyboard.addListener('keyboardDidShow', () => setKeyboard(true));
@@ -130,8 +134,8 @@ export default function BottomNavFrame({ children, docked = false, scrollBehavio
         ? { paddingTop: 2, paddingBottom: effectiveBottom }
         : { position: 'absolute', left: 0, right: 0, bottom: bottomPosition },
       { paddingHorizontal: Math.max(space.md, insets.left, insets.right),
-        opacity: keyboard ? 0 : visibility.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
-        transform: [{ translateY: visibility.interpolate({ inputRange: [0, 1], outputRange: [0, barHeight + effectiveBottom + nav.hideGap] }) }],
+        opacity: keyboard ? 0 : fadeOpacity,
+        transform: [{ translateY: slideOffset }],
       }
     ]}>
     {children}

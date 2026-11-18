@@ -114,6 +114,29 @@ export default function StaffDocumentEntryContent({ navigation, initialAttachmen
   // --- OCR autofill + create submission mutations -----------------------
   const autofillMutation = useAutofillDocument();
   const runAutofillRef = useRef(null);
+  const autofillGeneration = useRef(0);
+  useEffect(() => () => { autofillGeneration.current += 1; }, []);
+
+  const handleRefresh = () => {
+    // Start a fresh, unsaved entry; a late OCR response must not restore it.
+    autofillGeneration.current += 1;
+    autofillMutation.reset?.();
+    setProcessing(false);
+    setScannedFile(null);
+    setOcrDraft(null);
+    setOcrNotice(null);
+    setOrganization(null);
+    setDocType(null);
+    setCategory(null);
+    setSubmittedBy(null);
+    setTitle('');
+    titleEdited.current = false;
+    setDescription('');
+    setPriority(false);
+    // Keep the active academic year and refresh the existing reference queries.
+    return onRefresh();
+  };
+
   useEffect(() => {
     if (!organization) return;
     const full = organizations.find(item => String(item.org_id) === String(organization.id));
@@ -121,6 +144,7 @@ export default function StaffDocumentEntryContent({ navigation, initialAttachmen
   }, [organizations, organization]);
 
   const runAutofill = async (file) => {
+    const generation = ++autofillGeneration.current;
     setProcessing(true);
     try {
       // const file = await scanDocument();
@@ -128,8 +152,10 @@ export default function StaffDocumentEntryContent({ navigation, initialAttachmen
 
       setScannedFile(null);
       const prepared = await prepareAttachment(file);
+      if (generation !== autofillGeneration.current) return;
       setScannedFile(prepared);
       const draft = await autofillMutation.mutateAsync(file);
+      if (generation !== autofillGeneration.current) return;
       setOcrDraft(draft);
 
       if (draft.status !== "draft_pending_review") {
@@ -196,11 +222,14 @@ export default function StaffDocumentEntryContent({ navigation, initialAttachmen
         needsReview,
       });
     } catch (error) {
+      if (generation !== autofillGeneration.current) return;
       Alert.alert(
         "Document recognition failed",
         error.message || "Could not read this document. Please try another file or try again.",
       );
-    } finally { setProcessing(false); }
+    } finally {
+      if (generation === autofillGeneration.current) setProcessing(false);
+    }
   };
 
   runAutofillRef.current = runAutofill;
@@ -293,7 +322,7 @@ export default function StaffDocumentEntryContent({ navigation, initialAttachmen
     <KeyboardAwareScrollView {...navScroll?.scrollProps}
       scrollHeader={<View className="pt-2"><AccountHeader profileRoute="StaffProfile" /></View>}
       alwaysBounceVertical overScrollMode="always"
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
       className="flex-1"
       contentContainerStyle={{ paddingBottom: footerClearance }}
       showsVerticalScrollIndicator={false}

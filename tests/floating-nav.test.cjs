@@ -71,6 +71,13 @@ test('focus restores a cached tab without changing its controller or scroll posi
 test('floating frame fades and slides with the native driver, disables hidden touches and cleans listeners', async () => {
   let reduced = false, removed = 0; const timings = [], accessibility = {}, keyboard = {};
   const h = createHarness({ '../../hooks/useReducedMotion': { __esModule: true, default: () => reduced } });
+  const BaseValue = h.native.Animated.Value;
+  h.native.Animated.Value = class extends BaseValue {
+    // Native interpolation nodes stay attached and read the current parent value;
+    // the general harness's one-time numeric result cannot model that contract.
+    interpolate(config) { return { __getValue: () => super.interpolate(config) }; }
+  };
+  const sample = value => value?.__getValue ? value.__getValue() : value;
   h.native.AccessibilityInfo.addEventListener = (name, cb) => { accessibility[name] = cb; return { remove() { removed++; } }; };
   h.native.Keyboard.addListener = (name, cb) => { keyboard[name] = cb; return { remove() { removed++; } }; };
   h.native.Animated.timing = (value, config) => ({ start() { timings.push(config); value.setValue(config.toValue); } });
@@ -82,17 +89,17 @@ test('floating frame fades and slides with the native driver, disables hidden to
   behavior.scrollProps.onScrollBeginDrag(event(100)); behavior.scrollProps.onScroll(event(130)); frame.render();
   assert.equal(frame.output.props.pointerEvents, 'none');
   assert.equal(frame.output.props.importantForAccessibility, 'no-hide-descendants');
-  assert.equal(flat(frame.output.props.style).opacity, 0);
-  assert.ok(flat(frame.output.props.style).transform[0].translateY >= 56 + 8);
+  assert.equal(sample(flat(frame.output.props.style).opacity), 0);
+  assert.ok(sample(flat(frame.output.props.style).transform[0].translateY) >= 56 + 8);
   assert.equal(timings.at(-1).useNativeDriver, true); assert.equal(timings.at(-1).isInteraction, false);
   assert.equal(timings.at(-1).duration, 240);
   behavior.scrollProps.onScroll(event(120)); frame.render();
   assert.equal(frame.output.props.pointerEvents, 'box-none');
-  assert.equal(flat(frame.output.props.style).opacity, 1);
+  assert.equal(sample(flat(frame.output.props.style).opacity), 1);
   reduced = true; const before = timings.length;
   behavior.scrollProps.onScroll(event(160)); frame.render(); assert.equal(timings.length, before);
-  keyboard.keyboardDidShow(); frame.render(); assert.equal(flat(frame.output.props.style).opacity, 0);
-  keyboard.keyboardDidHide(); behavior.show(); frame.render(); assert.equal(flat(frame.output.props.style).opacity, 1);
+  keyboard.keyboardDidShow(); frame.render(); assert.equal(sample(flat(frame.output.props.style).opacity), 0);
+  keyboard.keyboardDidHide(); behavior.show(); frame.render(); assert.equal(sample(flat(frame.output.props.style).opacity), 1);
   frame.unmount(); assert.equal(removed, 3);
   behavior.scrollProps.onScrollBeginDrag(event(100)); behavior.scrollProps.onScroll(event(130)); // unsubscribed
 });

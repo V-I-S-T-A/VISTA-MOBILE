@@ -145,7 +145,7 @@ test('every routed page exposes a pullable main refresh surface, including short
   }
 });
 
-test('document-entry refresh refetches reference lists without changing entered values or submitting', async () => {
+test('document-entry pull refresh clears the unsaved entry and refetches options without submitting', async () => {
   const requests = [], writes = [];
   const h = createHarness({
     '@tanstack/react-query': { useQueryClient: () => ({ invalidateQueries: args => requests.push(args.queryKey) }) },
@@ -165,8 +165,9 @@ test('document-entry refresh refetches reference lists without changing entered 
   organization.props.onChange(organization.props.options[0]); page.render();
   const scroll = nodes(page.output).find(n => n.type === 'ScrollView');
   await scroll.props.refreshControl.props.onRefresh(); page.render();
-  assert.equal(title().props.value, 'Unsaved title');
-  organization = nodes(page.output).find(n => n.props?.label === 'Organization'); assert.equal(organization.props.value.id, 3);
+  assert.equal(title().props.value, '');
+  organization = nodes(page.output).find(n => n.props?.label === 'Organization'); assert.equal(organization.props.value, null);
+  assert.equal(nodes(page.output).find(n => n.props?.label === 'Academic year').props.value.id, 9);
   assert.deepEqual(requests.map(k => k[0]), ['organizations', 'categories', 'document-types', 'academic-years', 'users']);
   assert.equal(writes.length, 0);
 });
