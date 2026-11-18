@@ -30,6 +30,7 @@ import VistaLoader from './src/components/common/VistaLoader';
 import { OverlayProvider } from './src/components/common/OverlayPortal';
 import UpdateManager from './src/components/common/UpdateManager';
 import * as NativeSplash from "expo-splash-screen";
+import AppErrorBoundary from './src/components/common/AppErrorBoundary';
 
 // Hand off the OS splash only after the loader or routed content has laid out.
 NativeSplash.preventAutoHideAsync().catch(() => {});
@@ -37,7 +38,7 @@ NativeSplash.setOptions({ duration: 0, fade: false });
 
 let globalFontApplied = false;
 
-export default function App() {
+function AppContent() {
   useEffect(() => startNetworkRuntime(), []);
   const navigationRef = useRef(null);
   const [fontsLoaded, fontError] = useFonts({
@@ -93,4 +94,10 @@ export default function App() {
     </QueryClientProvider>
     </GestureHandlerRootView>
   );
+}
+
+export default function App() {
+  // The module-level query client retains cached drafts across a view retry.
+  // Retrying never clears credentials/cache or replays a submission mutation.
+  return <AppErrorBoundary><AppContent /></AppErrorBoundary>;
 }

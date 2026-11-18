@@ -1,6 +1,7 @@
 import { apiClient, unwrapApiError } from "../lib/apiClient";
 import { API_ENDPOINTS } from "../config/api";
 import { connectivity, offlineError } from '../lib/connectivityState.cjs';
+import { uploadAttachment } from './uploadAttachment';
 
 export const submissionsService = {
   /**
@@ -48,23 +49,21 @@ export const submissionsService = {
     }
   },
 
-  async uploadSubmissionDocument(submissionId, file) {
+  async uploadSubmissionDocument(submissionId, file, { signal, onUploaded } = {}) {
     if (!connectivity.isOnline()) {
       const error = offlineError();
       error.message = 'Submission created, but the attachment needs a connection. Retry the attachment from the submission details.';
       throw error;
     }
-    const uploadData = new FormData();
-    uploadData.append("file", { uri: file.uri, name: file.name, type: file.type || "application/octet-stream" });
-    uploadData.append("upload_preset", "vista_uploads");
     let cloudinary;
     try {
-      const response = await fetch("https://api.cloudinary.com/v1_1/djtdar2ex/auto/upload", { method: "POST", body: uploadData });
-      cloudinary = await response.json();
-      if (!response.ok || !cloudinary.secure_url) throw new Error(cloudinary.error?.message || "Cloudinary did not return a file URL.");
+      cloudinary = await uploadAttachment(file, { signal });
     } catch (error) {
-      throw new Error(`Submission created, but the attachment upload failed: ${error.message || "check your connection and retry."}`);
+      throw Object.assign(new Error(`Your submission was created. ${error.message || 'The attachment upload could not be confirmed. Please retry the attachment.'}`), { code: error.code, status: error.status });
     }
+    // Cancellation ends at the file-transfer boundary. Registering the saved
+    // asset is a mutation whose outcome must be allowed to finish normally.
+    onUploaded?.();
     try {
       const { data } = await apiClient.post(API_ENDPOINTS.DOCUMENTS.LIST, {
         submission_id: submissionId,
@@ -105,16 +104,9 @@ export const submissionsService = {
 
   // Stage the asset only. The status endpoint associates it transactionally and
   // records add/replace in review history, unlike the creation document endpoint.
-  async prepareStatusAttachment(file) {
+  async prepareStatusAttachment(file, options = {}) {
     if (!connectivity.isOnline()) throw offlineError();
-    const body = new FormData();
-    body.append('file', { uri: file.uri, name: file.name, type: file.type || 'application/octet-stream' });
-    body.append('upload_preset', 'vista_uploads');
-    const response = await fetch('https://api.cloudinary.com/v1_1/djtdar2ex/auto/upload', { method: 'POST', body });
-    const result = await response.json();
-    if (!response.ok || !result.secure_url || !result.public_id || !result.resource_type) {
-      throw new Error(result.error?.message || 'The attachment upload could not be confirmed.');
-    }
+    const result = await uploadAttachment(file, options);
     return { file_name: file.name, file_url: result.secure_url, cloudinary_public_id: result.public_id,
       cloudinary_resource_type: result.resource_type, mime_type: file.type || 'application/octet-stream',
       file_size_kb: Math.max(1, Math.round((result.bytes ?? file.size ?? 0) / 1024)) };

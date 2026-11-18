@@ -32,6 +32,13 @@ export default function ReviewDetailsActionCard({ submission, isLoading, onConfi
   const [drive, setDrive] = useState(null);
   const [driveError, setDriveError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const upload = useRef(null);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; upload.current?.abort(); };
+  }, []);
   const pending = useRef(false), journal = useRef({});
   const edits = useRef({ status: false, priority: false });
   const updateStatus = useUpdateSubmissionStatus();
@@ -73,18 +80,27 @@ export default function ReviewDetailsActionCard({ submission, isLoading, onConfi
           update: payload => updateStatus.mutateAsync(payload),
           getSubmission: id => submissionsService.getSubmission(id),
           listReviewLogs: id => reviewLogsService.listReviewLogs(id),
-          prepareAttachment: async file => submissionsService.prepareStatusAttachment(file.type?.startsWith('image/') ? await prepareAttachment(file) : file),
+          prepareAttachment: async file => {
+            const prepared = file.type?.startsWith('image/') ? await prepareAttachment(file) : file;
+            if (!mounted.current) throw Object.assign(new Error('The file upload was stopped.'), { code: 'ERR_CANCELED' });
+            const controller = new AbortController();
+            upload.current = controller; setUploading(true);
+            try { return await submissionsService.prepareStatusAttachment(prepared, { signal: controller.signal }); }
+            finally { if (upload.current === controller) upload.current = null; if (mounted.current) setUploading(false); }
+          },
           uploadDocument: payload => driveService.uploadDocument(payload),
         },
       });
+      if (!mounted.current) return;
       await onConfirmed?.();
+      if (!mounted.current) return;
       setConfirmation(false); setRemarks(''); setFiles([]); setFinalFiles([]); setReportFiles([]); journal.current = {};
       edits.current = { status: false, priority: false };
       setNextStatus(newUpdate ? null : STAFF_REVIEW_ACTIONS.find(action => action.id === result.fresh.status) || null);
       setPriority(!!result.fresh.priority_escalation);
       Alert.alert('Updated', result.queued ? `Decision saved. ${result.queued} Drive upload(s) queued; delivery is not yet confirmed.` : status ? `${nextStatus.label} saved and confirmed.` : 'Remarks and priority saved.');
-    } catch (error) { Alert.alert('Update not confirmed', error.message || 'Please retry. Your draft is retained.'); }
-    finally { pending.current = false; setSaving(false); onBusyChange?.(false); }
+    } catch (error) { if (mounted.current) Alert.alert(error.code === 'ERR_CANCELED' ? 'Upload stopped' : 'Update not confirmed', error.message || 'Please retry. Your draft is retained.'); }
+    finally { pending.current = false; if (mounted.current) { setSaving(false); onBusyChange?.(false); } }
   };
   const requestUpdate = () => {
     if (busy || pending.current) return;
@@ -102,6 +118,10 @@ export default function ReviewDetailsActionCard({ submission, isLoading, onConfi
     <View style={styles.row}><Text style={styles.body}>Priority escalation</Text><Switch value={priority} onValueChange={changePriority} disabled={isLoading || busy} accessibilityLabel="Priority escalation" trackColor={{ false: '#CBD5E1', true: colors.priorityText }} /></View>
     {nextStatus?.id === 'under_review' ? <StaffReviewFiles label="On Process attachment (optional)" files={files} onChange={setFiles} action={attachmentAction} onActionChange={setAttachmentAction} documents={submission.documents || []} disabled={busy} /> : null}
     <AppButton size="compact" label={busy ? 'Saving and confirming…' : newUpdate ? 'Post update' : 'Update Status'} accessibilityLabel={newUpdate ? 'Post submission update' : 'Update Status'} variant="accent" busy={busy} disabled={busy || isLoading} onPress={requestUpdate} />
+    {uploading ? <>
+      <Text accessibilityLiveRegion="polite" style={styles.meta}>Uploading the file. Your update will be saved after the upload finishes.</Text>
+      <AppButton size="compact" label="Cancel file upload" variant="secondary" onPress={() => upload.current?.abort()} />
+    </> : null}
     <Confirmation visible={confirmation} title="Confirm approval & Drive" onClose={closeConfirmation} dismissible={!busy} busy={busy}>
       {returning ? <Text style={styles.title}>Return submission?</Text> : null}
       <Text style={styles.body}>{submission.title}</Text>

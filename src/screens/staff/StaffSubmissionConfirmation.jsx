@@ -1,6 +1,6 @@
 import { AppAlert as Alert } from '../../components/common/AppDialog';
 import { Text } from "../../components/common/FontText";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, View, RefreshControl } from 'react-native';
 import { useScreenRefresh } from '../../hooks/useScreenRefresh';
 import { Feather } from "@expo/vector-icons";
@@ -20,6 +20,26 @@ export default function StaffSubmissionConfirmation({ navigation, route }) {
   const [busy, setBusy] = useState(false);
   const [createdSubmission, setCreatedSubmission] = useState(null);
   const [error, setError] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const upload = useRef(null);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; upload.current?.abort(); };
+  }, []);
+  const attachFile = async submissionId => {
+    const controller = new AbortController();
+    upload.current = controller; setUploading(true);
+    try {
+      return await submissionsService.uploadSubmissionDocument(submissionId, file, {
+        signal: controller.signal,
+        onUploaded: () => { if (mounted.current) setUploading(false); },
+      });
+    } finally {
+      if (upload.current === controller) upload.current = null;
+      if (mounted.current) setUploading(false);
+    }
+  };
   const { refreshing, onRefresh } = useScreenRefresh([], async () => {
     // A pull only reads an already-created submission; it never submits a draft
     // or retries the attachment/create operation.
@@ -35,12 +55,10 @@ export default function StaffSubmissionConfirmation({ navigation, route }) {
     setError("");
     try {
       const submission = await submissionsService.createSubmission(draft);
+      if (!mounted.current) return;
       setCreatedSubmission(submission);
-      if (file)
-        await submissionsService.uploadSubmissionDocument(
-          submission.submission_id,
-          file,
-        );
+      if (file) await attachFile(submission.submission_id);
+      if (!mounted.current) return;
       Alert.alert(
         "Submission created",
         "Your submission is ready for review.",
@@ -52,12 +70,12 @@ export default function StaffSubmissionConfirmation({ navigation, route }) {
         ],
       );
     } catch (e) {
-      setError(
+      if (mounted.current) setError(
         e.message ||
           "Could not create the submission. Check your connection and retry.",
       );
     } finally {
-      setBusy(false);
+      if (mounted.current) setBusy(false);
     }
   };
 
@@ -126,10 +144,8 @@ export default function StaffSubmissionConfirmation({ navigation, route }) {
               setBusy(true);
               setError("");
               try {
-                await submissionsService.uploadSubmissionDocument(
-                  createdSubmission.submission_id,
-                  file,
-                );
+                await attachFile(createdSubmission.submission_id);
+                if (!mounted.current) return;
                 Alert.alert(
                   "Attachment saved",
                   "The submission and attachment are ready for review.",
@@ -141,11 +157,11 @@ export default function StaffSubmissionConfirmation({ navigation, route }) {
                   ],
                 );
               } catch (e) {
-                setError(
+                if (mounted.current) setError(
                   e.message || "Attachment upload failed. Please retry.",
                 );
               } finally {
-                setBusy(false);
+                if (mounted.current) setBusy(false);
               }
             }}
             style={[styles.actionTarget, busy && { opacity: motion.disabledOpacity }]}
@@ -191,7 +207,7 @@ export default function StaffSubmissionConfirmation({ navigation, route }) {
           </Text>
         ) : null}
       </ScrollView>
-      <VistaProcessing visible={busy} />
+      <VistaProcessing visible={busy} message={uploading ? 'Uploading your attachment…' : 'Saving your submission…'} onCancel={uploading ? () => upload.current?.abort() : undefined} />
     </View>
   );
 }

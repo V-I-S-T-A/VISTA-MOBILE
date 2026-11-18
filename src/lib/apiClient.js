@@ -2,6 +2,7 @@ import axios from "axios";
 import { API_CONFIG, API_ENDPOINTS } from "../config/api";
 import { tokenStore } from "./tokenStore";
 import { connectivity, offlineError, isConnectionError } from './connectivityState.cjs';
+import { normalizeApiError } from './apiErrors.cjs';
 
 // Each client owns its refresh queue. Production uses the same instance as before;
 // the factory also permits isolated physical-device verification without user tokens.
@@ -94,16 +95,5 @@ export function createAuthenticatedApiClient({ baseURL = API_CONFIG.BASE_URL, st
 export const apiClient = createAuthenticatedApiClient();
 
 export function unwrapApiError(error) {
-  const data = error?.response?.data;
-  const message =
-    data?.detail ||
-    data?.non_field_errors?.[0] ||
-    (data && Object.values(data).flat?.()[0]) ||
-    error.message ||
-    "Request failed.";
-  const wrapped = new Error(message);
-  wrapped.code = data?.code;
-  if (!wrapped.code) wrapped.code = error?.code;
-  wrapped.status = error?.response?.status;
-  return wrapped;
+  return normalizeApiError(error);
 }
