@@ -1,239 +1,119 @@
-import TextInput from '../common/AppInput';
-import { surfaces } from "../../theme/layout";
+import { Linking, StyleSheet, View } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { Text } from '../common/FontText';
-import { useEffect, useState } from "react";
-import { View, TouchableOpacity, ActivityIndicator, StyleSheet } from "react-native";
-import { Feather } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
-import { useQueryClient } from "@tanstack/react-query";
-import SelectField from "./SelectField";
-import { scanDocument, pickDocumentFile } from "../../utils/documentScan";
-import {
-  useDriveConnection,
-  useDriveFolderPreview,
-  useDriveFolders,
-  useDriveUpload,
-  useDriveUploadStatus,
-} from "../../hooks/useDrive";
-import { useToast } from "../common/Toast";
-import { DriveSkeleton, Skeleton } from '../common/Skeleton';
+import { AppAlert as Alert } from '../common/AppDialog';
 import AppButton from '../common/AppButton';
-import { colors, radii, reviewControls } from '../../theme/tokens';
-import VistaProcessing from '../common/VistaProcessing';
+import GoogleDriveLogo from '../common/GoogleDriveLogo';
+import UserAvatar from '../common/UserAvatar';
+import { surfaces, panelStyles } from '../../theme/layout';
+import { colors, radii, sizes, space, statusTones, type } from '../../theme/tokens';
+import { safeWebUrl } from '../submissions/conversationPolicy.cjs';
 
-export default function DriveArchiveCard({ submission }) {
-  const navigation = useNavigation();
-  const toast = useToast();
-  const queryClient = useQueryClient();
+async function openArchive(archive) {
+  const url = safeWebUrl(archive.drive_view_link);
+  if (!url) return;
+  try { await Linking.openURL(url); }
+  catch { Alert.alert('Could not open Google Drive', 'Please check your connection and try again.'); }
+}
 
-  const [useAutoFolder, setUseAutoFolder] = useState(true);
-  const [manualFolder, setManualFolder] = useState(null);
-  const [fileName, setFileName] = useState(submission?.title || "");
-  const [fileSelection, setFileSelection] = useState({ start: 0, end: 0 });
-  const [pendingFile, setPendingFile] = useState(null);
-  const [uploadKind, setUploadKind] = useState("approved");
-  const [activeTaskId, setActiveTaskId] = useState(null);
-
-  const {
-    data: connection,
-    isLoading: loadingConnection,
-    isError: connectionError,
-  } = useDriveConnection();
-  const isConnected = !!connection?.connected;
-  const hasFolder = isConnected && !!connection?.folder_id;
-
-  const { data: folderPreview, isLoading: loadingPreview } =
-    useDriveFolderPreview(isConnected ? submission?.submission_id : undefined);
-  const { data: manualFolders = [], isLoading: loadingFolders } =
-    useDriveFolders();
-  const uploadMutation = useDriveUpload();
-
-  // By the time uploadMutation resolves, the file has only reached OUR
-  // server -- the actual Drive upload runs in the background. This just
-  // polls for the result so we can toast it, without blocking anything.
-  const { data: uploadStatus } = useDriveUploadStatus(activeTaskId);
-
-  useEffect(() => {
-    if (!activeTaskId || !uploadStatus || uploadStatus.status === "pending") {
-      return;
-    }
-
-    if (uploadStatus.status === "success") {
-      toast.success(
-        uploadStatus.detail || "Document archived to Google Drive.",
-      );
-      queryClient.invalidateQueries({
-        queryKey: ["submissions", submission?.submission_id],
-      });
-    } else if (uploadStatus.code === "drive_reauth_required") {
-      toast.error("Your Google Drive connection expired. Please reconnect it.");
-      queryClient.invalidateQueries({ queryKey: ["drive", "connection"] });
-    } else {
-      toast.error(uploadStatus.detail || "The upload to Google Drive failed.");
-    }
-
-    setActiveTaskId(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTaskId, uploadStatus]);
-
-  useEffect(() => {
-    if (submission?.title) setFileName(submission.title);
-  }, [submission?.title]);
-
-  if ((submission?.status || "").toLowerCase() !== "approved") return null;
-
-  if (loadingConnection) {
-    return (
-        <DriveSkeleton />
-    );
-  }
-
-  if (connectionError || !isConnected || !hasFolder) {
-    return (
-      <View className="bg-white rounded-3xl p-2 mb-2 " style={surfaces.card}>
-        <View className="flex-row items-center mb-3">
-          <View className="bg-[#fff4e5] w-10 min-h-[44px] rounded-xl items-center justify-center mr-3">
-            <Feather name="alert-triangle" size={18} color="#b45309" />
-          </View>
-          <Text className="text-vistaNavy font-medium text-sm flex-1">
-            Google Drive not connected
-          </Text>
-        </View>
-        <Text className="text-gray-500 text-xs leading-5 mb-2">
-          {connectionError
-            ? "Could not check your Google Drive connection. Please try again."
-            : !isConnected
-              ? "Connect your Google account to archive approved documents to Drive."
-              : "Choose a Drive folder in Google Drive Sync before archiving documents."}
-        </Text>
-        <TouchableOpacity
-          onPress={() => navigation.navigate("GDriveSync")}
-          className="bg-vistaNavy rounded-xl min-h-[48px] py-1 flex-row justify-center items-center gap-1 justify-center"
-        >
-          <Text className="text-white font-medium text-[13px]">
-            Go to Google Drive Sync
-          </Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
-  const folderOptions = manualFolders.map((f) => ({ id: f.id, label: f.name }));
-
-  const isAccomplishmentReport = !!submission?.is_accomplishment_report;
-  const folderPathSegments = folderPreview?.path_segments || [];
-  const destinationPathSegments =
-    uploadKind === "report" &&
-    folderPathSegments[folderPathSegments.length - 1] === "Approved"
-      ? folderPathSegments.slice(0, -1)
-      : folderPathSegments;
-  const handlePick = (source) => async () => {
-    const file =
-      source === "camera" ? await scanDocument() : await pickDocumentFile();
-    if (file) setPendingFile(file);
-  };
-
-  const handleUpload = () => {
-    if (!pendingFile) {
-      toast.error("Take a photo or choose a file first.");
-      return;
-    }
-    if (!useAutoFolder && !manualFolder) {
-      toast.error("Select a Drive folder or switch to automated folders.");
-      return;
-    }
-
-    uploadMutation.mutate(
-      {
-        submissionId: submission.submission_id,
-        file: pendingFile,
-        fileName: fileName.trim() || submission.title,
-        useAutoFolder,
-        folderId: useAutoFolder ? undefined : manualFolder?.id,
-        uploadKind,
-      },
-      {
-        onSuccess: (data) => {
-          toast.info(
-            "Upload started — you can keep working, we'll let you know when it's done.",
-          );
-          setActiveTaskId(data.task_id);
-          setPendingFile(null);
-        },
-        onError: (error) => {
-          if (error.code === "drive_reauth_required") {
-            toast.error(
-              "Your Google Drive connection expired. Please reconnect it.",
-            );
-            queryClient.invalidateQueries({
-              queryKey: ["drive", "connection"],
-            });
-          } else {
-            toast.error(error.message || "Please try again.");
-          }
-        },
-      },
-    );
-  };
-
-  return (
-    <View style={[surfaces.card, styles.panel]}>
-      <View style={styles.headingRow}><Feather name="hard-drive" size={reviewControls.icon} color={colors.blue} /><Text style={styles.heading}>Archive to Google Drive</Text></View>
-      <View style={styles.actions}>
-        <ArchiveAction label="Take Photo" icon="camera" onPress={handlePick("camera")} />
-        <ArchiveAction label="Upload File" icon="upload" onPress={handlePick("file")} />
-      </View>
-      {isAccomplishmentReport ? <View style={styles.group}>
-        <Text style={styles.label}>File destination</Text>
-        <View style={styles.actions}>
-          <ArchiveAction segment label="Approved copy" selected={uploadKind === 'approved'} disabled={!!activeTaskId || uploadMutation.isPending} onPress={() => setUploadKind('approved')} />
-          <ArchiveAction segment label="Accomplishment Report" selected={uploadKind === 'report'} disabled={!!activeTaskId || uploadMutation.isPending} onPress={() => setUploadKind('report')} />
-        </View>
-        <Text style={styles.support}>{uploadKind === 'approved' ? 'Uploads into the Approved subfolder.' : 'Uploads into the Accomplishment Report folder.'}</Text>
-      </View> : null}
-      {pendingFile ? <View style={styles.fileRow}>
-        <Text style={[styles.support, { flex: 1 }]} numberOfLines={1}>{pendingFile.name}</Text>
-        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Remove selected file" style={styles.remove} onPress={() => setPendingFile(null)}><Feather name="x" size={reviewControls.icon} color={colors.muted} /></TouchableOpacity>
-      </View> : null}
-      {activeTaskId ? <View style={styles.fileRow}><ActivityIndicator size="small" /><Text style={[styles.support, { flex: 1 }]}>{uploadKind === 'report' ? 'Archiving the Accomplishment Report in the background.' : 'Archiving the approved copy in the background — feel free to keep working.'}</Text></View> : null}
-      <View style={styles.group}>
-        <Text style={styles.label}>File name</Text>
-        <TextInput size="compact" accessibilityLabel="File name" value={fileName} onChangeText={setFileName}
-          selection={fileSelection} onFocus={() => setFileSelection(undefined)} onBlur={() => setFileSelection({ start: 0, end: 0 })}
-          placeholder="Document name" />
-      </View>
-      <View style={styles.actions}>
-        <ArchiveAction segment label="Automated Folder" selected={useAutoFolder} onPress={() => setUseAutoFolder(true)} />
-        <ArchiveAction segment label="Choose Folder" selected={!useAutoFolder} onPress={() => setUseAutoFolder(false)} />
-      </View>
-      {useAutoFolder ? <View style={styles.preview}>{loadingPreview ? <Skeleton height={14} /> : <Text style={styles.support}>{destinationPathSegments.join(' › ') || 'Academic Year › Organization › Title'}</Text>}</View> :
-        <SelectField size="compact" style={{ marginBottom: 0 }} label="Drive folder" placeholder="Select a folder..." value={manualFolder} options={folderOptions} isLoading={loadingFolders} onChange={setManualFolder} />}
-      <AppButton size="compact" variant="accent" label={uploadKind === 'report' ? 'Archive Accomplishment Report' : 'Archive Approved Copy'} onPress={handleUpload} busy={uploadMutation.isPending} />
-      <VistaProcessing visible={uploadMutation.isPending} message="Preparing your Drive upload…" />
+function PathStep({ name, index }) {
+  const label = name.toLowerCase() === 'approved' ? 'Approved' : ['Year', 'Organization', 'File type'][index] || 'Subfolder';
+  return <View style={[styles.pathStep, { marginLeft: Math.min(index, 2) * space.sm }]}>
+    <Feather name="folder" size={sizes.icon} color={colors.warning} />
+    <View style={styles.flex}>
+      <Text style={styles.pathName}>{name}</Text>
+      <Text style={styles.pathLabel}>{label}</Text>
     </View>
-  );
+  </View>;
 }
 
-function ArchiveAction({ label, icon, segment = false, selected, disabled, onPress }) {
-  return <AppButton size="compact" label={label} variant="secondary" onPress={onPress} disabled={disabled}
-    accessibilityRole={segment ? 'radio' : 'button'} accessibilityState={{ disabled: !!disabled, ...(segment ? { checked: !!selected } : {}) }}
-    style={{ flex: 1 }} surfaceStyle={[styles.actionSurface, segment && styles.segment, selected && styles.selected]}>
-    <View style={styles.actionContent}>{icon ? <Feather name={icon} size={reviewControls.icon} color={colors.blue} /> : null}<Text style={[styles.actionLabel, selected && { color: colors.blue }]}>{label}</Text></View>
-  </AppButton>;
+function SavedArchive({ archive, handlerName }) {
+  const path = Array.isArray(archive.folder_path) ? archive.folder_path.filter(name => typeof name === 'string' && name.trim()) : [];
+  const archiver = archive.archived_by_name?.trim();
+  const handled = handlerName || archiver || 'Staff member';
+  const name = archive.file_name || 'Archived file';
+  const report = archive.upload_kind === 'report';
+  return <View style={styles.archive}>
+    <View style={styles.root}>
+      <View style={styles.rootIcon}><Feather name="hard-drive" size={sizes.icon} color={colors.blue} /></View>
+      <View style={styles.flex}>
+        <Text style={styles.label}>Root storage folder</Text>
+        <Text style={styles.pathName}>{archive.root_folder_name || 'Google Drive folder'}</Text>
+      </View>
+    </View>
+    <View style={styles.path}>
+      <Text style={styles.label}>{path.length ? 'Automated subfolder path' : 'Drive folder'}</Text>
+      {path.length ? <View style={styles.tree}>
+        {path.map((segment, index) => <PathStep key={index} name={segment} index={index} />)}
+      </View> : <Text style={styles.support}>Folder path details are unavailable for this archive.</Text>}
+    </View>
+    <View style={styles.file}>
+      <View style={styles.fileHeading}>
+        <Feather name="file-text" size={sizes.icon} color={colors.success} />
+        <Text selectable style={[styles.pathName, styles.flex]}>{name}</Text>
+      </View>
+      <Text style={[styles.fileKind, report && styles.reportKind]}>{report ? 'Accomplishment Report' : 'Approved File'}</Text>
+      <Text style={styles.support}>Handled by <Text style={styles.handler}>{handled}</Text></Text>
+      {archiver && archiver !== handled ? <Text style={styles.support}>Archived by <Text style={styles.handler}>{archiver}</Text></Text> : null}
+      {safeWebUrl(archive.drive_view_link) ? <AppButton label="Open in Drive" accessibilityRole="link" accessibilityLabel={`Open ${name} in Google Drive`} variant="secondary" style={styles.open} onPress={() => openArchive(archive)}>
+        <View style={styles.openContent}><Text style={styles.openText}>Open in Drive</Text><Feather name="external-link" size={sizes.icon} color={colors.blue} /></View>
+      </AppButton> : <Text style={styles.support}>Drive link unavailable</Text>}
+    </View>
+  </View>;
 }
+
+// Read-only saved metadata, as on web. Uploads remain in the Post update sheet;
+// neither a queued task nor the current Drive connection proves an archive exists.
+export default function DriveArchiveCard({ submission, handledBy }) {
+  if ((submission?.status || '').toLowerCase() !== 'approved') return null;
+  const archives = Array.isArray(submission.drive_archives) ? submission.drive_archives : [];
+  const handlerName = typeof handledBy === 'string' ? handledBy.trim() : handledBy?.changed_by_name?.trim();
+  if (!archives.length && !handlerName) return null;
+  return <View style={[surfaces.card, panelStyles.card, styles.panel]}>
+    <View style={styles.headingRow}>
+      <GoogleDriveLogo size={space.xxl} decorative />
+      <Text accessibilityRole="header" style={styles.heading}>Google Drive archive</Text>
+    </View>
+    <View accessibilityLabel={archives.length ? 'Archive complete' : 'Approval recorded'} style={[styles.badge, !archives.length && styles.recordedBadge]}>
+      <Feather name={archives.length ? 'check-circle' : 'user-check'} size={space.lg} color={archives.length ? colors.success : colors.blue} />
+      <Text style={[styles.badgeText, !archives.length && styles.recordedText]}>{archives.length ? 'Archived to Drive' : 'Approval recorded'}</Text>
+    </View>
+    {archives.length ? <>
+      {archives.map(archive => <SavedArchive key={archive.archive_id || archive.drive_file_id} archive={archive} handlerName={handlerName} />)}
+      <Text style={styles.support}>This location was saved after the file was archived to Google Drive.</Text>
+    </> : <>
+      <View style={styles.root}>
+        <UserAvatar uri={handledBy?.changed_by_image_url} size={space.xxxl} />
+        <View style={styles.flex}><Text style={styles.label}>Approved submission handled by</Text><Text style={styles.pathName}>{handlerName}</Text></View>
+      </View>
+      <Text style={styles.support}>VISTA has no saved Google Drive location or file link for this entry.</Text>
+    </>}
+  </View>;
+}
+
 const styles = StyleSheet.create({
-  panel: { padding: reviewControls.padding, gap: 0, marginBottom: reviewControls.gap },
-  headingRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  heading: { ...reviewControls.heading, color: colors.text, flexShrink: 1 },
-  actions: { flexDirection: 'row', gap: 8 }, group: { gap: 0 },
-  label: { ...reviewControls.label, color: colors.text, marginTop: 4 },
-  support: { ...reviewControls.label, fontFamily: 'DMSans_400Regular', lineHeight: 14, color: colors.muted },
-  actionSurface: { minHeight: reviewControls.attachmentHeight, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.field },
-  actionContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4 },
-  actionLabel: { ...reviewControls.action, color: colors.text, textAlign: 'center', flexShrink: 1 },
-  segment: { minHeight: reviewControls.segmentHeight, borderRadius: radii.chip },
-  selected: { backgroundColor: colors.selectedSurface, borderColor: colors.blue },
-  preview: { marginBottom: 4, padding: 8, borderRadius: radii.chip, backgroundColor: colors.field },
-  fileRow: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.field, borderRadius: radii.chip, paddingHorizontal: 8 },
-  remove: { minWidth: reviewControls.touch, minHeight: reviewControls.touch, alignItems: 'center', justifyContent: 'center' },
+  panel: { gap: space.md },
+  headingRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  heading: { ...type.cardTitle, color: colors.text, flex: 1, minWidth: 0 },
+  badge: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: space.xs, paddingHorizontal: space.sm, paddingVertical: space.xs, borderRadius: radii.pill, backgroundColor: statusTones.approved.background, maxWidth: '100%' },
+  badgeText: { ...type.compactLabel, color: colors.success, flexShrink: 1 },
+  recordedBadge: { backgroundColor: colors.selectedSurface }, recordedText: { color: colors.blue },
+  archive: { gap: space.md },
+  root: { flexDirection: 'row', alignItems: 'center', gap: space.sm, padding: space.md, borderRadius: radii.chip, backgroundColor: colors.selectedSurface },
+  rootIcon: { width: sizes.avatar, height: sizes.avatar, alignItems: 'center', justifyContent: 'center' },
+  flex: { flex: 1, minWidth: 0 },
+  label: { ...type.meta, color: colors.muted, marginBottom: space.xs },
+  pathName: { ...type.listTitle, color: colors.text },
+  path: { paddingHorizontal: space.xs, gap: space.xs },
+  tree: { borderLeftWidth: 1, borderColor: colors.border, paddingLeft: space.sm, gap: space.sm },
+  pathStep: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm },
+  pathLabel: { ...type.meta, color: colors.blue },
+  file: { padding: space.md, borderWidth: 1, borderColor: colors.border, borderRadius: radii.field, gap: space.sm },
+  fileHeading: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm },
+  fileKind: { ...type.meta, color: colors.success, alignSelf: 'flex-start', backgroundColor: statusTones.approved.background, paddingHorizontal: space.sm, paddingVertical: space.xs, borderRadius: radii.chip },
+  reportKind: { color: colors.blue, backgroundColor: colors.selectedSurface },
+  support: { ...type.meta, color: colors.muted }, handler: { fontFamily: type.medium, color: colors.text },
+  open: { backgroundColor: colors.selectedSurface, borderRadius: radii.chip },
+  openContent: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: space.sm },
+  openText: { ...type.button, color: colors.blue, flexShrink: 1 },
 });

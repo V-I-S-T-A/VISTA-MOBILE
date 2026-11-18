@@ -97,7 +97,7 @@ export default function AcademicYearFilterSheet({
         keyboardShouldPersistTaps="handled"
       >
         {isLoading && options.length <= 1 ? (
-          <DropdownSkeleton count={4} />
+          <DropdownSkeleton count={4} variant="academicYear" />
         ) : (
           <View style={{ gap: 4 }}>
             {options.map((option) => {
@@ -128,7 +128,7 @@ export default function AcademicYearFilterSheet({
                   style={{
                     width: 18,
                     height: 18,
-                    borderRadius: 9,
+                    borderRadius: radii.chip,
                     borderWidth: 1.5,
                     borderColor: isSelected ? colors.blue : colors.border,
                     alignItems: 'center',

@@ -1,3 +1,4 @@
+import { type } from '../../theme/tokens';
 import { useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, Animated, AppState, Easing, Image, Text, View } from 'react-native';
 
@@ -32,6 +33,6 @@ export default function VistaLoader({ fullScreen = false, light = false, fontsRe
     <View style={{ flexDirection: 'row', gap: 9, marginTop: 22, marginBottom: 20 }}>
       {['#1A59A5', '#FDC849', '#5AB5CD'].map((color, index) => <Animated.View key={color} style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: color, transform: [{ translateY: phase.interpolate({ inputRange: PHASES, outputRange: PHASES.map(value => reduceMotion ? 0 : -6 * Math.max(0, Math.sin((value - index / 6) * Math.PI * 2))) }) }] }} />)}
     </View>
-    <Text style={{ ...(fontsReady ? { fontFamily: 'DMSans_500Medium' } : {}), color: light ? '#1E3A68' : '#FFFFFF', fontSize: 14, lineHeight: 21, textAlign: 'center' }}>{message}</Text>
+    <Text style={{ ...(fontsReady ? { fontFamily: 'DMSans_500Medium' } : {}), color: light ? '#1E3A68' : '#FFFFFF', fontSize: type.field.fontSize, lineHeight: type.field.lineHeight, textAlign: 'center' }}>{message}</Text>
   </View>;
 }

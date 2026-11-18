@@ -7,11 +7,15 @@ import { prepareAttachment } from '../../../services/prepareAttachment';
 import DraftAttachmentPreview from '../../../components/submissions/DraftAttachmentPreview';
 import VistaProcessing from '../../../components/common/VistaProcessing';
 import { FormSkeleton } from '../../../components/common/Skeleton';
+import ContentState from '../../../components/common/ContentState';
+import useConnectivity from '../../../hooks/useConnectivity';
 import { Text } from '../../../components/common/FontText';
 import { useEffect, useMemo, useRef, useState } from "react";
-import { View, Image, TouchableOpacity, ScrollView, ActivityIndicator, Switch, StyleSheet } from 'react-native';
+import { View, Image, TouchableOpacity, ActivityIndicator, Switch, StyleSheet, RefreshControl } from 'react-native';
+import { useScreenRefresh } from '../../../hooks/useScreenRefresh';
+import { PullRefreshKeyboardAwareScrollView as KeyboardAwareScrollView } from '../../../components/common/PullRefresh';
 import VistaIcon from '../../../components/common/VistaIcon';
-import { colors, form, space, radii, sizes, type } from '../../../theme/tokens';
+import { colors, form, space, radii, sizes, type, reviewControls } from '../../../theme/tokens';
 
 import SelectField from "../../../components/staff/SelectField";
 import { scanDocument, pickDocumentFile } from "../../../utils/documentScan";
@@ -26,8 +30,12 @@ function toOption(row, idField, labelFn) {
   return { id: row[idField], label: labelFn(row) };
 }
 
-export default function StaffDocumentEntryContent({ navigation, initialAttachment }) {
+export default function StaffDocumentEntryContent({ navigation, initialAttachment, navScroll }) {
+  const online = useConnectivity();
   const footerClearance = useBottomNavClearance();
+  const { refreshing, onRefresh } = useScreenRefresh([
+    ['organizations'], ['categories'], ['document-types'], ['academic-years'], ['users', 'by-organization'],
+  ]);
   const attachmentTrigger = useRef(null);
   // --- form state -----------------------------------------------------
   const [organization, setOrganization] = useState(null); // { id, label }
@@ -45,13 +53,14 @@ export default function StaffDocumentEntryContent({ navigation, initialAttachmen
   const [priority, setPriority] = useState(false);
 
   // --- reference data ---------------------------------------------------
-  const { data: organizations = [], isLoading: loadingOrgs } =
+  const { data: organizations = [], isLoading: loadingOrgs, error: organizationsError } =
     useOrganizations();
-  const { data: categories = [], isLoading: loadingCategories } =
+  const { data: categories = [], isLoading: loadingCategories, error: categoriesError } =
     useCategories();
-  const { data: documentTypes = [], isLoading: loadingDocTypes } =
+  const { data: documentTypes = [], isLoading: loadingDocTypes, error: documentTypesError } =
     useDocumentTypes();
-  const { data: activeAcademicYear, isLoading: loadingAcademicYear } = useActiveAcademicYear();
+  const { data: activeAcademicYear, isLoading: loadingAcademicYear, error: academicYearError } = useActiveAcademicYear();
+  const referenceError = organizationsError || categoriesError || documentTypesError || academicYearError;
   const { data: orgUsers = [], isLoading: loadingOrgUsers } =
     useOrganizationUsers(organization?.id);
 
@@ -105,6 +114,29 @@ export default function StaffDocumentEntryContent({ navigation, initialAttachmen
   // --- OCR autofill + create submission mutations -----------------------
   const autofillMutation = useAutofillDocument();
   const runAutofillRef = useRef(null);
+  const autofillGeneration = useRef(0);
+  useEffect(() => () => { autofillGeneration.current += 1; }, []);
+
+  const handleRefresh = () => {
+    // Start a fresh, unsaved entry; a late OCR response must not restore it.
+    autofillGeneration.current += 1;
+    autofillMutation.reset?.();
+    setProcessing(false);
+    setScannedFile(null);
+    setOcrDraft(null);
+    setOcrNotice(null);
+    setOrganization(null);
+    setDocType(null);
+    setCategory(null);
+    setSubmittedBy(null);
+    setTitle('');
+    titleEdited.current = false;
+    setDescription('');
+    setPriority(false);
+    // Keep the active academic year and refresh the existing reference queries.
+    return onRefresh();
+  };
+
   useEffect(() => {
     if (!organization) return;
     const full = organizations.find(item => String(item.org_id) === String(organization.id));
@@ -112,6 +144,7 @@ export default function StaffDocumentEntryContent({ navigation, initialAttachmen
   }, [organizations, organization]);
 
   const runAutofill = async (file) => {
+    const generation = ++autofillGeneration.current;
     setProcessing(true);
     try {
       // const file = await scanDocument();
@@ -119,8 +152,10 @@ export default function StaffDocumentEntryContent({ navigation, initialAttachmen
 
       setScannedFile(null);
       const prepared = await prepareAttachment(file);
+      if (generation !== autofillGeneration.current) return;
       setScannedFile(prepared);
       const draft = await autofillMutation.mutateAsync(file);
+      if (generation !== autofillGeneration.current) return;
       setOcrDraft(draft);
 
       if (draft.status !== "draft_pending_review") {
@@ -187,11 +222,14 @@ export default function StaffDocumentEntryContent({ navigation, initialAttachmen
         needsReview,
       });
     } catch (error) {
+      if (generation !== autofillGeneration.current) return;
       Alert.alert(
         "Document recognition failed",
         error.message || "Could not read this document. Please try another file or try again.",
       );
-    } finally { setProcessing(false); }
+    } finally {
+      if (generation === autofillGeneration.current) setProcessing(false);
+    }
   };
 
   runAutofillRef.current = runAutofill;
@@ -281,18 +319,23 @@ export default function StaffDocumentEntryContent({ navigation, initialAttachmen
     autofillMutation.isPending || processing;
 
   return (
-    <ScrollView
-      className="flex-1 pt-2"
+    <KeyboardAwareScrollView {...navScroll?.scrollProps}
+      scrollHeader={<View className="pt-2"><AccountHeader profileRoute="StaffProfile" /></View>}
+      alwaysBounceVertical overScrollMode="always"
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
+      className="flex-1"
       contentContainerStyle={{ paddingBottom: footerClearance }}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
-      automaticallyAdjustKeyboardInsets
+      bottomOffset={footerClearance}
+      keyboardDismissMode="on-drag"
     >
-      <AccountHeader profileRoute="StaffProfile" />
 
       <PageHeading compact title="Document Entry" subtitle="Registration Portal." />
 
-      {loadingOrgs || loadingCategories || loadingDocTypes || loadingAcademicYear ? <FormSkeleton compact /> : <View style={styles.form}>
+      {!online || referenceError ? <ContentState compact variant="error" title="Could not load form options"
+        error={!online ? { code: 'OFFLINE' } : referenceError} onRetry={onRefresh} /> : null}
+      {online && (loadingOrgs || loadingCategories || loadingDocTypes || loadingAcademicYear) ? <FormSkeleton compact hasAttachment={!!scannedFile} /> : <View style={styles.form}>
         <SelectField
           size="compact"
           label="Organization"
@@ -356,35 +399,40 @@ export default function StaffDocumentEntryContent({ navigation, initialAttachmen
           onChange={setSubmittedBy}
         />
 
-        <View className="flex-row items-center justify-between bg-[#FFF6D6] rounded-2xl p-2 mb-2">
-          <View className="flex-1 mr-3"><Text className="text-vistaNavy font-medium text-[13px]">Priority escalation</Text><Text className="text-slate-600 text-xs mt-1">Flag this submission for priority review.</Text></View>
-          <Switch value={priority} onValueChange={setPriority} accessibilityLabel="Priority escalation" trackColor={{ false: '#CBD5E1', true: '#FDC849' }} thumbColor="#FFFFFF" />
+        <View style={styles.priorityRow}>
+          <Text style={styles.priorityLabel}>Priority escalation</Text>
+          <Switch value={priority} onValueChange={setPriority} accessibilityLabel="Priority escalation" trackColor={{ false: '#CBD5E1', true: colors.yellow }} thumbColor="#FFFFFF" />
         </View>
         {ocrNotice?.template ? (
-          <View className="bg-slate-50 rounded-lg p-2 mb-2">
-            <Text className="text-vistaNavy text-xs font-medium">
+          <View style={styles.noticeCard}>
+            <Text style={styles.noticeTitle}>
               Detected: {ocrNotice.template} ({ocrNotice.confidence}% match)
             </Text>
             {ocrNotice.needsReview?.length > 0 ? (
-              <Text className="text-amber-600 text-xs font-semibold mt-1">
+              <Text style={styles.noticeWarning}>
                 Please double-check: {ocrNotice.needsReview.join(", ")}
               </Text>
             ) : null}
           </View>
         ) : null}
         {ocrNotice?.unrecognized ? (
-          <View className="bg-slate-50 rounded-lg p-2 mb-2">
-            <Text className="text-amber-600 text-xs font-semibold">
+          <View style={styles.noticeCard}>
+            <Text style={styles.noticeWarning}>
               Couldn't confidently match a known form template — please fill in
               the fields manually.
             </Text>
           </View>
         ) : null}
 
-        {scannedFile ? <>
-          <DraftAttachmentPreview file={scannedFile} compact />
-          <TouchableOpacity disabled={isBusy} onPress={() => { setScannedFile(null); setOcrDraft(null); setOcrNotice(null); }} accessibilityLabel="Remove attachment" className="self-end min-h-[48px] justify-center px-3 mb-2"><Text className="text-red-700 text-sm font-bold">Remove attachment</Text></TouchableOpacity>
-        </> : null}
+        {scannedFile ? (
+          <View style={styles.attachmentSection}>
+            <DraftAttachmentPreview
+              file={scannedFile}
+              compact
+              onRemove={() => { setScannedFile(null); setOcrDraft(null); setOcrNotice(null); }}
+            />
+          </View>
+        ) : !isBusy ? <ContentState compact title="Ready for your document" message="Scan a document or choose a file. You can also continue without an attachment." /> : null}
         <TouchableOpacity
           ref={attachmentTrigger}
           onPress={handleAttachDocument}
@@ -394,30 +442,75 @@ export default function StaffDocumentEntryContent({ navigation, initialAttachmen
           accessibilityState={{ disabled: isBusy, busy: autofillMutation.isPending }}
           style={[styles.attachment, isBusy && { opacity: 0.55 }]}
         >
-          {autofillMutation.isPending ? (
-            <>
-              <ActivityIndicator />
-              <Text style={styles.attachmentLabel}>
-                Reading document…
-              </Text>
-            </>
-          ) : (
-            <>
-              <VistaIcon name="paperclip" size={sizes.icon} color={colors.muted} />
-              <Text style={styles.attachmentLabel}>Attach Document (Optional)</Text>
-            </>
-          )}
+          <View style={styles.attachmentSurface}>
+            {autofillMutation.isPending ? (
+              <>
+                <ActivityIndicator size="small" color={colors.muted} />
+                <Text style={styles.attachmentLabel}>
+                  Reading document…
+                </Text>
+              </>
+            ) : (
+              <>
+                <VistaIcon name="paperclip" size={reviewControls.icon} color={colors.muted} />
+                <Text style={styles.attachmentLabel}>
+                  {scannedFile ? 'Replace Document (Optional)' : 'Attach Document (Optional)'}
+                </Text>
+              </>
+            )}
+          </View>
         </TouchableOpacity>
 
-        <AppButton label="Submit" variant="accent" onPress={handleSubmit} disabled={isBusy} />
+        <AppButton size="compact" label="Submit" variant="accent" onPress={handleSubmit} disabled={isBusy} />
       </View>}
       <VistaProcessing visible={processing} message="Reading your document and preparing its image…" />
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 }
 const styles = StyleSheet.create({
-  form: { backgroundColor: colors.surface, borderRadius: radii.card, padding: space.sm },
+  form: { backgroundColor: colors.surface, borderRadius: radii.card, borderCurve: 'continuous', padding: space.lg },
   label: { ...type.label, color: colors.text, marginBottom: form.labelGap },
-  attachment: { minHeight: sizes.touch, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm, paddingHorizontal: form.paddingHorizontal, paddingVertical: form.paddingVertical, borderRadius: radii.field, borderWidth: 1, borderColor: colors.border, borderStyle: 'dashed', backgroundColor: colors.field, marginBottom: form.sectionGap },
-  attachmentLabel: { ...type.body, color: colors.muted, flexShrink: 1 },
+  priorityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: reviewControls.fieldHeight,
+    paddingHorizontal: reviewControls.padding,
+    paddingVertical: 4,
+    borderRadius: reviewControls.radius,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.field,
+    marginBottom: form.fieldGap,
+  },
+  priorityLabel: { ...reviewControls.value, color: colors.text, flex: 1, marginRight: space.sm },
+  noticeCard: {
+    backgroundColor: colors.field,
+    borderRadius: reviewControls.radius,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: reviewControls.padding,
+    paddingVertical: space.sm,
+    marginBottom: form.fieldGap,
+  },
+  noticeTitle: { ...reviewControls.label, color: colors.navy },
+  noticeWarning: { ...reviewControls.label, color: colors.warning, marginTop: 2 },
+  attachmentSection: { marginBottom: form.fieldGap },
+  attachment: { minHeight: sizes.touch, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: form.fieldGap },
+  attachmentSurface: {
+    flex: 1,
+    minHeight: reviewControls.actionHeight,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: space.sm,
+    paddingHorizontal: reviewControls.padding,
+    paddingVertical: 4,
+    borderRadius: reviewControls.radius,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderStyle: 'dashed',
+    backgroundColor: colors.field,
+  },
+  attachmentLabel: { ...reviewControls.action, color: colors.muted, flexShrink: 1 },
 });

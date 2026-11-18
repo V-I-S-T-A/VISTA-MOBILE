@@ -2,6 +2,11 @@ node_modules/
 .expo/
 android/build/
 android/app/build/
+android/.gradle/
+android/.cxx/
+android/app/.cxx/
+android/local.properties
+coverage/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -19,4 +24,10 @@ android/app/google-services.json
 *firebase-adminsdk*.json
 credentials.json
 dist/
+
+# Generated local build snapshots and JVM crash diagnostics
+/eas-inspect*/
+/eas-archive*/
+/android/hs_err_pid*.log
+/android/replay_pid*.log
 

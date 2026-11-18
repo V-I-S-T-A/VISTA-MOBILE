@@ -1,5 +1,5 @@
 import { ScrollView, View, TouchableOpacity } from 'react-native';
-import { colors, sizes, radii, type } from '../../theme/tokens';
+import { colors, sizes, radii, type, space, compact, motion } from '../../theme/tokens';
 import { Text } from '../common/FontText';
 
 export function filterNotifications(items, tab) {
@@ -14,8 +14,8 @@ export default function NotificationTabs({ value, onChange, variant = 'compact',
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      style={[{ flexGrow: 0, marginVertical: 6 }, style]}
-      contentContainerStyle={{ gap: 8, paddingVertical: 2 }}
+      style={[{ flexGrow: 0, marginVertical: space.xs }, style]}
+      contentContainerStyle={{ gap: space.sm, paddingVertical: space.xs / 2 }}
     >
       {['All', 'Unread', 'Priority'].map(tab => {
         const isSelected = value === tab;
@@ -27,6 +27,7 @@ export default function NotificationTabs({ value, onChange, variant = 'compact',
             accessibilityLabel={tab + ' notifications'}
             accessibilityState={{ selected: isSelected }}
             onPress={() => onChange(tab)}
+            activeOpacity={motion.pressedOpacity}
             style={{ minHeight: sizes.touch, justifyContent: 'center' }}
             hitSlop={{ top: 6, bottom: 6, left: 2, right: 2 }}
           >
@@ -34,22 +35,23 @@ export default function NotificationTabs({ value, onChange, variant = 'compact',
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
-                gap: 6,
-                height: 34,
-                paddingHorizontal: 14,
+                gap: space.xs,
+                minHeight: compact.chipHeight,
+                paddingVertical: space.xs,
+                paddingHorizontal: space.lg,
                 borderRadius: radii.pill,
-                backgroundColor: isSelected ? '#FFC342' : '#EDF4FF',
+                backgroundColor: isSelected ? colors.blue : colors.selectedSurface,
                 borderWidth: 1,
-                borderColor: isSelected ? '#F0B32E' : '#DFEBFB',
+                borderColor: isSelected ? colors.blue : colors.border,
               }}
             >
               <Text
                 style={{
                   ...type.label,
-                  fontSize: 12.5,
-                  lineHeight: 16,
+                  fontSize: type.field.fontSize,
+                  lineHeight: type.field.lineHeight,
                   fontFamily: 'DMSans_500Medium',
-                  color: isSelected ? '#513600' : '#142B52',
+                  color: isSelected ? colors.onBrand : colors.navy,
                 }}
               >
                 {tab}
@@ -58,11 +60,10 @@ export default function NotificationTabs({ value, onChange, variant = 'compact',
                 <Text
                   style={{
                     ...type.badge,
-                    fontSize: 11,
-                    lineHeight: 14,
+                    fontSize: type.meta.fontSize,
+                    lineHeight: type.meta.lineHeight,
                     fontFamily: 'DMSans_500Medium',
-                    color: isSelected ? '#513600' : '#64748B',
-                    opacity: isSelected ? 0.85 : 0.8,
+                    color: isSelected ? colors.onBrand : colors.muted,
                   }}
                 >
                   {count}

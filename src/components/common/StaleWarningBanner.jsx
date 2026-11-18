@@ -1,3 +1,4 @@
+import { radii, type } from '../../theme/tokens';
 import { View } from 'react-native';
 import { Text } from './FontText';
 import VistaIcon from './VistaIcon';
@@ -18,7 +19,7 @@ export default function StaleWarningBanner({
           backgroundColor: '#FFF7ED',
           borderWidth: 1,
           borderColor: '#FFEDD5',
-          borderRadius: 8,
+          borderRadius: radii.chip,
           paddingHorizontal: 10,
           paddingVertical: 5,
           marginBottom: 8,
@@ -30,8 +31,8 @@ export default function StaleWarningBanner({
       <Text
         style={{
           fontFamily: 'DMSans_400Regular',
-          fontSize: 11,
-          lineHeight: 15,
+          fontSize: type.meta.fontSize,
+          lineHeight: type.meta.lineHeight,
           color: '#9A3412',
           flex: 1,
         }}

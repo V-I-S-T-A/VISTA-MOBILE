@@ -3,6 +3,8 @@ import { TouchableOpacity, View, FlatList, ActivityIndicator, useWindowDimension
 import { useRef, useState } from 'react';
 import NotificationTabs, { filterNotifications } from './NotificationTabs';
 import { NotificationsSkeleton } from '../common/Skeleton';
+import ContentState from '../common/ContentState';
+import StaleWarningBanner from '../common/StaleWarningBanner';
 import StudentNotificationListItem from './StudentNotificationListItem';
 import { useMarkNotificationRead } from '../../hooks/useStudentNotifications';
 import { Feather } from "@expo/vector-icons";
@@ -17,18 +19,20 @@ export default function StudentNotificationBell() {
   const { height } = useWindowDimensions();
   const navigation = useNavigation();
   const { role } = useAuth();
-  const { data, isPending, isError, refetch } = useNotifications();
+  const { data, isPending, isError, error, refetch } = useNotifications();
+  const canShowCached = !!data && ![401, 403].includes(error?.status || error?.response?.status);
   const [open, setOpen] = useState(false);
   const trigger = useRef(null);
   const returnTrigger = useRef(null);
   const [tab, setTab] = useState('All');
   const markRead = useMarkNotificationRead();
   const items = filterNotifications(data?.results || [], tab).slice(0, 5);
-  const openItem = async item => {
+  const openItem = item => {
     returnTrigger.current = null;
     setOpen(false);
-    if (!item.is_read) { try { await markRead.mutateAsync(item.notification_id); } catch {} }
     if (item.submission_id) navigation.navigate(role === ROLES.STUDENT ? 'StudentSubmissionDetails' : 'ReviewPanelDetails', { submission: { submission_id: item.submission_id } });
+    // Read-state persistence must not hold navigation behind a network round trip.
+    if (!item.is_read) void markRead.mutateAsync(item.notification_id).catch(() => {});
   };
   const unreadCount = data?.unread_count || 0;
 
@@ -55,9 +59,10 @@ export default function StudentNotificationBell() {
     <AppBottomSheet portal returnFocusRef={returnTrigger} visible={open} title="Notifications" onClose={() => setOpen(false)} scroll={false}>
           <Text className="text-slate-500 text-xs">Latest updates · Past 30 days</Text>
           <NotificationTabs value={tab} onChange={setTab} />
-          {isPending ? <NotificationsSkeleton /> : isError ? <TouchableOpacity onPress={() => refetch()} style={{ padding: 20 }}><Text>Could not load notifications. Tap to retry.</Text></TouchableOpacity> :
+          {isError && canShowCached ? <StaleWarningBanner /> : null}
+          {isPending && !canShowCached ? <NotificationsSkeleton /> : isError && !canShowCached ? <ContentState compact variant="error" title="Could not load notifications" error={error} onRetry={() => refetch()} /> :
             <FlatList style={{ flexGrow: 0, flexShrink: 1, maxHeight: height * 0.45 }} data={items} keyExtractor={item => item.notification_id} renderItem={({ item }) => <StudentNotificationListItem notification={item} onPress={() => openItem(item)} />}
-              ListEmptyComponent={<Text className="text-slate-500 text-center py-6">No {tab === 'All' ? '' : tab.toLowerCase() + ' '}notifications</Text>} />}
+              ListEmptyComponent={<ContentState compact title={`No ${tab === 'All' ? '' : tab.toLowerCase() + ' '}notifications`} message="New updates will appear here." />} />}
           <TouchableOpacity className="bg-[#1A59A5] rounded-full items-center py-3 mt-3" onPress={() => { returnTrigger.current = null; setOpen(false); navigation.navigate(role === ROLES.STUDENT ? 'StudentNotifications' : 'StaffNotifications'); }}><Text className="text-white font-bold">View more notifications</Text></TouchableOpacity>
     </AppBottomSheet>
     </>

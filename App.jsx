@@ -1,5 +1,7 @@
 import "./global.css";
-import { useRef } from 'react';
+import { GestureHandlerRootView } from './src/lib/nativeGestures';
+import { useEffect, useRef } from 'react';
+import { startNetworkRuntime } from './src/lib/networkRuntime';
 import NotificationRuntime from './src/components/common/NotificationRuntime';
 import { Text, TextInput } from "react-native";
 import { useFonts } from "@expo-google-fonts/dm-sans";
@@ -16,7 +18,7 @@ import {
 } from "@expo-google-fonts/dm-sans";
 import { NavigationContainer } from "@react-navigation/native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { KeyboardProvider } from "react-native-keyboard-controller";
+import ImmersiveLayout from './src/components/common/ImmersiveLayout';
 import { StatusBar } from "expo-status-bar";
 import { AuthProvider } from "./src/context/AuthContext";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -28,6 +30,7 @@ import VistaLoader from './src/components/common/VistaLoader';
 import { OverlayProvider } from './src/components/common/OverlayPortal';
 import UpdateManager from './src/components/common/UpdateManager';
 import * as NativeSplash from "expo-splash-screen";
+import AppErrorBoundary from './src/components/common/AppErrorBoundary';
 
 // Hand off the OS splash only after the loader or routed content has laid out.
 NativeSplash.preventAutoHideAsync().catch(() => {});
@@ -35,7 +38,8 @@ NativeSplash.setOptions({ duration: 0, fade: false });
 
 let globalFontApplied = false;
 
-export default function App() {
+function AppContent() {
+  useEffect(() => startNetworkRuntime(), []);
   const navigationRef = useRef(null);
   const [fontsLoaded, fontError] = useFonts({
     DMSans_100Thin,
@@ -67,9 +71,10 @@ export default function App() {
   }
 
   return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
-        <KeyboardProvider>
+        <ImmersiveLayout>
           <ToastProvider>
             <AuthProvider>
               <NavigationContainer ref={navigationRef}>
@@ -84,8 +89,15 @@ export default function App() {
               </NavigationContainer>
             </AuthProvider>
           </ToastProvider>
-        </KeyboardProvider>
+        </ImmersiveLayout>
       </SafeAreaProvider>
     </QueryClientProvider>
+    </GestureHandlerRootView>
   );
+}
+
+export default function App() {
+  // The module-level query client retains cached drafts across a view retry.
+  // Retrying never clears credentials/cache or replays a submission mutation.
+  return <AppErrorBoundary><AppContent /></AppErrorBoundary>;
 }

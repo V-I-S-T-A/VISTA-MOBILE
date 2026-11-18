@@ -15,10 +15,11 @@ export function useDriveAuthStart() {
   });
 }
 
-export function useDriveFolders(search = "") {
+export function useDriveFolders(search = "", { enabled = true } = {}) {
   return useQuery({
     queryKey: ["drive", "folders", search],
     queryFn: () => driveService.listFolders(search),
+    enabled,
   });
 }
 

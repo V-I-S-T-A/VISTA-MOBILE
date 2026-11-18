@@ -19,3 +19,44 @@ yarn-error.log*
 dist/
 eas-inspect/
 .git/
+
+# Sensitive local files
+.env.*
+!.env.example
+.secrets/
+*.jks
+*.keystore
+!/android/app/debug.keystore
+*firebase-adminsdk*.json
+credentials.json
+
+# Local test and verification files
+/tests/
+/scripts/push-verification/
+/scripts/run-push-tests.ps1
+/scripts/verify-push-phone.ps1
+
+# Documentation and crash logs
+/*.md
+!/README.md
+/android/hs_err_pid*.log
+/android/replay_pid*.log
+*.hprof
+
+# Exclude all local EAS inspection outputs
+/eas-inspect*/
+/eas-archive*/
+
+# Explicitly exclude contents of local test directories
+/tests/**
+/scripts/push-verification/**
+
+# Explicitly exclude generated inspection contents
+/eas-inspect*/
+/eas-inspect*/**
+/eas-archive*/
+/eas-archive*/**
+
+# Exclude local crash logs
+/android/hs_err_pid*.log
+/android/replay_pid*.log

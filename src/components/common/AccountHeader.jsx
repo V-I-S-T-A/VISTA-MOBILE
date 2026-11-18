@@ -1,6 +1,9 @@
 import { Feather } from "@expo/vector-icons";
-import { sizes, colors } from '../../theme/tokens';
+import { sizes, colors, space } from '../../theme/tokens';
+import { useContext } from 'react';
 import { Image, TouchableOpacity, View } from "react-native";
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
+import { ScreenMotionContext } from '../../navigation/ScreenMotionContext';
 import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "../../context/AuthContext";
 import StudentNotificationBell from "../students/StudentNotificationBell";
@@ -9,9 +12,13 @@ import UserAvatar from './UserAvatar';
 export default function AccountHeader({ profileRoute, showSettings = false }) {
   const navigation = useNavigation();
   const { user } = useAuth();
+  const motion = useContext(ScreenMotionContext);
+  const motionStyle = useAnimatedStyle(() => ({ opacity: motion?.visible === false ? 0 : 1,
+    transform: [{ translateX: motion ? -(motion.active.value ? motion.offset.value : motion.seed) : 0 }] }));
 
   return (
-    <View className="flex-row items-center justify-between" style={{ height: 56, marginBottom: 8 }}>
+    <Animated.View className="flex-row items-center justify-between" pointerEvents={motion?.visible === false ? 'none' : 'auto'}
+      style={[{ height: sizes.accountHeader, marginBottom: space.sm }, motionStyle]}>
       <TouchableOpacity accessibilityRole="button" accessibilityLabel="Open profile" style={{ width: sizes.touch, height: sizes.touch, justifyContent: "center" }} onPress={() => navigation.navigate(profileRoute)}>
         <UserAvatar uri={user?.image_url} size={sizes.avatarHeader} style={{ borderWidth: 2, borderColor: 'white' }} />
       </TouchableOpacity>
@@ -33,6 +40,6 @@ export default function AccountHeader({ profileRoute, showSettings = false }) {
         ) : null}
         <StudentNotificationBell />
       </View>
-    </View>
+    </Animated.View>
   );
 }

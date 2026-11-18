@@ -4,7 +4,7 @@ import ConfirmDialog from '../../components/common/ConfirmDialog';
 import { AppAlert as Alert } from '../../components/common/AppDialog';
 import { Text } from '../../components/common/FontText';
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, RefreshControl, ScrollView, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, RefreshControl, TouchableOpacity, View } from 'react-native';
 import { Feather } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -14,11 +14,14 @@ import VistaProcessing from '../../components/common/VistaProcessing';
 import { ProfileSkeleton } from '../../components/common/Skeleton';
 import { useQuery } from '@tanstack/react-query';
 import UserAvatar from '../../components/common/UserAvatar';
-import { colors, sizes, type, reviewControls } from '../../theme/tokens';
+import { colors, sizes, type, reviewControls, radii, profileLayout } from '../../theme/tokens';
 import { useStaffLayout } from '../../theme/layout';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import useStableBottomLayout from '../../hooks/useStableBottomLayout';
 
 export default function EditProfileScreen({ navigation }) {
   const insets = useSafeAreaInsets();
+  const bottomLayout = useStableBottomLayout();
   const logoutTrigger = useRef(null);
   const passwordTrigger = useRef(null);
   const imageTrigger = useRef(null);
@@ -193,9 +196,9 @@ export default function EditProfileScreen({ navigation }) {
     }
   };
   return (
-    <View className="flex-1 bg-[#F3F3F3]" style={{ paddingTop: insets.top }}>
-      {profile.isPending ? <ProfileSkeleton /> : <>
-      <View style={[screenLayout.horizontal, { paddingTop: 8, paddingBottom: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}>
+    <View className="flex-1 bg-[#F3F3F3]" style={{ paddingTop: insets.top, marginBottom: bottomLayout.marginBottom }}>
+      {profile.isPending ? <ProfileSkeleton hasOrganization={!!user?.department} bottomInset={bottomLayout.bottom} /> : <>
+      <View style={[screenLayout.horizontal, { paddingTop: profileLayout.headerPaddingTop, paddingBottom: profileLayout.headerPaddingBottom, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}>
         <TouchableOpacity
           onPress={leaveProfile}
           accessibilityRole="button"
@@ -216,19 +219,18 @@ export default function EditProfileScreen({ navigation }) {
       <View
         className="flex-1 bg-[#245EA9]"
         style={[
-          screenLayout.horizontal,
           {
             borderTopLeftRadius: 20,
             borderTopRightRadius: 20,
             overflow: 'visible',
-            marginTop: 44,
+            marginTop: profileLayout.panelTopGap,
           },
         ]}
       >
         <View
           style={{
             position: 'absolute',
-            top: -34,
+            top: profileLayout.avatarTop,
             left: 0,
             right: 0,
             alignItems: 'center',
@@ -240,7 +242,7 @@ export default function EditProfileScreen({ navigation }) {
             <UserAvatar
               uri={selectedImage || user?.image_url}
               size={sizes.avatarProfile}
-              style={{ borderWidth: 3, borderColor: '#FFFFFF' }}
+              style={{ borderWidth: 3, borderColor: colors.surface }}
             />
             <TouchableOpacity
               ref={imageTrigger}
@@ -254,12 +256,12 @@ export default function EditProfileScreen({ navigation }) {
                 right: 0,
                 width: 32,
                 height: 32,
-                borderRadius: 16,
-                backgroundColor: '#FFFFFF',
+                borderRadius: radii.listCard,
+                backgroundColor: colors.surface,
                 alignItems: 'center',
                 justifyContent: 'center',
                 borderWidth: 1,
-                borderColor: '#E1E8F0',
+                borderColor: colors.border,
                 shadowColor: '#183A60',
                 shadowOffset: { width: 0, height: 2 },
                 shadowOpacity: 0.15,
@@ -271,7 +273,11 @@ export default function EditProfileScreen({ navigation }) {
             </TouchableOpacity>
           </View>
         </View>
-        <ScrollView
+        <View style={[{ flex: 1 }, screenLayout.horizontal]}>
+        <KeyboardAwareScrollView
+          alwaysBounceVertical overScrollMode="always"
+          bottomOffset={16}
+          keyboardDismissMode="on-drag"
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           refreshControl={
@@ -285,8 +291,8 @@ export default function EditProfileScreen({ navigation }) {
           contentContainerStyle={{
             flexGrow: 1,
             justifyContent: 'space-between',
-            paddingTop: 68,
-            paddingBottom: Math.max(insets.bottom, 16) + 16,
+            paddingTop: profileLayout.contentTop,
+            paddingBottom: Math.max(bottomLayout.bottom, 16) + 16,
             width: '100%',
             maxWidth: sizes.contentWidth,
             alignSelf: 'center',
@@ -296,10 +302,10 @@ export default function EditProfileScreen({ navigation }) {
             <Text
               style={{
                 ...type.title,
-                fontSize: 20,
-                lineHeight: 26,
+                fontSize: type.title.fontSize,
+                lineHeight: type.title.lineHeight,
                 fontFamily: 'DMSans_600SemiBold',
-                color: '#FFFFFF',
+                color: colors.onBrand,
                 marginBottom: 16,
               }}
             >
@@ -309,54 +315,59 @@ export default function EditProfileScreen({ navigation }) {
               value={firstName}
               size="compact"
               style={{
-                borderRadius: 22,
+                borderRadius: radii.field,
                 minHeight: reviewControls.fieldHeight,
                 paddingHorizontal: 16,
-                backgroundColor: '#FFFFFF',
-                color: '#1E3A68',
-                fontSize: 13,
+                backgroundColor: colors.surface,
+                color: colors.text,
+                fontSize: type.field.fontSize,
                 fontFamily: 'DMSans_400Regular',
                 marginBottom: 12,
               }}
               onChangeText={setFirstName}
               placeholder="First Name"
-              placeholderTextColor="#94A3B8"
+              accessibilityLabel="First name"
+              autoComplete="given-name"
+              placeholderTextColor={colors.placeholder}
               className="bg-white rounded-full px-4 text-gray-800 mb-3"
             />
             <TextInput
               value={lastName}
               size="compact"
               style={{
-                borderRadius: 22,
+                borderRadius: radii.field,
                 minHeight: reviewControls.fieldHeight,
                 paddingHorizontal: 16,
-                backgroundColor: '#FFFFFF',
-                color: '#1E3A68',
-                fontSize: 13,
+                backgroundColor: colors.surface,
+                color: colors.text,
+                fontSize: type.field.fontSize,
                 fontFamily: 'DMSans_400Regular',
                 marginBottom: 12,
               }}
               onChangeText={setLastName}
               placeholder="Last Name"
-              placeholderTextColor="#94A3B8"
+              accessibilityLabel="Last name"
+              autoComplete="family-name"
+              placeholderTextColor={colors.placeholder}
               className="bg-white rounded-full px-4 text-gray-800 mb-3"
             />
             <TextInput
               value={user?.email || ""}
               size="compact"
               style={{
-                borderRadius: 22,
+                borderRadius: radii.field,
                 minHeight: reviewControls.fieldHeight,
                 paddingHorizontal: 16,
-                backgroundColor: '#FFFFFF',
-                color: '#1E3A68',
+                backgroundColor: colors.surface,
+                color: colors.text,
                 opacity: 0.85,
-                fontSize: 13,
+                fontSize: type.field.fontSize,
                 fontFamily: 'DMSans_400Regular',
                 marginBottom: 16,
               }}
               editable={false}
               placeholder="Email"
+              accessibilityLabel="Email address, read only"
               placeholderTextColor="#94A3B8"
               className="bg-white rounded-full px-4 text-gray-800 opacity-80 mb-4"
             />
@@ -364,7 +375,7 @@ export default function EditProfileScreen({ navigation }) {
               <View
                 style={{
                   backgroundColor: 'rgba(255, 255, 255, 0.12)',
-                  borderRadius: 20,
+                  borderRadius: radii.card,
                   paddingHorizontal: 16,
                   paddingVertical: 12,
                   marginBottom: 16,
@@ -373,8 +384,8 @@ export default function EditProfileScreen({ navigation }) {
                 <Text
                   style={{
                     fontFamily: 'DMSans_500Medium',
-                    fontSize: 11,
-                    lineHeight: 16,
+                    fontSize: type.meta.fontSize,
+                    lineHeight: type.meta.lineHeight,
                     color: 'rgba(255, 255, 255, 0.75)',
                   }}
                 >
@@ -389,9 +400,9 @@ export default function EditProfileScreen({ navigation }) {
                   <Text
                     style={{
                       fontFamily: 'DMSans_500Medium',
-                      fontSize: 13,
-                      lineHeight: 18,
-                      color: '#FFFFFF',
+                      fontSize: type.field.fontSize,
+                      lineHeight: type.field.lineHeight,
+                      color: colors.onBrand,
                       flex: 1,
                     }}
                   >
@@ -407,9 +418,9 @@ export default function EditProfileScreen({ navigation }) {
                 accessibilityRole="button"
                 accessibilityLabel="Update Profile"
                 style={{
-                  backgroundColor: '#FFC342',
-                  borderRadius: 22,
-                  minHeight: 42,
+                  backgroundColor: colors.yellow,
+                  borderRadius: radii.button,
+                  minHeight: profileLayout.actionHeight,
                   alignItems: 'center',
                   justifyContent: 'center',
                   flex: 1,
@@ -419,7 +430,7 @@ export default function EditProfileScreen({ navigation }) {
                 {saving ? (
                   <ActivityIndicator color="#513600" />
                 ) : (
-                  <Text style={{ fontFamily: 'DMSans_500Medium', fontSize: 13, color: '#513600' }}>
+                  <Text style={{ fontFamily: 'DMSans_500Medium', fontSize: type.field.fontSize, color: '#513600' }}>
                     Update Profile
                   </Text>
                 )}
@@ -429,16 +440,16 @@ export default function EditProfileScreen({ navigation }) {
                 accessibilityRole="button"
                 accessibilityLabel="Cancel"
                 style={{
-                  backgroundColor: '#FFFFFF',
-                  borderRadius: 22,
-                  minHeight: 42,
+                  backgroundColor: colors.surface,
+                  borderRadius: radii.button,
+                  minHeight: profileLayout.actionHeight,
                   alignItems: 'center',
                   justifyContent: 'center',
                   flex: 1,
                 }}
                 hitSlop={{ top: 3, bottom: 3, left: 0, right: 0 }}
               >
-                <Text style={{ fontFamily: 'DMSans_500Medium', fontSize: 13, color: '#1a59a5' }}>
+                <Text style={{ fontFamily: 'DMSans_500Medium', fontSize: type.field.fontSize, color: colors.blue }}>
                   Cancel
                 </Text>
               </TouchableOpacity>
@@ -450,7 +461,7 @@ export default function EditProfileScreen({ navigation }) {
               accessibilityLabel="Change Password"
               style={{ alignItems: 'center', justifyContent: 'center', minHeight: 48, marginTop: 4 }}
             >
-              <Text style={{ fontFamily: 'DMSans_500Medium', fontSize: 13, color: '#FFFFFF' }}>
+              <Text style={{ fontFamily: 'DMSans_500Medium', fontSize: type.field.fontSize, color: colors.onBrand }}>
                 Change Password
               </Text>
             </TouchableOpacity>
@@ -468,19 +479,20 @@ export default function EditProfileScreen({ navigation }) {
                 backgroundColor: 'rgba(255, 255, 255, 0.12)',
                 borderWidth: 1,
                 borderColor: 'rgba(255, 255, 255, 0.35)',
-                borderRadius: 22,
-                minHeight: 44,
+                borderRadius: radii.button,
+                minHeight: profileLayout.logoutHeight,
                 width: '100%',
               }}
               hitSlop={{ top: 2, bottom: 2, left: 0, right: 0 }}
             >
               <Feather name="log-out" size={16} color="white" />
-              <Text style={{ fontFamily: 'DMSans_500Medium', fontSize: 13, color: 'white', marginLeft: 8 }}>
+              <Text style={{ fontFamily: 'DMSans_500Medium', fontSize: type.field.fontSize, color: 'white', marginLeft: 8 }}>
                 Log out
               </Text>
             </TouchableOpacity>
           </View>
-        </ScrollView>
+        </KeyboardAwareScrollView>
+        </View>
       </View>
       </>}
       <AppBottomSheet returnFocusRef={passwordTrigger} visible={isPasswordOpen} title={passwordStep === 'form' ? 'Change Password' : 'Verify Your Email'} onClose={resetPasswordFlow} busy={isSendingCode || isChangingPassword}>

@@ -1,15 +1,12 @@
+import { PullRefreshFlatList as FlatList } from '../../components/common/PullRefresh';
+import useBottomNavScroll from '../../hooks/useBottomNavScroll';
 import AppButton from '../../components/common/AppButton';
 import AccountHeader from '../../components/common/AccountHeader';
 import { useStaffLayout, useBottomNavClearance } from '../../theme/layout';
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import NotificationTabs, { filterNotifications } from '../../components/students/NotificationTabs';
 import { NotificationsSkeleton } from '../../components/common/Skeleton';
-import {
-  FlatList,
-  RefreshControl,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { RefreshControl, TouchableOpacity, View,  } from "react-native";
 import VistaIcon from '../../components/common/VistaIcon';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../../context/AuthContext";
@@ -25,22 +22,36 @@ import StudentBottomNav from '../../components/students/StudentBottomNav';
 import StaffBottomNav from '../../components/staff/StaffBottomNav';
 import { openDocumentEntryWithAttachment } from '../../utils/openDocumentEntryWithAttachment';
 import NotificationDetailSheet from '../../components/students/NotificationDetailSheet';
-import { colors, space, type, sizes, radii } from '../../theme/tokens';
+import { colors, space, type } from '../../theme/tokens';
 import StaleWarningBanner from '../../components/common/StaleWarningBanner';
+import ContentState from '../../components/common/ContentState';
+import useNavigationContentReady from '../../hooks/useNavigationContentReady';
+
+const EMPTY_NOTIFICATIONS = [];
+const notificationKey = item => item.notification_id;
 
 export default function NotificationsScreen({ navigation, route }) {
+  const navScroll = useBottomNavScroll(navigation);
   const insets = useSafeAreaInsets();
   const screenLayout = useStaffLayout();
   const footerClearance = useBottomNavClearance();
   const { role } = useAuth();
-  const { data, isPending, isError, error, isFetching, refetch } = useNotifications();
-  const markRead = useMarkNotificationRead();
+  const { data, dataUpdatedAt, isPending, isError, error, isFetching, refetch } = useNotifications();
+  const { mutateAsync: markRead } = useMarkNotificationRead();
   const { refreshing, onRefresh } = useScreenRefresh([["notifications"]]);
   const [tab, setTab] = useState('All');
   const [selected, setSelected] = useState(null);
   const selectedTrigger = useRef(null);
   const [markingAll, setMarkingAll] = useState(false);
-  const notifications = filterNotifications(data?.results || [], tab);
+  const contentReady = useNavigationContentReady(tab);
+  const items = data?.results || EMPTY_NOTIFICATIONS;
+  // Refresh the 30-day window on query/focus polling, even when structural
+  // sharing keeps the same results array. Unrelated renders reuse the row data.
+  const notifications = useMemo(() => {
+    void dataUpdatedAt; void isFetching;
+    return filterNotifications(items, tab);
+  }, [items, tab, dataUpdatedAt, isFetching]);
+  const timestampMinute = Math.floor((dataUpdatedAt || Date.now()) / 60000);
 
   const unreadItems = (data?.results || []).filter((item) => !item.is_read);
   const hasUnread = unreadItems.length > 0;
@@ -53,7 +64,7 @@ export default function NotificationsScreen({ navigation, route }) {
     setMarkingAll(true);
     try {
       await Promise.allSettled(
-        unread.map((item) => markRead.mutateAsync(item.notification_id))
+        unread.map((item) => markRead(item.notification_id))
       );
     } finally {
       setMarkingAll(false);
@@ -64,12 +75,23 @@ export default function NotificationsScreen({ navigation, route }) {
     setSelected(item);
     if (!item.is_read) {
       try {
-        await markRead.mutateAsync(item.notification_id);
+        await markRead(item.notification_id);
       } catch {
         // Keep the detail sheet and linked submission available when marking read fails.
       }
     }
   }, [markRead]);
+
+  const handleNotificationOpen = useCallback((item, trigger) => {
+    selectedTrigger.current = trigger;
+    openNotification(item);
+  }, [openNotification]);
+  const renderNotification = useCallback(({ item }) => (
+    <StudentNotificationListItem notification={item} onOpen={handleNotificationOpen}
+      // Refresh relative/accessibility timestamps after polling, without
+      // rerendering unchanged rows at both ends of every navigation animation.
+      timestampRevision={timestampMinute} />
+  ), [handleNotificationOpen, timestampMinute]);
 
   const staffActiveTab = (() => {
     if (route?.params?.previousTab) return route.params.previousTab;
@@ -86,126 +108,108 @@ export default function NotificationsScreen({ navigation, route }) {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background, paddingTop: insets.top }}>
-      {/* 1. Page Header: Dashboard Top Header Row */}
-      <View style={[screenLayout.horizontal, { paddingTop: 8 }]}>
-        <AccountHeader profileRoute={role === ROLES.STUDENT ? 'StudentProfile' : 'StaffProfile'} />
+      <FlatList {...navScroll.scrollProps}
+        scrollHeader={<View style={{ ...screenLayout.horizontal, paddingTop: space.sm }}><AccountHeader profileRoute={role === ROLES.STUDENT ? 'StudentProfile' : 'StaffProfile'} /></View>}
+        alwaysBounceVertical overScrollMode="always"
+        style={{ flex: 1 }}
+        data={!contentReady || isPending && !hasData || isError && (!hasData || isAuthError) ? EMPTY_NOTIFICATIONS : notifications}
+        keyExtractor={notificationKey}
+        renderItem={renderNotification}
+        initialNumToRender={6}
+        maxToRenderPerBatch={4}
+        windowSize={7}
+        contentContainerStyle={{
+          ...screenLayout.horizontal,
+          paddingBottom: footerClearance,
+          flexGrow: 1,
+        }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        ListHeaderComponent={<>
+          <View>
+            {/* 2. Notifications Heading */}
+            <Text accessibilityRole="header" style={{ ...type.title, color: colors.navy }}>
+              Notifications
+            </Text>
 
-        {/* 2. Notifications Heading */}
-        <Text accessibilityRole="header" style={{ ...type.title, color: '#142B52' }}>
-          Notifications
-        </Text>
-
-        {/* 3. Subtitle */}
-        <Text
-          style={{
-            ...type.body,
-            color: '#64748B',
-            marginTop: 4,
-            marginBottom: 2,
-          }}
-        >
-          Submission and Drive updates from the past 30 days
-        </Text>
-
-        {/* 4. Notification Filters */}
-        <NotificationTabs
-          variant="compact"
-          showCounts
-          items={data?.results || []}
-          value={tab}
-          onChange={setTab}
-          style={{ marginVertical: 0 }}
-        />
-
-        {/* 5. Section Heading & Mark All As Read */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4, marginBottom: 6 }}>
-          <Text
-            accessibilityRole="header"
-            style={{
-              fontFamily: 'DMSans_600SemiBold',
-              fontSize: 12,
-              lineHeight: 16,
-              color: '#142B52',
-              includeFontPadding: false,
-            }}
-          >
-            Recent Notifications
-          </Text>
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityLabel="Mark all notifications as read"
-            disabled={!hasUnread || markingAll}
-            onPress={handleMarkAllAsRead}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-            style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 2 }}
-          >
+            {/* 3. Subtitle */}
             <Text
               style={{
-                fontFamily: type.bold,
-                fontSize: 10,
-                lineHeight: 14,
-                color: hasUnread ? colors.blue : '#94A3B8',
-                opacity: markingAll ? 0.6 : 1,
-                includeFontPadding: false,
+                ...type.body,
+                color: colors.muted,
+                marginTop: 4,
+                marginBottom: 2,
               }}
             >
-              {markingAll ? 'Marking read...' : 'Mark all as read'}
+              Submission and Drive updates from the past 30 days
             </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
 
-      {/* List content / Skeleton / Error / Empty */}
-      {isPending && !hasData ? (
-        <View style={screenLayout.horizontal}><NotificationsSkeleton /></View>
-      ) : isError && (!hasData || isAuthError) ? (
-        <View style={[screenLayout.horizontal, { paddingVertical: space.xxl, gap: space.sm, alignItems: 'flex-start' }]}>
-          <VistaIcon name="alert-circle" size={18} color={colors.danger} />
-          <Text accessibilityRole="alert" style={{ ...type.notificationTitle, color: colors.text }}>Could not load notifications</Text>
-          <Text style={{ ...type.body, color: colors.muted }}>Check your connection and try again.</Text>
-          <AppButton label="Try again" busy={isFetching} onPress={() => refetch()} />
-        </View>
-      ) : (
-        <>
-          {isError && hasData && !isAuthError ? (
-            <View style={screenLayout.horizontal}>
-              <StaleWarningBanner />
+            {/* 4. Notification Filters */}
+            <NotificationTabs
+              variant="compact"
+              showCounts
+              items={data?.results || []}
+              value={tab}
+              onChange={setTab}
+              style={{ marginVertical: 0 }}
+            />
+
+            {/* 5. Section Heading & Mark All As Read */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4, marginBottom: 6 }}>
+              <Text
+                accessibilityRole="header"
+                style={{
+                  fontFamily: 'DMSans_600SemiBold',
+                  fontSize: type.meta.fontSize,
+                  lineHeight: type.meta.lineHeight,
+                  color: colors.navy,
+                  includeFontPadding: false,
+                }}
+              >
+                Recent Notifications
+              </Text>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="Mark all notifications as read"
+                disabled={!hasUnread || markingAll}
+                onPress={handleMarkAllAsRead}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 2 }}
+              >
+                <Text
+                  style={{
+                    fontFamily: type.bold,
+                    fontSize: type.meta.fontSize,
+                    lineHeight: type.meta.lineHeight,
+                    color: hasUnread ? colors.blue : '#94A3B8',
+                    opacity: markingAll ? 0.6 : 1,
+                    includeFontPadding: false,
+                  }}
+                >
+                  {markingAll ? 'Marking read...' : 'Mark all as read'}
+                </Text>
+              </TouchableOpacity>
             </View>
-          ) : null}
-          <FlatList
-            data={notifications}
-            keyExtractor={(item) => item.notification_id}
-            renderItem={({ item }) => (
-              <StudentNotificationListItem
-                notification={item}
-                onPress={trigger => { selectedTrigger.current = trigger; openNotification(item); }}
-              />
-            )}
-            contentContainerStyle={{
-              ...screenLayout.horizontal,
-              paddingTop: 0,
-              paddingBottom: footerClearance,
-              flexGrow: 1,
-            }}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-            ListEmptyComponent={
-              <View style={{ alignItems: 'flex-start', paddingVertical: 24, gap: space.sm }}>
-                <VistaIcon name="bell" size={18} color={colors.muted} />
-                <Text style={{ ...type.notificationTitle, color: colors.text }}>You’re all caught up</Text>
-                <Text style={{ ...type.body, color: colors.muted }}>New updates will appear here.</Text>
-              </View>
-            }
-          />
-        </>
+          </View>
+
+          {isError && hasData && !isAuthError ? <StaleWarningBanner /> : null}
+        </>}
+        ListEmptyComponent={!contentReady || isPending && !hasData ? <NotificationsSkeleton />
+          : isError && (!hasData || isAuthError) ? (
+        <ContentState variant="error" title="Could not load notifications" error={error} busy={isFetching} onRetry={() => refetch()} />
+      ) : (
+              <ContentState title="You’re all caught up" message="New updates will appear here." />
       )}
+      />
       {role === ROLES.STUDENT ? (
-        <StudentBottomNav
+        <StudentBottomNav scrollBehavior={navScroll}
           activeTab="notifications"
           onHomePress={() => navigation.navigate('StudentHome')}
           onTrackerPress={() => navigation.navigate('StudentTracker')}
         />
       ) : role === ROLES.STAFF ? (
-        <StaffBottomNav
+        <StaffBottomNav scrollBehavior={navScroll}
           activeTab={staffActiveTab}
           onHomePress={() => navigation.navigate('StaffHome')}
           onProfilePress={() => navigation.navigate('StaffDocumentEntry')}

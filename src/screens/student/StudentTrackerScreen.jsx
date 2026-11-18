@@ -1,8 +1,11 @@
+import { PullRefreshScrollView as ScrollView } from '../../components/common/PullRefresh';
+import useBottomNavScroll from '../../hooks/useBottomNavScroll';
 import { useBottomNavClearance } from '../../theme/layout';
 import { Text } from "../../components/common/FontText";
-import { ActivityIndicator, ScrollView, TouchableOpacity, View, RefreshControl } from "react-native";
+import { ActivityIndicator, TouchableOpacity, View, RefreshControl } from "react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
 import SubmissionSummaryTabs from '../../components/submissions/SubmissionSummaryTabs';
+import SubmissionFilterResults from '../../components/submissions/SubmissionFilterResults';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import StudentHeader from "../../components/students/StudentHeader";
 import StudentBottomNav from "../../components/students/StudentBottomNav";
@@ -14,6 +17,7 @@ import { panelStyles, useStaffLayout } from '../../theme/layout';
 import PageHeading from '../../components/common/PageHeading';
 import { SubmissionListSkeleton } from '../../components/common/Skeleton';
 import StaleWarningBanner from '../../components/common/StaleWarningBanner';
+import ContentState from '../../components/common/ContentState';
 import StaffReviewSearch from '../staff/reviewPanel/StaffReviewSearch';
 import AcademicYearFilterSheet from '../../components/submissions/AcademicYearFilterSheet';
 import { colors, compact, radii, type } from '../../theme/tokens';
@@ -27,13 +31,14 @@ const STATUS_TO_PARAM = {
 const FILTER_OPTIONS = ['All Status', 'Pending', 'Approved', 'Rejected'];
 
 export default function StudentTrackerScreen({ navigation, route }) {
+  const navScroll = useBottomNavScroll(navigation);
   const footerClearance = useBottomNavClearance();
   const insets = useSafeAreaInsets();
   const screenLayout = useStaffLayout();
 
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filter, setFilter] = useState(() =>
+  const [selectedStatus, setFilter] = useState(() =>
     FILTER_OPTIONS.includes(route?.params?.statusFilter)
       ? route.params.statusFilter
       : 'All Status'
@@ -41,6 +46,13 @@ export default function StudentTrackerScreen({ navigation, route }) {
   const [academicYearId, setAcademicYearId] = useState(() => route?.params?.academicYearId || null);
   const [filterSheetVisible, setFilterSheetVisible] = useState(false);
   const filterButtonRef = useRef(null);
+
+  // Apply incoming dashboard filters before querying a retained tracker tab.
+  const requestedStatus = FILTER_OPTIONS.includes(route?.params?.statusFilter)
+    ? route.params.statusFilter : null;
+  const filter = requestedStatus ?? selectedStatus;
+  const currentPage = requestedStatus ? 1 : page;
+  const currentSearch = requestedStatus ? '' : searchQuery;
 
   useEffect(() => {
     const requested = route?.params?.statusFilter;
@@ -62,8 +74,8 @@ export default function StudentTrackerScreen({ navigation, route }) {
     setPage(1);
   };
 
-  const params = { page };
-  if (searchQuery.trim()) params.search = searchQuery.trim();
+  const params = { page: currentPage };
+  if (currentSearch.trim()) params.search = currentSearch.trim();
   if (filter !== 'All Status') {
     params.status = STATUS_TO_PARAM[filter];
   }
@@ -85,15 +97,16 @@ export default function StudentTrackerScreen({ navigation, route }) {
 
   return (
     <View className="flex-1 bg-[#F3F3F3]" style={{ paddingTop: insets.top }}>
-      <ScrollView
+      <ScrollView {...navScroll.scrollProps}
+        scrollHeader={<View className="pt-2"><StudentHeader /></View>}
+        alwaysBounceVertical overScrollMode="always"
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         keyboardShouldPersistTaps="handled"
-        className="flex-1 pt-2"
+        className="flex-1"
         style={screenLayout.horizontal}
         contentContainerStyle={{ paddingBottom: footerClearance }}
         showsVerticalScrollIndicator={false}
       >
-        <StudentHeader />
         <PageHeading compact title="Review Tracker" subtitle="Reviewing processing status." style={{ marginBottom: 2 }} />
         <SubmissionSummaryTabs
           showRejected
@@ -101,36 +114,24 @@ export default function StudentTrackerScreen({ navigation, route }) {
           onChange={changeFilter}
         />
         <StaffReviewSearch
-          searchQuery={searchQuery}
+          searchQuery={currentSearch}
           setSearchQuery={handleSearchChange}
           onFilterPress={() => setFilterSheetVisible(true)}
           isFilterActive={!!academicYearId}
           activeFilterLabel={selectedYearLabel}
           filterButtonRef={filterButtonRef}
         />
+        <SubmissionFilterResults filterKey={filter} loading={isLoading && !hasData}>
         {isLoading && !hasData ? (
           <SubmissionListSkeleton count={5} />
         ) : isError && (!hasData || isAuthError) ? (
-          <View style={panelStyles.state}>
-            <Text className="text-gray-500 mb-3">
-              Could not load submissions.
-            </Text>
-            <TouchableOpacity
-              onPress={refetch}
-              style={panelStyles.touch} className="bg-vistaNavy rounded-full px-4 py-2"
-            >
-              <Text className="text-white font-semibold">Retry</Text>
-            </TouchableOpacity>
-          </View>
+          <ContentState variant="error" title="Could not load submissions" error={error} onRetry={refetch} />
         ) : submissions.length === 0 ? (
-          <View style={{ paddingVertical: 24, alignItems: 'center', gap: 8 }}>
-            <Text className="text-gray-500 text-center" style={{ ...type.body, color: colors.muted }}>
-              {academicYearId
+          <ContentState title={academicYearId || currentSearch.trim() || filter !== 'All Status' ? 'No matching submissions' : 'No submissions yet'} message={academicYearId
                 ? "No submissions found for the selected academic year and status."
-                : searchQuery.trim()
+                : currentSearch.trim()
                 ? "No submissions match your search."
-                : "No submissions to track yet."}
-            </Text>
+                : "No submissions to track yet."}>
             {academicYearId ? (
               <TouchableOpacity
                 accessibilityRole="button"
@@ -151,7 +152,7 @@ export default function StudentTrackerScreen({ navigation, route }) {
                 <Text style={{ ...type.compactLabel, color: colors.blue }}>Clear Filter</Text>
               </TouchableOpacity>
             ) : null}
-          </View>
+          </ContentState>
         ) : (
           <>
             {isError && hasData && !isAuthError ? <StaleWarningBanner /> : null}
@@ -168,15 +169,16 @@ export default function StudentTrackerScreen({ navigation, route }) {
             ))}
             {(data?.total_pages ?? 1) > 1 && (
               <SubmissionPagination
-                currentPage={page}
+                currentPage={currentPage}
                 totalPages={data.total_pages}
                 onPageChange={setPage}
               />
             )}
           </>
         )}
+        </SubmissionFilterResults>
       </ScrollView>
-      <StudentBottomNav
+      <StudentBottomNav scrollBehavior={navScroll}
         activeTab="tracker"
         onHomePress={() => navigation.navigate("StudentHome")}
         onTrackerPress={() => navigation.navigate("StudentTracker")}

@@ -2,7 +2,7 @@ import { TouchableOpacity, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Text } from "./FontText";
 import VistaIcon from './VistaIcon';
-import { sizes } from '../../theme/tokens';
+import { colors, radii, sizes, space, type, motion } from '../../theme/tokens';
 
 export default function BackButton({ variant = 'default' }) {
   const navigation = useNavigation();
@@ -14,14 +14,13 @@ export default function BackButton({ variant = 'default' }) {
       accessibilityRole="button"
       accessibilityLabel="Go back"
       hitSlop={6}
+      activeOpacity={motion.pressedOpacity}
       style={{ minWidth: sizes.touch, minHeight: sizes.touch, justifyContent: 'center' }}
       className="rounded-full"
     >
-      <View style={{ borderWidth: 3, borderColor: '#FFE452' }} className="bg-[#FFF2A8] px-3.5 py-1 flex-row items-center rounded-full">
-        <Text className="text-[#1a1a1a] font-medium text-base mr-1 leading-5">
-          ‹
-        </Text>
-        <Text className="text-[#1a1a1a] font-medium text-[13px]">Back</Text>
+      <View style={{ backgroundColor: colors.yellow, borderRadius: radii.pill, paddingHorizontal: space.md, paddingVertical: space.sm, flexDirection: 'row', alignItems: 'center', gap: space.xs }}>
+        <VistaIcon name="chevron-left" size={sizes.icon} color={colors.onYellow} />
+        <Text style={{ ...type.label, color: colors.onYellow }}>Back</Text>
       </View>
     </TouchableOpacity>
   );

@@ -1,4 +1,6 @@
-import { View, ScrollView, RefreshControl } from "react-native";
+import { PullRefreshScrollView as ScrollView } from '../../components/common/PullRefresh';
+import useBottomNavScroll from '../../hooks/useBottomNavScroll';
+import { View, RefreshControl } from "react-native";
 import { useStaffLayout, useBottomNavClearance } from "../../theme/layout";
 import { useEffect, useMemo, useRef, useState } from "react";
 import StaffBottomNav from "../../components/staff/StaffBottomNav";
@@ -11,6 +13,7 @@ import { useSubmissions } from "../../hooks/useSubmissions";
 import { openDocumentEntryWithAttachment } from "../../utils/openDocumentEntryWithAttachment";
 import { useScreenRefresh } from "../../hooks/useScreenRefresh";
 import SubmissionSummaryTabs from '../../components/submissions/SubmissionSummaryTabs';
+import SubmissionFilterResults from '../../components/submissions/SubmissionFilterResults';
 import AcademicYearFilterSheet from '../../components/submissions/AcademicYearFilterSheet';
 
 const STATUS_TO_PARAM = {
@@ -32,15 +35,24 @@ const getInitialFilter = (route) =>
     : "All Status";
 
 export default function StaffReviewPanel({ navigation, route }) {
+  const navScroll = useBottomNavScroll(navigation);
   const screenLayout = useStaffLayout();
   const footerClearance = useBottomNavClearance();
 
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState(() => getInitialFilter(route));
+  const [selectedStatus, setStatusFilter] = useState(() => getInitialFilter(route));
   const [academicYearId, setAcademicYearId] = useState(() => route?.params?.academicYearId || null);
   const [filterSheetVisible, setFilterSheetVisible] = useState(false);
   const filterButtonRef = useRef(null);
+
+  // Cached tabs must query/render the dashboard selection immediately, before
+  // the effect persists it and consumes the navigation parameter.
+  const requestedStatus = FILTER_OPTIONS.includes(route?.params?.statusFilter)
+    ? route.params.statusFilter : null;
+  const statusFilter = requestedStatus ?? selectedStatus;
+  const currentPage = requestedStatus ? 1 : page;
+  const currentSearch = requestedStatus ? '' : searchQuery;
 
   useEffect(() => {
     const requestedFilter = route?.params?.statusFilter;
@@ -51,8 +63,8 @@ export default function StaffReviewPanel({ navigation, route }) {
     navigation.setParams({ statusFilter: undefined });
   }, [navigation, route?.params?.statusFilter]);
 
-  const params = { page };
-  if (searchQuery.trim()) params.search = searchQuery.trim();
+  const params = { page: currentPage, page_size: 30 };
+  if (currentSearch.trim()) params.search = currentSearch.trim();
   if (statusFilter !== "All Status") {
     params.status = STATUS_TO_PARAM[statusFilter];
   }
@@ -81,8 +93,16 @@ export default function StaffReviewPanel({ navigation, route }) {
 
   return (
     <View className="flex-1 bg-[#F3F3F3]" style={screenLayout.top}>
-      <View className="flex-1 pt-2" style={screenLayout.horizontal}>
-        <StaffReviewHeader showSettings />
+      <View className="flex-1" style={screenLayout.horizontal}>
+        <ScrollView {...navScroll.scrollProps}
+          scrollHeader={<View className="pt-2"><StaffReviewHeader /></View>}
+          alwaysBounceVertical overScrollMode="always"
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          keyboardShouldPersistTaps="handled"
+          className="flex-1"
+          contentContainerStyle={{ paddingBottom: footerClearance, flexGrow: 1 }}
+          showsVerticalScrollIndicator={false}
+        >
         <StaffReviewBanner />
         <SubmissionSummaryTabs
           staff
@@ -90,7 +110,7 @@ export default function StaffReviewPanel({ navigation, route }) {
           onChange={handleStatusChange}
         />
         <StaffReviewSearch
-          searchQuery={searchQuery}
+          searchQuery={currentSearch}
           setSearchQuery={handleSearchChange}
           statusFilter={statusFilter}
           setStatusFilter={handleStatusChange}
@@ -99,12 +119,7 @@ export default function StaffReviewPanel({ navigation, route }) {
           activeFilterLabel={selectedYearLabel}
           filterButtonRef={filterButtonRef}
         />
-        <ScrollView
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-          className="flex-1"
-          contentContainerStyle={{ paddingBottom: footerClearance, flexGrow: 1 }}
-          showsVerticalScrollIndicator={false}
-        >
+        <SubmissionFilterResults filterKey={statusFilter} loading={isLoading && !(data?.results?.length)}>
           <StaffReviewList
             submissions={data?.results ?? []}
             isLoading={isLoading}
@@ -122,16 +137,18 @@ export default function StaffReviewPanel({ navigation, route }) {
           />
         {(data?.total_pages ?? 1) > 1 && (
           <SubmissionPagination
-            currentPage={page}
+            variant="history"
+            currentPage={currentPage}
             totalPages={data.total_pages}
             onPageChange={setPage}
           />
         )}
+        </SubmissionFilterResults>
         </ScrollView>
 
       </View>
 
-      <StaffBottomNav
+      <StaffBottomNav scrollBehavior={navScroll}
         activeTab="reports"
         onScanPress={() => openDocumentEntryWithAttachment(navigation)}
         onHomePress={() => navigation?.navigate("StaffHome")}

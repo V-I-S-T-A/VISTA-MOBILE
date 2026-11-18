@@ -1,4 +1,5 @@
 import { AppAlert as Alert } from "../common/AppDialog";
+import { useState } from 'react';
 import { Linking, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { Text } from "../common/FontText";
@@ -6,8 +7,9 @@ import UserAvatar from "../common/UserAvatar";
 import SubmissionStatusBadge from "./SubmissionStatusBadge";
 import TicketBanner from "./TicketBanner";
 import { safeWebUrl } from "./conversationPolicy.cjs";
-import { colors, type } from "../../theme/tokens";
+import { colors, type, radii } from '../../theme/tokens';
 import { visibleSubmissionDescription } from "../../utils/documentCode.cjs";
+import AttachmentPreview from './AttachmentPreview';
 
 async function openFile(value) {
   const url = safeWebUrl(value);
@@ -22,19 +24,23 @@ async function openFile(value) {
   }
 }
 
-export function SubmissionAttachmentRow({ name, url }) {
-  return (
+export function SubmissionAttachmentRow({ name, url, document, history = false, external = false }) {
+  const [preview, setPreview] = useState(false);
+  const file = document || { file_name: name, file_url: url };
+  const ink = history ? colors.blue : colors.onBrand;
+  return <>
     <TouchableOpacity
-      accessibilityRole="link"
-      accessibilityLabel={`Open ${name}`}
-      onPress={() => openFile(url)}
-      style={styles.file}
+      accessibilityRole={external ? 'link' : 'button'}
+      accessibilityLabel={`${external ? 'Open' : 'Preview'} ${name}`}
+      onPress={() => external ? openFile(url) : setPreview(true)}
+      style={[styles.file, history && { backgroundColor: colors.selectedSurface, borderRadius: radii.chip }]}
     >
-      <Feather name="paperclip" size={20} color="white" />
-      <Text style={styles.fileName}>{name}</Text>
-      <Feather name="external-link" size={18} color="white" />
+      <Feather name="paperclip" size={20} color={ink} />
+      <Text style={[styles.fileName, { color: ink }]}>{name}</Text>
+      <Feather name={external ? 'external-link' : 'eye'} size={18} color={ink} />
     </TouchableOpacity>
-  );
+    {!external ? <AttachmentPreview document={preview ? file : null} onClose={() => setPreview(false)} /> : null}
+  </>;
 }
 
 export default function SubmissionTicket({
@@ -153,6 +159,7 @@ export default function SubmissionTicket({
             key={doc.document_id || doc.file_name}
             name={doc.file_name || "Attached document"}
             url={doc.file_url}
+            document={doc}
           />
         ))}
         {archives.map((archive) => (
@@ -160,6 +167,7 @@ export default function SubmissionTicket({
             key={archive.archive_id}
             name={`Archived · ${archive.file_name}`}
             url={archive.drive_view_link}
+            external
           />
         ))}
         {!files.length && !archives.length ? (
@@ -185,7 +193,7 @@ export default function SubmissionTicket({
 const styles = StyleSheet.create({
   ticket: {
     backgroundColor: colors.ticket,
-    borderRadius: 20,
+    borderRadius: radii.card,
     marginBottom: 16,
     shadowColor: colors.navy,
     shadowOpacity: 0.12,
@@ -194,14 +202,14 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   content: { padding: 12, gap: 6 },
-  category: { color: colors.ticketText, fontSize: 12, marginTop: 6 },
-  title: { ...type.heading, color: "white", fontSize: 18, lineHeight: 24 },
+  category: { color: colors.ticketText, fontSize: type.meta.fontSize, marginTop: 6 },
+  title: { ...type.heading, color: "white", fontSize: type.navigationTitle.fontSize, lineHeight: type.navigationTitle.lineHeight },
   meta: { flexDirection: "row", flexWrap: "wrap", gap: 14, marginTop: 6 },
   metaCell: { flexGrow: 1, flexBasis: 115 },
-  label: { color: colors.ticketMuted, fontSize: 12 },
-  value: { color: "white", fontSize: 14, lineHeight: 21 },
+  label: { color: colors.ticketMuted, fontSize: type.meta.fontSize },
+  value: { color: "white", fontSize: type.field.fontSize, lineHeight: type.field.lineHeight },
   organization: { marginTop: 4 },
-  description: { color: colors.ticketText, fontSize: 13, lineHeight: 20 },
+  description: { color: colors.ticketText, fontSize: type.field.fontSize, lineHeight: type.field.lineHeight },
   handler: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 4 },
   handlerName: { ...type.meta, color: colors.ticketText, flex: 1 },
   profileSection: {
@@ -222,9 +230,9 @@ const styles = StyleSheet.create({
     gap: 10,
     alignItems: "center",
   },
-  name: { fontFamily: "DMSans_700Bold", color: "white", fontSize: 14 },
-  email: { color: colors.ticketMuted, fontSize: 11, lineHeight: 17 },
-  role: { color: colors.ticketMuted, fontSize: 11, marginTop: 3 },
+  name: { fontFamily: "DMSans_700Bold", color: "white", fontSize: type.field.fontSize },
+  email: { color: colors.ticketMuted, fontSize: type.meta.fontSize, lineHeight: type.meta.lineHeight },
+  role: { color: colors.ticketMuted, fontSize: type.meta.fontSize, marginTop: 3 },
   statusRow: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -233,7 +241,7 @@ const styles = StyleSheet.create({
     maxWidth: "100%",
     flexShrink: 1,
   },
-  priority: { color: "#FFF0A6", fontSize: 11, fontFamily: "DMSans_700Bold" },
+  priority: { color: colors.priorityOnTicket, fontSize: type.meta.fontSize, fontFamily: "DMSans_700Bold" },
   tear: {
     borderTopWidth: 1,
     borderColor: colors.ticketMuted,
@@ -244,8 +252,8 @@ const styles = StyleSheet.create({
   cutout: {
     width: 20,
     height: 20,
-    borderRadius: 10,
-    backgroundColor: "#F3F3F3",
+    borderRadius: radii.chip,
+    backgroundColor: colors.background,
     position: "absolute",
     top: -10,
   },
@@ -258,14 +266,14 @@ const styles = StyleSheet.create({
   },
   file: {
     backgroundColor: "#FFFFFF22",
-    borderRadius: 14,
+    borderRadius: radii.field,
     padding: 12,
     minHeight: 48,
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
   },
-  fileName: { color: "white", flex: 1, fontSize: 13 },
+  fileName: { color: "white", flex: 1, fontSize: type.field.fontSize },
   emptyFile: {
     flexDirection: "row",
     alignItems: "center",
@@ -274,8 +282,8 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     color: colors.ticketText,
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: type.meta.fontSize,
+    lineHeight: type.meta.lineHeight,
     flexShrink: 1,
   },
 });

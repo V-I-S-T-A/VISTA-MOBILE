@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { uuid } from 'expo-modules-core';
 import { reviewLogsService } from '../services/reviewLogsService';
@@ -21,7 +21,7 @@ export default function useSubmissionConversation({ submissionId, scope, access,
     queryFn: ({ pageParam, signal }) => reviewLogsService.listReviewLogs(submissionId, { page: pageParam, pageSize: 20, signal }),
     initialPageParam: 1, getNextPageParam: nextPage, enabled, retry: false, staleTime: 0,
   });
-  const entries = logs.isError ? [] : uniqueRows(logs.data?.pages, 'log_id');
+  const entries = useMemo(() => logs.isError ? [] : uniqueRows(logs.data?.pages, 'log_id'), [logs.isError, logs.data?.pages]);
   useEffect(() => {
     mounted.current = true;
     return () => { mounted.current = false; abort.current?.abort(); };
@@ -31,6 +31,22 @@ export default function useSubmissionConversation({ submissionId, scope, access,
   }, [logs.error, onAccessLost]);
   const targetKey = target ? JSON.stringify([target.log.log_id, target.parentId]) : '';
   const draft = drafts[targetKey]?.message || '';
+  const updateDraft = access.staff ? drafts['new-update']?.message || '' : '';
+  function changeUpdateDraft(message) {
+    if (!access.staff || pending.current || !enabled) return;
+    setDrafts(current => {
+      const updated = { ...current, 'new-update': { message } };
+      client.setQueryData(draftKey, updated);
+      return updated;
+    });
+  }
+  function clearUpdateDraft() {
+    setDrafts(current => {
+      const updated = { ...current }; delete updated['new-update'];
+      client.setQueryData(draftKey, updated);
+      return updated;
+    });
+  }
   function selectTarget(log, reply = null) {
     if (pending.current || !canReplyTo(log, access)) return;
     setTarget({ log, parentId: reply?.reply_id || null, name: reply?.author_name || log.changed_by_name || 'OSA Staff' });
@@ -41,13 +57,19 @@ export default function useSubmissionConversation({ submissionId, scope, access,
     const updated = { ...drafts, [targetKey]: { ...drafts[targetKey], message } };
     setDrafts(updated); client.setQueryData(draftKey, updated); setNotice('');
   }
-  async function send(link = '') {
+  function changeLink(link) {
+    if (!target || pending.current) return;
+    const updated = { ...drafts, [targetKey]: { ...drafts[targetKey], link } };
+    setDrafts(updated); client.setQueryData(draftKey, updated); setNotice('');
+  }
+  const link = drafts[targetKey]?.link || '';
+  async function send(replyLink = link) {
     if (pending.current || !target || !canReplyTo(target.log, access) || !enabled) return;
     let payload;
     const requests = { ...drafts[targetKey]?.requests };
-    try { payload = prepareReply(draft, link, target.log.log_id, target.parentId, requests, () => uuid.v4()); }
+    try { payload = prepareReply(draft, replyLink, target.log.log_id, target.parentId, requests, () => uuid.v4()); }
     catch (err) { setError(err.message); return; }
-    const updated = { ...drafts, [targetKey]: { message: draft, requests } };
+    const updated = { ...drafts, [targetKey]: { message: draft, link: replyLink, requests } };
     setDrafts(updated); client.setQueryData(draftKey, updated);
     pending.current = true; setSending(true); setError(''); setNotice('');
     abort.current = new AbortController();
@@ -71,7 +93,7 @@ export default function useSubmissionConversation({ submissionId, scope, access,
       if (mounted.current) setSending(false);
     }
   }
-  return { logs, entries, target, draft, sending, error, notice, selectTarget, changeDraft, send,
+  return { logs, entries, target, draft, link, changeLink, updateDraft, changeUpdateDraft, clearUpdateDraft, sending, error, notice, selectTarget, changeDraft, send,
     cancel: () => { if (!pending.current) { setTarget(null); setError(''); } },
     hasReply: entries.some(log => canReplyTo(log, access)) };
 }

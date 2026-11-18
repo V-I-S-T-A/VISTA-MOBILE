@@ -1,3 +1,5 @@
+import { colors, radii, sizes, type, shadows, motion } from '../../theme/tokens';
+import useVisibilityProgress from '../../hooks/useVisibilityProgress';
 import { Text } from "./FontText";
 import {
   createContext,
@@ -7,33 +9,36 @@ import {
   useRef,
   useState,
 } from "react";
-import { Animated, Pressable, StyleSheet, View } from "react-native";
+import { Animated, TouchableOpacity, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 
 const ToastContext = createContext(null);
 
 const VARIANTS = {
-  success: { bg: "#16a34a", icon: "check-circle" },
-  error: { bg: "#dc2626", icon: "alert-circle" },
-  info: { bg: "#1e5aa0", icon: "info" },
+  success: { bg: colors.success, icon: "check-circle" },
+  error: { bg: colors.danger, icon: "alert-circle" },
+  info: { bg: colors.blue, icon: "info" },
 };
 
 let idCounter = 0;
 
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
+  const timers = useRef(new Map());
   const insets = useSafeAreaInsets();
+  useEffect(() => () => { timers.current.forEach(clearTimeout); timers.current.clear(); }, []);
 
   const dismiss = useCallback((id) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
+    clearTimeout(timers.current.get(id)); timers.current.delete(id);
+    setToasts(prev => prev.map(toast => toast.id === id ? { ...toast, dismissed: true } : toast));
   }, []);
 
   const show = useCallback(
     (message, variant = "info", duration = 3200, action = null) => {
       const id = ++idCounter;
       setToasts((prev) => [...prev, { id, message, variant, action }]);
-      setTimeout(() => dismiss(id), duration);
+      timers.current.set(id, setTimeout(() => dismiss(id), duration));
       return id;
     },
     [dismiss],
@@ -66,6 +71,7 @@ export function ToastProvider({ children }) {
             key={toast.id}
             toast={toast}
             onPress={() => dismiss(toast.id)}
+            onHidden={() => setToasts(prev => prev.filter(item => item.id !== toast.id))}
           />
         ))}
       </View>
@@ -73,22 +79,16 @@ export function ToastProvider({ children }) {
   );
 }
 
-function ToastItem({ toast, onPress }) {
-  const opacity = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.timing(opacity, {
-      toValue: 1,
-      duration: 180,
-      useNativeDriver: true,
-    }).start();
-  }, [opacity]);
+function ToastItem({ toast, onPress, onHidden }) {
+  const opacity = useVisibilityProgress(!toast.dismissed, onHidden);
+  const acted = useRef(false);
 
   const variant = VARIANTS[toast.variant] || VARIANTS.info;
 
   return (
-    <Animated.View style={{ opacity }}>
+    <Animated.View pointerEvents={toast.dismissed ? 'none' : 'auto'} accessibilityElementsHidden={!!toast.dismissed} importantForAccessibility={toast.dismissed ? 'no-hide-descendants' : 'auto'} style={{ opacity }}>
       <View
+        accessibilityLiveRegion="polite"
         onTouchEnd={toast.action ? undefined : onPress}
         style={[styles.toast, { backgroundColor: variant.bg }]}
       >
@@ -97,16 +97,20 @@ function ToastItem({ toast, onPress }) {
           {toast.message}
         </Text>
         {toast.action ? (
-          <Pressable
+          <TouchableOpacity
+            disabled={!!toast.dismissed}
             accessibilityRole="button"
             onPress={() => {
+              if (acted.current || toast.dismissed) return;
+              acted.current = true;
               onPress();
               toast.action.onPress();
             }}
+            activeOpacity={motion.pressedOpacity}
             style={styles.action}
           >
             <Text style={styles.actionText}>{toast.action.label}</Text>
-          </Pressable>
+          </TouchableOpacity>
         ) : null}
       </View>
     </Animated.View>
@@ -123,32 +127,29 @@ const styles = StyleSheet.create({
   toast: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: 12,
+    borderRadius: radii.field,
+    borderCurve: 'continuous',
     paddingVertical: 10,
     paddingHorizontal: 14,
     marginBottom: 8,
-    shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 4,
+    ...shadows.raised,
   },
   text: {
-    color: "white",
-    fontSize: 13,
-    fontWeight: "600",
+    ...type.button,
+    color: colors.onBrand,
     marginLeft: 8,
     flex: 1,
   },
   action: {
+    minHeight: sizes.touch,
+    justifyContent: 'center',
     marginLeft: 12,
     paddingVertical: 6,
     paddingHorizontal: 8,
   },
   actionText: {
-    color: "white",
-    fontSize: 13,
-    fontWeight: "700",
+    ...type.button,
+    color: colors.onBrand,
   },
 });
 

@@ -1,526 +1,235 @@
-import { View, useWindowDimensions } from 'react-native';
-import { surfaces } from '../../theme/layout';
-import { colors, compact, radii, type, notificationLayout, sizes, form, space, reviewControls } from '../../theme/tokens';
+import { ScrollView, View, useWindowDimensions } from 'react-native';
+import useDashboardGrid from '../../hooks/useDashboardGrid';
+import TicketBanner from '../submissions/TicketBanner';
+import { surfaces, panelStyles, useStaffLayout } from '../../theme/layout';
+import { colors, radii, type, notificationLayout, sizes, form, space, reviewControls, dashboardLayout, dashboardTones, settingsLayout, profileLayout, stateLayout } from '../../theme/tokens';
 
-// Base placeholder component using consistent design tokens
-export function Skeleton({ width = '100%', height = 14, radius = 8, style, light = false }) {
-  const bg = light ? 'rgba(255, 255, 255, 0.22)' : colors.skeleton;
-  return (
-    <View
-      accessible={false}
-      style={[{ width, height, borderRadius: radius, backgroundColor: bg }, style]}
-    />
-  );
+// Static placeholders need no timers or animation loops while data is loading.
+const loadingProps = label => ({ accessible: true, accessibilityLabel: label, accessibilityRole: 'progressbar', accessibilityState: { busy: true } });
+export function Skeleton({ width = '100%', height = type.meta.lineHeight, radius = space.xs, style, light = false }) {
+  return <View accessible={false} style={[{ width, height, borderRadius: radius, backgroundColor: light ? '#FFFFFF38' : colors.skeleton }, style]} />;
 }
 
-const Card = ({ children, style }) => (
-  <View style={[surfaces.card, { padding: 16, marginBottom: 16 }, style]}>
-    {children}
-  </View>
-);
-
-const Lines = ({ light = false }) => (
-  <>
-    <Skeleton width="68%" light={light} style={{ marginBottom: 10 }} />
-    <Skeleton height={11} width="90%" light={light} style={{ marginBottom: 8 }} />
-    <Skeleton height={11} width="55%" light={light} />
-  </>
-);
-
-// 1. Submission List Skeleton — Matches SubmissionListCard.jsx
 export function SubmissionListSkeleton({ count = 3 }) {
   const { fontScale } = useWindowDimensions();
-  return (
-    <View accessibilityLabel="Loading submissions" accessibilityRole="progressbar" accessibilityState={{ busy: true }}>
-      {Array.from({ length: count }, (_, i) => (
-        <View
-          key={i}
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 8,
-            paddingHorizontal: compact.paddingHorizontal || 11,
-            paddingVertical: compact.paddingVertical || 7.5,
-            marginBottom: compact.gutter || 5,
-            borderRadius: radii.listCard || 14,
-            borderWidth: 1,
-            borderColor: '#E2E8F0',
-            backgroundColor: '#FFFFFF',
-          }}
-        >
-          {/* Avatar */}
-          <Skeleton width={compact.avatar || 30} height={compact.avatar || 30} radius={(compact.avatar || 30) / 2} />
-          {/* Content Column */}
-          <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
-            <Skeleton width="75%" height={type.listTitle.lineHeight * fontScale} radius={4} />
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
-              <Skeleton width="48%" height={type.listMeta.lineHeight * fontScale} radius={3} />
-              <Skeleton width={56} height={(type.badge.lineHeight + 4) * fontScale} radius={6} />
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
-              <Skeleton width="34%" height={type.listMeta.lineHeight * fontScale} radius={3} />
-            </View>
-          </View>
+  const stacked = fontScale > 1.2;
+  const row = { flexDirection: stacked ? 'column' : 'row', alignItems: stacked ? 'stretch' : 'center', justifyContent: 'space-between', gap: stacked ? 2 : space.xs };
+  return <View {...loadingProps('Loading submissions')}>
+    {Array.from({ length: count }, (_, index) => <View key={index} style={[surfaces.card, {
+      flexDirection: 'row', alignItems: 'flex-start', gap: 10,
+      paddingHorizontal: notificationLayout.paddingHorizontal, paddingVertical: notificationLayout.paddingVertical,
+      marginBottom: notificationLayout.gap, borderRadius: notificationLayout.radius, backgroundColor: colors.listSurface, overflow: 'hidden',
+    }]}>
+      <Skeleton width={notificationLayout.avatar} height={notificationLayout.avatar} radius={radii.pill} />
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <Skeleton width="75%" height={type.notificationTitle.lineHeight * fontScale} />
+        <View style={[row, { marginTop: 1, marginBottom: 3 }]}>
+          <View style={{ flex: 1, minWidth: 0 }}><Skeleton width="68%" height={type.listOrg.lineHeight * fontScale} /></View>
+          <Skeleton width="35%" height={type.miniBadge.lineHeight * fontScale} />
         </View>
-      ))}
-    </View>
-  );
+        <View style={row}><Skeleton width="34%" height={type.listDate.lineHeight * fontScale} /></View>
+      </View>
+    </View>)}
+  </View>;
 }
 
-// 2. Dashboard Summary Cards Skeleton — Matches SubmissionDashboardCards.jsx
 export function DashboardCardsSkeleton() {
-  return (
-    <View accessibilityLabel="Loading dashboard totals" accessibilityRole="progressbar">
-      {/* Primary Card */}
-      <View
-        style={{
-          borderRadius: 18,
-          padding: 12,
-          backgroundColor: '#023C69',
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'flex-end',
-          marginBottom: 12,
-          minHeight: 88,
-        }}
-      >
-        <View style={{ flex: 1, minWidth: 0, gap: 6 }}>
-          <Skeleton width="50%" height={14} radius={4} light />
-          <Skeleton width={70} height={36} radius={6} light />
-        </View>
-        <Skeleton width={38} height={38} radius={10} light />
-      </View>
-
-      {/* Secondary Cards Row */}
-      <View style={{ flexDirection: 'row', gap: 12, marginBottom: 4 }}>
-        {[0, 1].map((i) => (
-          <View
-            key={i}
-            style={{
-              flex: 1,
-              borderRadius: 18,
-              padding: 12,
-              backgroundColor: '#FFFFFF',
-              borderWidth: 1,
-              borderColor: '#E2E8F0',
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'flex-end',
-              minHeight: 78,
-            }}
-          >
-            <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
-              <Skeleton width="65%" height={12} radius={3} />
-              <Skeleton width={45} height={26} radius={6} />
-            </View>
-            <Skeleton width={28} height={28} radius={8} />
-          </View>
-        ))}
-      </View>
-    </View>
-  );
+  return DashboardCardsSkeletonContent(useDashboardGrid());
 }
 
-// 3. Notifications Skeleton — Matches StudentNotificationListItem.jsx
+// The dashboard owns measurement across loading/content; standalone consumers
+// use the wrapper above. This renderer does not mount a second grid hook.
+export function DashboardCardsSkeletonContent({ columns, fontScale, onLayout }) {
+  const keys = ['total', 'pending', 'approved', 'rejected'];
+  const artScale = dashboardLayout.artScale / (columns === 2 ? Math.max(1, fontScale) : 1);
+  const artSize = dashboardLayout.artSize * artScale;
+  const rows = Array.from({ length: Math.ceil(keys.length / columns) }, (_, index) => keys.slice(index * columns, (index + 1) * columns));
+  return <View {...loadingProps('Loading dashboard totals')} onLayout={onLayout} style={{ gap: space.md, marginBottom: space.lg }}>
+    {rows.map((row, index) => <View key={index} style={{ flexDirection: 'row', gap: space.md, alignItems: 'stretch' }}>
+      {row.map(key => <View key={key} style={{ flex: 1, minWidth: 0, aspectRatio: 1, padding: space.md, overflow: 'hidden', borderRadius: radii.card, borderCurve: 'continuous', backgroundColor: dashboardTones[key].background }}>
+        <Skeleton light width="80%" height={type.sectionTitle.lineHeight * 2 * fontScale} />
+        <View style={{ flex: 1, minHeight: 0, flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: space.xs, marginTop: space.xs }}>
+          <Skeleton light width="35%" height={type.number.lineHeight * fontScale} />
+          <Skeleton light width={artSize} height={artSize} radius={radii.field} style={{ alignSelf: 'flex-end', flexShrink: 0 }} />
+        </View>
+      </View>)}
+    </View>)}
+  </View>;
+}
+
 export function NotificationsSkeleton({ count = 4 }) {
-  return (
-    <View accessibilityLabel="Loading notifications" accessibilityRole="progressbar">
-      {Array.from({ length: count }, (_, i) => (
-        <View
-          key={i}
-          style={{
-            flexDirection: 'row',
-            alignItems: 'flex-start',
-            gap: 10,
-            paddingHorizontal: notificationLayout.paddingHorizontal || 11,
-            paddingVertical: notificationLayout.paddingVertical || 7.5,
-            marginBottom: notificationLayout.gap || 5,
-            borderRadius: notificationLayout.radius || 14,
-            backgroundColor: '#FFFFFF',
-            borderWidth: 1,
-            borderColor: '#E2E8F0',
-          }}
-        >
-          {/* Avatar icon */}
-          <Skeleton
-            width={notificationLayout.avatar || 30}
-            height={notificationLayout.avatar || 30}
-            radius={(notificationLayout.avatar || 30) / 2}
-          />
-          {/* Content */}
-          <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
-              <Skeleton width="65%" height={12} radius={4} />
-              <Skeleton width={6} height={6} radius={3} />
-            </View>
-            <Skeleton width="88%" height={11} radius={3} />
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2 }}>
-              <Skeleton width={52} height={14} radius={4} />
-              <Skeleton width={42} height={10} radius={3} />
-            </View>
-          </View>
+  const { fontScale } = useWindowDimensions();
+  return <View {...loadingProps('Loading notifications')}>
+    {Array.from({ length: count }, (_, index) => <View key={index} style={{
+      minHeight: sizes.touch, flexDirection: 'row', alignItems: 'flex-start', gap: 10,
+      paddingHorizontal: notificationLayout.paddingHorizontal, paddingVertical: notificationLayout.paddingVertical,
+      marginBottom: notificationLayout.gap, borderRadius: notificationLayout.radius, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
+    }}>
+      <Skeleton width={notificationLayout.avatar} height={notificationLayout.avatar} radius={radii.pill} />
+      <View style={{ flex: 1, minWidth: 0, justifyContent: 'center' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+          <Skeleton width="65%" height={type.notificationTitle.lineHeight * fontScale} />
+          <Skeleton width={notificationLayout.unread} height={notificationLayout.unread} radius={radii.pill} />
         </View>
-      ))}
-    </View>
-  );
+        <Skeleton width="88%" height={type.notificationPreview.lineHeight * fontScale} style={{ marginTop: 1, marginBottom: 3 }} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          <Skeleton width="34%" height={type.notificationBadge.lineHeight * fontScale} />
+          <Skeleton width="24%" height={type.notificationMeta.lineHeight * fontScale} />
+        </View>
+      </View>
+    </View>)}
+  </View>;
 }
 
-// 4. Track Details Skeleton — Matches SubmissionTicket.jsx + Conversation
+// The bundled banner is available offline; reuse its actual responsive geometry.
 export function TrackDetailsSkeleton({ staff = false }) {
-  return (
-    <View accessibilityLabel="Loading submission details" accessibilityRole="progressbar" style={{ gap: 12 }}>
-      {/* Ticket Banner (Cosmic Purple look) */}
-      <View
-        style={{
-          borderRadius: 20,
-          padding: 16,
-          backgroundColor: '#1C1033',
-          minHeight: 140,
-          gap: 10,
-        }}
-      >
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Skeleton width="35%" height={18} radius={6} light />
-          <Skeleton width={80} height={22} radius={11} light />
+  const { fontScale } = useWindowDimensions();
+  return <View {...loadingProps('Loading submission details')}>
+    <View style={{ backgroundColor: colors.ticket, borderRadius: radii.card, marginBottom: space.lg }}>
+      <View style={{ padding: space.md, gap: 6 }}>
+        <TicketBanner />
+        <Skeleton light width="60%" height={type.meta.lineHeight * fontScale} style={{ marginTop: 6 }} />
+        <Skeleton light width="85%" height={type.navigationTitle.lineHeight * fontScale} />
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginTop: 6 }}>
+          {[0, 1].map(index => <View key={index} style={{ flexGrow: 1, flexBasis: 115 }}><Skeleton light width="30%" height={type.meta.lineHeight * fontScale} /><Skeleton light width="65%" height={type.field.lineHeight * fontScale} /></View>)}
         </View>
-        <Skeleton width="80%" height={22} radius={6} light />
-        <Skeleton width="50%" height={14} radius={4} light />
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
-          <Skeleton width="40%" height={12} radius={4} light />
-          <Skeleton width="30%" height={12} radius={4} light />
-        </View>
-      </View>
-
-      {/* Submitter & Documents Info Card */}
-      <View
-        style={{
-          borderRadius: 16,
-          padding: 14,
-          backgroundColor: '#FFFFFF',
-          borderWidth: 1,
-          borderColor: '#E2E8F0',
-          gap: 10,
-        }}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <Skeleton width={40} height={40} radius={20} />
-          <View style={{ flex: 1, gap: 4 }}>
-            <Skeleton width="45%" height={14} radius={4} />
-            <Skeleton width="60%" height={12} radius={3} />
+        <View style={{ marginTop: space.xs }}><Skeleton light width="35%" height={type.meta.lineHeight * fontScale} /><Skeleton light width="75%" height={type.field.lineHeight * fontScale} /></View>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 10, borderTopWidth: 1, borderTopColor: colors.ticketMuted, paddingTop: space.md, marginTop: 6 }}>
+          <View style={{ flexDirection: 'row', flexGrow: 1, flexBasis: 180, minWidth: 0, gap: 10, alignItems: 'center' }}>
+            <Skeleton light width={sizes.avatar} height={sizes.avatar} radius={radii.pill} />
+            <View style={{ flex: 1, minWidth: 0 }}><Skeleton light width="65%" height={type.field.lineHeight * fontScale} /><Skeleton light width="80%" height={type.meta.lineHeight * fontScale} /><Skeleton light width="55%" height={type.meta.lineHeight * fontScale} style={{ marginTop: 3 }} /></View>
           </View>
-        </View>
-        <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
-          <Skeleton width="45%" height={28} radius={8} />
-          <Skeleton width="35%" height={28} radius={8} />
+          <Skeleton light width={80} height={type.badge.lineHeight * fontScale + space.xs} radius={radii.pill} />
         </View>
       </View>
-
-      {/* Staff Action Card if staff */}
-      {staff ? (
-        <View
-          style={{
-            borderRadius: 16,
-            padding: 14,
-            backgroundColor: '#FFFFFF',
-            borderWidth: 1,
-            borderColor: '#E2E8F0',
-            gap: 10,
-          }}
-        >
-          <Skeleton width="40%" height={14} radius={4} />
-          <Skeleton height={42} radius={12} />
-        </View>
-      ) : null}
-
-      {/* Official Remarks / Conversation Card */}
-      <View
-        style={{
-          borderRadius: 16,
-          padding: 14,
-          backgroundColor: '#FFFFFF',
-          borderWidth: 1,
-          borderColor: '#E2E8F0',
-          gap: 10,
-        }}
-      >
-        <Skeleton width="50%" height={15} radius={4} />
-        <View style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
-          <Skeleton width={32} height={32} radius={16} />
-          <View style={{ flex: 1, gap: 6 }}>
-            <Skeleton width="40%" height={12} radius={3} />
-            <Skeleton height={50} radius={12} />
-          </View>
-        </View>
+      <View style={{ borderTopWidth: 1, borderColor: colors.ticketMuted, borderStyle: 'dashed', marginTop: space.xs, height: 1 }}>
+        {[-1, 1].map(side => <View key={side} style={{ position: 'absolute', top: -10, ...(side < 0 ? { left: -10 } : { right: -10 }), width: space.xl, height: space.xl, borderRadius: radii.chip, backgroundColor: colors.background }} />)}
       </View>
-
-      {/* Reply Composer Skeleton Bar */}
-      <View
-        style={{
-          borderRadius: 24,
-          height: 48,
-          backgroundColor: '#FFFFFF',
-          borderWidth: 1,
-          borderColor: '#E2E8F0',
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingHorizontal: 14,
-          justifyContent: 'space-between',
-        }}
-      >
-        <Skeleton width="60%" height={16} radius={4} />
-        <Skeleton width={32} height={32} radius={16} />
-      </View>
+      <View style={{ padding: space.md, gap: space.sm }}><View style={{ minHeight: staff ? sizes.touch : undefined, flexDirection: 'row', alignItems: 'center', gap: 10, padding: staff ? space.md : 3, borderRadius: radii.field }}>
+        <Skeleton light width={sizes.icon} height={sizes.icon} /><View style={{ flex: 1 }}><Skeleton light width="85%" height={(staff ? type.field.lineHeight : type.meta.lineHeight * 2) * fontScale} /></View>
+      </View></View>
     </View>
-  );
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.sm, marginBottom: 6 }}><Skeleton width="40%" height={type.cardTitle.lineHeight * fontScale} /><Skeleton width="20%" height={type.meta.lineHeight * fontScale} /></View>
+    <ConversationSkeleton />
+  </View>;
 }
-
-// Alias DetailsSkeleton to TrackDetailsSkeleton for backwards compatibility
 export const DetailsSkeleton = TrackDetailsSkeleton;
 
-// 5. Profile Skeleton — Matches EditProfileScreen.jsx with increased white header height
-export function ProfileSkeleton() {
-  return (
-    <View
-      style={{ flex: 1, backgroundColor: '#F3F3F3' }}
-      accessibilityLabel="Loading profile"
-      accessibilityRole="progressbar"
-    >
-      {/* Header icon placeholders matching current Back and Settings positions */}
-      <View
-        style={{
-          paddingTop: 8,
-          paddingBottom: 20,
-          paddingHorizontal: 16,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <Skeleton width={24} height={24} radius={12} />
-        <Skeleton width={24} height={24} radius={12} />
+export function ConversationSkeleton({ count = 2 }) {
+  const { fontScale } = useWindowDimensions();
+  return <View {...loadingProps('Loading conversation')}>
+    {Array.from({ length: count }, (_, index) => <View key={index} style={[surfaces.card, { paddingVertical: space.sm, paddingHorizontal: space.md, marginBottom: space.sm }]}>
+      <Skeleton height={type.meta.lineHeight * fontScale + space.sm} radius={radii.field} />
+      <View style={{ paddingTop: space.xs }}>
+        <View style={{ flexDirection: 'row', gap: space.sm, alignItems: 'center', marginBottom: space.xs }}><Skeleton width={28} height={28} radius={radii.pill} /><View style={{ flex: 1 }}><Skeleton width="65%" height={type.notificationTitle.lineHeight * fontScale} /><Skeleton width="75%" height={type.meta.lineHeight * fontScale} style={{ marginTop: 2 }} /></View></View>
+        <Skeleton width="85%" height={type.conversation.lineHeight * fontScale} />
+        <View style={{ minHeight: sizes.touch, flexDirection: 'row', gap: space.sm, alignItems: 'center', paddingHorizontal: space.xs }}><Skeleton width="20%" height={type.meta.lineHeight * fontScale} /><Skeleton width="35%" height={type.meta.lineHeight * fontScale} /></View>
       </View>
-
-      {/* Blue Panel positioned lower to match EditProfileScreen marginTop: 44 */}
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: '#245EA9',
-          borderTopLeftRadius: 20,
-          borderTopRightRadius: 20,
-          marginTop: 44,
-          paddingHorizontal: 16,
-          paddingTop: 68,
-        }}
-      >
-      {/* Floating Centered Avatar */}
-      <View
-        style={{
-          position: 'absolute',
-          top: -34,
-          left: 0,
-          right: 0,
-          alignItems: 'center',
-        }}
-      >
-        <Skeleton
-          width={sizes.avatarProfile || 68}
-          height={sizes.avatarProfile || 68}
-          radius={(sizes.avatarProfile || 68) / 2}
-          style={{ borderWidth: 3, borderColor: '#FFFFFF' }}
-        />
-      </View>
-
-      {/* Title */}
-      <Skeleton width={120} height={22} radius={6} light style={{ marginBottom: 16 }} />
-
-      {/* Form Fields */}
-      <View style={{ gap: 12, marginBottom: 16 }}>
-        <Skeleton height={reviewControls.fieldHeight || 42} radius={22} style={{ backgroundColor: '#FFFFFF' }} />
-        <Skeleton height={reviewControls.fieldHeight || 42} radius={22} style={{ backgroundColor: '#FFFFFF' }} />
-        <Skeleton height={reviewControls.fieldHeight || 42} radius={22} style={{ backgroundColor: '#FFFFFF' }} />
-      </View>
-
-      {/* Account Info / Role Box */}
-      <View
-        style={{
-          borderRadius: 20,
-          height: 68,
-          backgroundColor: 'rgba(255, 255, 255, 0.16)',
-          padding: 12,
-          gap: 6,
-          marginBottom: 16,
-        }}
-      >
-        <Skeleton width="35%" height={12} radius={3} light />
-        <Skeleton width="60%" height={14} radius={4} light />
-      </View>
-
-      {/* Buttons */}
-      <View style={{ flexDirection: 'row', gap: 12, marginBottom: 20 }}>
-        <Skeleton width="48%" height={42} radius={22} style={{ backgroundColor: '#FFFFFF' }} />
-        <Skeleton width="48%" height={42} radius={22} style={{ backgroundColor: '#FFFFFF' }} />
-      </View>
-
-      {/* Version */}
-      <Skeleton width={100} height={12} radius={4} light style={{ alignSelf: 'center' }} />
-      </View>
-    </View>
-  );
+    </View>)}
+  </View>;
 }
 
-// 6. Settings Skeleton — Matches SettingsScreen.jsx
+export function RepliesSkeleton({ count = 2, canReply = true }) {
+  const { fontScale } = useWindowDimensions();
+  return <View {...loadingProps('Loading replies')}>
+    {Array.from({ length: count }, (_, index) => <View key={index} style={{ paddingVertical: 2, paddingRight: 10 }}>
+      <Skeleton width="50%" height={type.notificationTitle.lineHeight * fontScale} /><Skeleton width="85%" height={type.conversation.lineHeight * fontScale} />
+      {canReply ? <View style={{ minHeight: sizes.touch, justifyContent: 'center' }}><Skeleton width="20%" height={type.meta.lineHeight * fontScale} /></View> : null}
+    </View>)}
+  </View>;
+}
+
+export function ProfileSkeleton({ hasOrganization = false, bottomInset = 0 }) {
+  const layout = useStaffLayout();
+  const { fontScale } = useWindowDimensions();
+  return <View {...loadingProps('Loading profile')} style={{ flex: 1, backgroundColor: colors.background }}>
+    <View style={[layout.horizontal, { paddingTop: profileLayout.headerPaddingTop, paddingBottom: profileLayout.headerPaddingBottom, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}>
+      {[0, 1].map(index => <View key={index} style={{ width: sizes.touch, height: sizes.touch, alignItems: 'center', justifyContent: 'center', marginLeft: index === 0 ? -space.sm : 0, marginRight: index === 1 ? -space.sm : 0 }}><Skeleton width={sizes.icon} height={sizes.icon} radius={radii.pill} /></View>)}
+    </View>
+    <View style={{ flex: 1, backgroundColor: colors.profileBlue, borderTopLeftRadius: radii.card, borderTopRightRadius: radii.card, marginTop: profileLayout.panelTopGap }}>
+      <View style={{ position: 'absolute', top: profileLayout.avatarTop, left: 0, right: 0, alignItems: 'center' }}>
+        <View style={{ width: sizes.avatarProfile, height: sizes.avatarProfile }}>
+          <Skeleton width={sizes.avatarProfile} height={sizes.avatarProfile} radius={radii.pill} style={{ borderWidth: 3, borderColor: colors.surface }} />
+          <Skeleton width={space.xxxl} height={space.xxxl} radius={radii.pill} style={{ position: 'absolute', bottom: 0, right: 0, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }} />
+        </View>
+      </View>
+      <View style={[{ flex: 1 }, layout.horizontal]}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1, justifyContent: 'space-between', paddingTop: profileLayout.contentTop, paddingBottom: Math.max(bottomInset, space.lg) + space.lg, width: '100%', maxWidth: sizes.contentWidth, alignSelf: 'center' }}>
+          <View>
+            <Skeleton light width="45%" height={type.title.lineHeight * fontScale} style={{ marginBottom: space.lg }} />
+            {[0, 1, 2].map(index => <View key={index} style={{ minHeight: sizes.touch, justifyContent: 'center' }}><Skeleton height={Math.max(reviewControls.fieldHeight, reviewControls.value.lineHeight * fontScale + space.sm + 2)} radius={radii.field} style={{ backgroundColor: colors.surface, marginBottom: index === 2 ? space.lg : space.md }} /></View>)}
+            {hasOrganization ? <View style={{ borderRadius: radii.card, paddingHorizontal: space.lg, paddingVertical: space.md, marginBottom: space.lg }}>
+              <Skeleton light width="35%" height={type.meta.lineHeight * fontScale} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: space.sm, gap: 10 }}><Skeleton light width={sizes.avatar} height={sizes.avatar} radius={radii.pill} /><Skeleton light width="60%" height={type.field.lineHeight * fontScale} /></View>
+            </View> : null}
+            <View style={{ flexDirection: 'row', gap: space.md, marginBottom: space.sm }}>{[0, 1].map(index => <Skeleton key={index} light width={null} height={Math.max(profileLayout.actionHeight, type.field.lineHeight * fontScale)} radius={radii.button} style={{ flex: 1 }} />)}</View>
+            <View style={{ minHeight: sizes.touch, marginTop: space.xs, alignItems: 'center', justifyContent: 'center' }}><Skeleton light width="45%" height={type.field.lineHeight * fontScale} /></View>
+          </View>
+          <View style={{ marginTop: 'auto', paddingTop: space.xl }}><Skeleton light height={Math.max(profileLayout.logoutHeight, type.field.lineHeight * fontScale)} radius={radii.button} /></View>
+        </ScrollView>
+      </View>
+    </View>
+  </View>;
+}
+
+// Retained utility; Settings itself renders its bundled content immediately.
 export function SettingsSkeleton() {
-  return (
-    <View
-      style={{
-        flex: 1,
-        backgroundColor: '#245EA9',
-        paddingHorizontal: 16,
-        paddingTop: 12,
-      }}
-      accessibilityLabel="Loading settings"
-      accessibilityRole="progressbar"
-    >
-      {/* Header */}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Skeleton width={24} height={24} radius={12} light />
-        <Skeleton width={90} height={20} radius={6} light />
-        <Skeleton width={24} height={24} radius={6} light />
+  const { fontScale } = useWindowDimensions();
+  return <ScrollView {...loadingProps('Loading settings')} style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={{ padding: space.lg }}>
+    <View style={{ flexDirection: 'row', gap: space.md, padding: space.lg, borderRadius: settingsLayout.cardRadius, backgroundColor: colors.surface, marginBottom: space.xxl }}><Skeleton width={settingsLayout.profileAvatar} height={settingsLayout.profileAvatar} radius={radii.pill} /><View style={{ flex: 1, gap: space.xs, justifyContent: 'center' }}><Skeleton width="65%" height={type.sectionTitle.lineHeight * fontScale} /><Skeleton width="85%" height={type.meta.lineHeight * fontScale} /></View></View>
+    {[1, 1, 4, 4].map((count, index) => <View key={index} style={{ marginBottom: space.xxl }}>
+      <Skeleton width="35%" height={type.meta.lineHeight * fontScale} style={{ marginLeft: space.xs, marginBottom: space.sm }} />
+      <View style={{ borderRadius: settingsLayout.cardRadius, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
+        {Array.from({ length: count }, (_, row) => <View key={row} style={{ minHeight: settingsLayout.rowMinHeight, paddingHorizontal: space.lg, paddingVertical: space.md, flexDirection: 'row', alignItems: 'center', gap: space.md }}><Skeleton width={settingsLayout.iconSize} height={settingsLayout.iconSize} /><View style={{ flex: 1 }}><Skeleton width="65%" height={type.field.lineHeight * fontScale} /><Skeleton width="85%" height={type.meta.lineHeight * fontScale} style={{ marginTop: space.xs }} /></View><Skeleton width={sizes.icon} height={sizes.icon} /></View>)}
       </View>
-
-      {/* Section 1 */}
-      <Skeleton width={80} height={11} radius={3} light style={{ marginBottom: 6, marginLeft: 4 }} />
-      <View style={{ borderRadius: 16, backgroundColor: '#FFFFFF', padding: 14, marginBottom: 16, gap: 8 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <Skeleton width={20} height={20} radius={4} />
-          <View style={{ flex: 1, gap: 4 }}>
-            <Skeleton width="50%" height={14} radius={4} />
-            <Skeleton width="70%" height={11} radius={3} />
-          </View>
-          <Skeleton width={14} height={14} radius={4} />
-        </View>
-      </View>
-
-      {/* Section 2 */}
-      <Skeleton width={95} height={11} radius={3} light style={{ marginBottom: 6, marginLeft: 4 }} />
-      <View style={{ borderRadius: 16, backgroundColor: '#FFFFFF', padding: 14, marginBottom: 16, gap: 12 }}>
-        {[0, 1, 2].map((i) => (
-          <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <Skeleton width={20} height={20} radius={4} />
-            <View style={{ flex: 1, gap: 4 }}>
-              <Skeleton width="45%" height={14} radius={4} />
-              <Skeleton width="65%" height={11} radius={3} />
-            </View>
-            <Skeleton width={14} height={14} radius={4} />
-          </View>
-        ))}
-      </View>
-
-      {/* Section 3 */}
-      <Skeleton width={85} height={11} radius={3} light style={{ marginBottom: 6, marginLeft: 4 }} />
-      <View style={{ borderRadius: 16, backgroundColor: '#FFFFFF', padding: 14, gap: 12 }}>
-        {[0, 1, 2, 3].map((i) => (
-          <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <Skeleton width={20} height={20} radius={4} />
-            <View style={{ flex: 1, gap: 4 }}>
-              <Skeleton width="50%" height={14} radius={4} />
-              <Skeleton width="60%" height={11} radius={3} />
-            </View>
-            <Skeleton width={14} height={14} radius={4} />
-          </View>
-        ))}
-      </View>
-    </View>
-  );
+    </View>)}
+  </ScrollView>;
 }
 
-// 7. Dropdown & Selection Skeleton — Matches SelectField & Filter Sheets
-export function DropdownSkeleton({ count = 3 }) {
-  return (
-    <View accessibilityLabel="Loading options" accessibilityRole="progressbar" style={{ paddingHorizontal: 12, paddingVertical: 4 }}>
-      {Array.from({ length: count }, (_, i) => (
-        <View
-          key={i}
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 12,
-            paddingVertical: 12,
-            borderBottomWidth: i === count - 1 ? 0 : 1,
-            borderBottomColor: '#E2E8F0',
-          }}
-        >
-          <Skeleton width={18} height={18} radius={9} />
-          <Skeleton width={`${55 + (i % 3) * 12}%`} height={14} radius={4} />
-        </View>
-      ))}
-    </View>
-  );
+// Select sheets are text-only; academic years use radios, Drive uses chevrons.
+export function DropdownSkeleton({ count = 3, variant = 'select', compact: dense = false }) {
+  const { fontScale } = useWindowDimensions();
+  const academicYear = variant === 'academicYear', drive = variant === 'drive';
+  const lineHeight = academicYear ? type.body.lineHeight : dense ? reviewControls.value.lineHeight : type.field.lineHeight;
+  return <View {...loadingProps('Loading options')} style={{ gap: academicYear ? space.xs : 0 }}>
+    {Array.from({ length: count }, (_, index) => <View key={index} style={{ minHeight: sizes.touch, justifyContent: 'center' }}><View style={{ minHeight: dense ? reviewControls.optionHeight : sizes.touch, paddingHorizontal: academicYear ? space.md : dense ? reviewControls.padding : 0, paddingVertical: dense ? space.xs : drive ? space.md : form.paddingVertical, flexDirection: 'row', alignItems: 'center', gap: space.md, borderBottomWidth: academicYear ? 0 : 1, borderBottomColor: colors.border }}>
+      {academicYear ? <Skeleton width={sizes.icon} height={sizes.icon} radius={radii.chip} /> : null}
+      <View style={{ flex: 1 }}><Skeleton width={(55 + (index % 3) * 12) + '%'} height={lineHeight * fontScale} /></View>
+      {drive ? <Skeleton width={reviewControls.icon} height={reviewControls.icon} /> : null}
+    </View></View>)}
+  </View>;
 }
 
-// 8. Form, Timeline, Drive Skeletons (Preserved existing utilities)
-export function FormSkeleton({ compact = false }) {
-  if (compact) {
-    return (
-      <Card style={{ padding: 8 }}>
-        {Array.from({ length: 6 }, (_, i) => (
-          <View key={i} style={{ marginBottom: 8 }}>
-            <Skeleton width="40%" height={type.label.lineHeight} style={{ marginBottom: form.labelGap }} />
-            <Skeleton height={sizes.input} radius={radii.field} />
-          </View>
-        ))}
-        <Skeleton height={56} radius={12} style={{ marginBottom: 8 }} />
-        <Skeleton height={sizes.touch} radius={radii.pill} />
-      </Card>
-    );
-  }
-  return (
-    <Card style={{ padding: 20 }}>
-      {Array.from({ length: 6 }, (_, i) => (
-        <View key={i} style={{ marginBottom: 18 }}>
-          <Skeleton width="40%" height={11} style={{ marginBottom: 10 }} />
-          <Skeleton height={46} radius={16} />
-        </View>
-      ))}
-      <Skeleton height={110} radius={16} style={{ marginBottom: 18 }} />
-      <Skeleton height={44} radius={24} />
-    </Card>
-  );
+export function FormSkeleton({ compact: dense = false, hasAttachment = false }) {
+  const { fontScale } = useWindowDimensions();
+  const fieldHeight = Math.max(dense ? reviewControls.fieldHeight : sizes.input, (dense ? reviewControls.value.lineHeight : type.field.lineHeight) * fontScale + (dense ? space.sm : form.paddingVertical * 2) + 2);
+  return <View {...loadingProps('Loading document entry')} style={{ backgroundColor: colors.surface, borderRadius: radii.card, borderCurve: 'continuous', padding: space.lg }}>
+    {Array.from({ length: 6 }, (_, index) => <View key={index} style={{ marginBottom: form.fieldGap }}><Skeleton width="40%" height={type.label.lineHeight * fontScale} style={{ marginBottom: form.labelGap }} /><View style={{ minHeight: sizes.touch, justifyContent: 'center' }}><Skeleton height={fieldHeight} radius={dense ? reviewControls.radius : radii.field} /></View></View>)}
+    <View style={{ minHeight: reviewControls.fieldHeight, marginBottom: form.fieldGap, paddingHorizontal: reviewControls.padding, paddingVertical: space.xs, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm, borderWidth: 1, borderColor: colors.border, borderRadius: reviewControls.radius, backgroundColor: colors.field }}><Skeleton width="50%" height={reviewControls.value.lineHeight * fontScale} /><Skeleton width={sizes.touch} height={sizes.avatarHeader} radius={radii.pill} /></View>
+    {hasAttachment ? <Skeleton height={reviewControls.attachmentHeight} radius={reviewControls.radius} style={{ marginBottom: form.fieldGap }} /> : <View style={{ alignItems: 'center', gap: space.sm, paddingVertical: space.lg, paddingHorizontal: space.md }}><Skeleton width={stateLayout.compactArtSize} height={stateLayout.compactArtSize} radius={radii.card} /><Skeleton width="65%" height={type.heading.lineHeight * fontScale} /><Skeleton width="90%" height={type.body.lineHeight * 2 * fontScale} /></View>}
+    <View style={{ minHeight: sizes.touch, justifyContent: 'center', marginBottom: form.fieldGap }}><Skeleton height={reviewControls.attachmentHeight} radius={reviewControls.radius} /></View>
+    <View style={{ minHeight: sizes.touch, justifyContent: 'center' }}><Skeleton height={Math.max(dense ? reviewControls.actionHeight : sizes.touch, type.button.lineHeight * fontScale + space.sm)} radius={dense ? reviewControls.radius : radii.button} /></View>
+  </View>;
 }
 
+// Legacy status-history utility retained for existing imports.
 export function TimelineSkeleton() {
-  return (
-    <View accessibilityLabel="Loading status history" accessibilityRole="progressbar">
-      {[0, 1].map((i) => (
-        <View key={i} style={{ flexDirection: 'row', marginBottom: 24 }}>
-          <View style={{ width: 32, alignItems: 'center' }}>
-            <Skeleton width={14} height={14} radius={7} />
-            <Skeleton width={2} height={132} style={{ marginTop: 6 }} />
-          </View>
-          <View style={{ flex: 1, paddingLeft: 8 }}>
-            <Lines />
-            <View style={{ flexDirection: 'row', marginTop: 18, alignItems: 'center' }}>
-              <Skeleton width={32} height={32} radius={16} />
-              <Skeleton width="55%" style={{ marginLeft: 10 }} />
-            </View>
-            <Skeleton height={64} radius={16} style={{ marginTop: 14 }} />
-          </View>
-        </View>
-      ))}
-    </View>
-  );
+  const { fontScale } = useWindowDimensions();
+  return <View {...loadingProps('Loading status history')}>
+    {[0, 1].map(index => <View key={index} style={{ flexDirection: 'row', marginBottom: index === 0 ? space.xxl : 0 }}>
+      <View style={{ width: space.xxxl, alignItems: 'center' }}><Skeleton width={space.xxl} height={space.xxl} radius={radii.pill} /></View>
+      <View style={{ flex: 1, paddingLeft: space.sm }}><Skeleton width="55%" height={space.xxl * fontScale} /><Skeleton width="65%" height={type.field.lineHeight * fontScale} style={{ marginTop: 2 }} /><Skeleton width="50%" height={type.field.lineHeight * fontScale} style={{ marginTop: space.sm }} />
+        <View style={{ flexDirection: 'row', gap: space.sm, alignItems: 'center', marginTop: space.md }}><Skeleton width={space.xxxl} height={space.xxxl} radius={radii.pill} /><View style={{ flex: 1 }}><Skeleton width="35%" height={type.meta.lineHeight * fontScale} /><Skeleton width="65%" height={type.field.lineHeight * fontScale} /></View></View>
+      </View>
+    </View>)}
+  </View>;
 }
 
 export function DriveSkeleton() {
-  return (
-    <Card style={{ padding: space.md, marginBottom: space.md }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm, marginBottom: space.sm }}>
-        <Skeleton width={sizes.avatar} height={sizes.avatar} radius={radii.field} />
-        <Skeleton width="55%" height={type.cardTitle.lineHeight} />
-      </View>
-      <Skeleton height={sizes.touch} radius={radii.field} style={{ marginBottom: space.sm }} />
-      <Skeleton height={64} radius={radii.field} />
-      <Skeleton width="65%" height={type.meta.lineHeight} style={{ marginTop: space.sm }} />
-    </Card>
-  );
+  const { fontScale } = useWindowDimensions();
+  return <View {...loadingProps('Loading Google Drive connection')} style={[surfaces.card, panelStyles.card]}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.md, marginBottom: space.sm }}><Skeleton width={space.xxxl} height={space.xxxl} radius={radii.field} /><View style={{ flex: 1, gap: space.xs }}><Skeleton width="55%" height={type.sectionTitle.lineHeight * fontScale} /><Skeleton width="80%" height={type.meta.lineHeight * fontScale} /></View></View>
+    <View style={{ padding: space.md, marginBottom: space.sm }}><Skeleton width="75%" height={type.meta.lineHeight * fontScale} /></View>
+    <Skeleton height={Math.max(sizes.touch, type.meta.lineHeight * fontScale + space.xxl)} radius={radii.field} style={{ marginBottom: space.md }} /><Skeleton height={Math.max(sizes.touch, type.meta.lineHeight * fontScale + space.xxl)} radius={radii.field} />
+  </View>;
 }

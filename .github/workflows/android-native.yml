@@ -1,0 +1,86 @@
+name: Android native verification
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: '1'
+  EXPO_NO_DOTENV: '1'
+  EXPO_NO_TELEMETRY: '1'
+  EXPO_OFFLINE: '1'
+
+jobs:
+  debug:
+    name: Android debug build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          # Event base/head and merge-base must exist even for multi-commit pushes.
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Detect native input changes
+        id: changes
+        run: node scripts/ci/native-changes.cjs
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        if: steps.changes.outputs.required == 'true'
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        if: steps.changes.outputs.required == 'true'
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@4c125117fe7c5aed11272ec4213f602f012f89f2 # v5
+        if: steps.changes.outputs.required == 'true'
+        with:
+          # Untrusted PRs can restore main's cache, but cannot write to it.
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+      - run: npm ci --no-audit --no-fund
+        if: steps.changes.outputs.required == 'true'
+      - name: Confirm credential-free checkout
+        if: steps.changes.outputs.required == 'true'
+        shell: bash
+        run: |
+          test ! -f google-services.json
+          test ! -f android/app/google-services.json
+      - name: Install Android SDK components
+        if: steps.changes.outputs.required == 'true'
+        shell: bash
+        run: |
+          sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
+          if [[ -z "$sdk_root" ]]; then
+            echo '::error::The runner did not provide an Android SDK directory.'
+            exit 1
+          fi
+          sdk_manager="$sdk_root/cmdline-tools/latest/bin/sdkmanager"
+          if [[ ! -x "$sdk_manager" ]]; then
+            echo '::error::Android sdkmanager is missing from the runner SDK directory.'
+            exit 1
+          fi
+          "$sdk_manager" 'platforms;android-36' 'build-tools;36.0.0' 'ndk;27.1.12297006' 'cmake;3.22.1'
+      - name: Compile debug APK and run Android lint
+        if: steps.changes.outputs.required == 'true'
+        working-directory: android
+        shell: bash
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:assembleDebug :app:lintDebug --no-daemon --max-workers=2 --stacktrace -PreactNativeArchitectures=arm64-v8a
+      - name: Explain skipped native compilation
+        if: steps.changes.outputs.required == 'false'
+        shell: bash
+        run: echo 'No native build inputs changed. Android compilation intentionally skipped; fast JS/config/regression checks still run.' >> "$GITHUB_STEP_SUMMARY"
+      # Deliberately no APK upload, publishing, release signing or EAS invocation.

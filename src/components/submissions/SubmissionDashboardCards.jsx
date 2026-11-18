@@ -1,22 +1,24 @@
 import { typography } from "../../theme/layout";
-import { ActivityIndicator, TouchableOpacity, View } from "react-native";
-import VistaIcon from '../common/VistaIcon';
+import { View } from "react-native";
+import PressableCard from '../common/PressableCard';
+import useDashboardGrid from '../../hooks/useDashboardGrid';
+import useNavigationContentReady from '../../hooks/useNavigationContentReady';
+import DashboardCardIllustration from './DashboardCardIllustration';
 import { Text } from "../common/FontText";
-import { MAIN_BLUE, MAIN_YELLOW } from "../../constants/colors";
-import { DashboardCardsSkeleton } from '../common/Skeleton';
+import { DashboardCardsSkeletonContent } from '../common/Skeleton';
+import { dashboardLayout, dashboardTones, radii, type, space } from '../../theme/tokens';
 
-function DashboardCard({ onPress, className, style, children }) {
-  const Card = onPress ? TouchableOpacity : View;
-
+function DashboardCard({ onPress, style, label, count, children }) {
   return (
-    <Card
+    <PressableCard
       onPress={onPress}
-      accessibilityRole={onPress ? "button" : undefined}
-      className={className}
+      accessibilityLabel={`${label}: ${count ?? 'Unavailable'} submissions`}
+      accessibilityHint={onPress ? 'Opens submission history with this filter selected' : undefined}
       style={style}
+      containerStyle={{ flex: 1, minWidth: 0 }}
     >
       {children}
-    </Card>
+    </PressableCard>
   );
 }
 
@@ -25,69 +27,50 @@ export default function SubmissionDashboardCards({
   total,
   pending,
   approved,
+  rejected,
   totalLabel = "Total Submissions",
   approvedLabel = "Approved",
   totalOnPress,
   pendingOnPress,
   approvedOnPress,
+  rejectedOnPress,
   showTotalLoader = false,
 }) {
-  if (isLoading) return <DashboardCardsSkeleton />;
+  const { columns, fontScale, onLayout } = useDashboardGrid();
+  const contentReady = useNavigationContentReady();
+  if (isLoading || !contentReady) return <DashboardCardsSkeletonContent columns={columns} fontScale={fontScale} onLayout={onLayout} />;
+  const artScale = dashboardLayout.artScale / (columns === 2 ? Math.max(1, fontScale) : 1);
+  const artSize = dashboardLayout.artSize * artScale;
+  const cards = [
+      { key: 'total', label: totalLabel, count: total, icon: 'folder', onPress: totalOnPress },
+      { key: 'pending', label: 'Pending', count: pending, icon: 'clock', onPress: pendingOnPress },
+      { key: 'approved', label: approvedLabel, count: approved, icon: 'check-square', onPress: approvedOnPress },
+      { key: 'rejected', label: 'Rejected', count: rejected, icon: 'x-square', onPress: rejectedOnPress },
+  ];
+  const rows = Array.from({ length: Math.ceil(cards.length / columns) }, (_, index) => cards.slice(index * columns, (index + 1) * columns));
   return (
-    <>
-      <DashboardCard
-        onPress={totalOnPress}
-        className="rounded-2xl p-3 flex-row justify-between items-end mb-3"
-        style={{ backgroundColor: MAIN_BLUE, borderRadius: 18, borderCurve: "continuous" }}
-      >
-        <View className="flex-1 min-w-0">
-          <Text className="text-white text-sm mb-1 font-bold" style={{ color: '#FFFFFF' }}>
-            {totalLabel}
-          </Text>
-          {isLoading && showTotalLoader ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <Text className="text-white text-4xl font-bold" style={[typography.number, { color: '#FFFFFF' }]}>
-              {isLoading ? "—" : total}
-            </Text>
-          )}
+    <View onLayout={onLayout} style={{ gap: space.md, marginBottom: space.lg }}>
+      {rows.map((row, index) => (
+        <View key={index} style={{ flexDirection: 'row', gap: space.md, alignItems: 'stretch' }}>
+          {row.map(card => {
+            const tone = dashboardTones[card.key];
+            return <DashboardCard key={card.key} onPress={card.onPress} label={card.label} count={card.count}
+              style={{ flex: 1, minWidth: 0, aspectRatio: 1, padding: space.md, overflow: 'hidden',
+                backgroundColor: tone.background, borderRadius: radii.card, borderCurve: 'continuous' }}>
+              <Text style={{ ...type.sectionTitle, minHeight: type.sectionTitle.lineHeight * 2 * fontScale, color: tone.foreground }}>{card.label}</Text>
+              <View style={{ flex: 1, minHeight: 0, flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: space.xs, marginTop: space.xs }}>
+                <Text style={[typography.number, { flexShrink: 1, color: tone.foreground }]}>{card.count ?? '—'}</Text>
+                <View pointerEvents="none" accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
+                  style={{ width: artSize, height: artSize, alignSelf: 'flex-end', flexShrink: 0 }}>
+                  <View style={{ position: 'absolute', right: 0, bottom: 0 }}>
+                    <DashboardCardIllustration kind={card.key} scale={artScale} />
+                  </View>
+                </View>
+              </View>
+            </DashboardCard>;
+          })}
         </View>
-        <VistaIcon name="folder" size={24} color="#FFFFFF" style={{ marginBottom: 4, marginRight: 2 }} />
-      </DashboardCard>
-
-      <View className="flex-row gap-3 mb-4">
-        <DashboardCard
-          onPress={pendingOnPress}
-          className="flex-1 rounded-2xl p-3 flex-row justify-between items-end"
-          style={{ backgroundColor: MAIN_YELLOW, borderRadius: 18, borderCurve: "continuous" }}
-        >
-          <View className="flex-1 min-w-0">
-            <Text className="text-white text-xs mb-1 font-bold" style={{ color: '#FFFFFF' }}>
-              Pending
-            </Text>
-            <Text className="text-white text-4xl font-bold" style={[typography.number, { color: '#FFFFFF' }]}>
-              {isLoading ? "—" : pending}
-            </Text>
-          </View>
-          <VistaIcon name="clock" size={24} color="#FFFFFF" style={{ marginBottom: 4, marginRight: 2 }} />
-        </DashboardCard>
-
-        <DashboardCard
-          onPress={approvedOnPress}
-          className="flex-1 rounded-2xl p-3 flex-row justify-between items-end"
-          style={{ backgroundColor: '#52B764', borderRadius: 18, borderCurve: "continuous" }}
-        >
-          <View className="flex-1 min-w-0">
-            <Text className="text-white text-xs mb-1 font-bold" style={{ color: '#FFFFFF' }}>
-              {approvedLabel}
-            </Text>
-            <Text className="text-white text-4xl font-bold" style={[typography.number, { color: '#FFFFFF' }]}>
-              {isLoading ? "—" : approved}
-            </Text>
-          </View>
-          <VistaIcon name="check-square" size={24} color="#FFFFFF" style={{ marginBottom: 4, marginRight: 2 }} />
-        </DashboardCard>
-      </View>
-    </>
+      ))}
+    </View>
   );
 }

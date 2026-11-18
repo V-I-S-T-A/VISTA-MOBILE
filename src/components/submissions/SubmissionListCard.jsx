@@ -3,14 +3,23 @@ import { Text } from '../common/FontText';
 import UserAvatar from '../common/UserAvatar';
 import SubmissionStatusBadge, { getSubmissionStatus } from './SubmissionStatusBadge';
 import { surfaces } from '../../theme/layout';
-import { colors, compact, radii, type, cardTones } from '../../theme/tokens';
+import { colors, compact, type, cardTones, space, motion, notificationLayout } from '../../theme/tokens';
+
+// Intl formatter construction is expensive in Hermes. Share it across cards
+// instead of reconstructing one for every card on each navigation render.
+const submissionDateFormatter = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+
+function formatSubmissionDate(value) {
+  if (!value) return '—';
+  const date = new Date(value);
+  // Preserve the existing malformed-date fallback rather than throwing in render.
+  return Number.isNaN(date.getTime()) ? date.toLocaleDateString() : submissionDateFormatter.format(date);
+}
 
 export default function SubmissionListCard({ submission, onPress, showSubmitterEmail = false }) {
   const { fontScale } = useWindowDimensions();
   const title = submission.title || 'Untitled submission';
-  const date = submission.submitted_at
-    ? new Date(submission.submitted_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
-    : '—';
+  const date = formatSubmissionDate(submission.submitted_at);
   const tone = submission.priority_escalation
     ? cardTones.priority
     : cardTones[submission.status] || cardTones.default;
@@ -18,26 +27,24 @@ export default function SubmissionListCard({ submission, onPress, showSubmitterE
   return (
     <TouchableOpacity
       onPress={onPress}
-      activeOpacity={0.8}
+      activeOpacity={motion.pressedOpacity}
       accessibilityRole="button"
       accessibilityLabel={`${submission.priority_escalation ? 'Priority, ' : ''}${title}, ${submission.org_name || 'Organization unavailable'}, ${getSubmissionStatus(submission.status).label}${showSubmitterEmail && submission.submitted_by_email ? `, ${submission.submitted_by_email}` : ''}. Open full submission details.`}
       style={[surfaces.card, styles.card]}
     >
       <View style={[styles.accent, { backgroundColor: tone.accent }]} />
-      <View style={styles.avatar}>
-        <UserAvatar uri={submission.org_image_url} size={compact.avatar || 30} />
-      </View>
+      <UserAvatar uri={submission.org_image_url} size={notificationLayout.avatar || 30} />
       <View style={styles.content}>
         <Text numberOfLines={1} ellipsizeMode="tail" style={styles.title}>
           {title}
         </Text>
-        <View style={[styles.row, fontScale > 1.2 && styles.largeRow]}>
+        <View style={[styles.row, styles.middleRow, fontScale > 1.2 && styles.largeRow]}>
           <View style={styles.metadata}>
             <Text numberOfLines={1} ellipsizeMode="tail" style={styles.org}>
               {submission.org_name || 'Organization unavailable'}
             </Text>
           </View>
-          <SubmissionStatusBadge status={submission.status} size="mini" />
+          <SubmissionStatusBadge status={submission.status} size="mini" variant="dot" />
         </View>
         <View style={[styles.row, fontScale > 1.2 && styles.largeRow]}>
           <View style={styles.metadata}>
@@ -47,6 +54,7 @@ export default function SubmissionListCard({ submission, onPress, showSubmitterE
           </View>
           {submission.priority_escalation ? (
             <View style={styles.priority}>
+              <View style={styles.priorityDot} />
               <Text style={styles.priorityText}>Priority</Text>
             </View>
           ) : null}
@@ -59,14 +67,14 @@ export default function SubmissionListCard({ submission, onPress, showSubmitterE
 const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: compact.paddingHorizontal || 11,
-    paddingVertical: compact.paddingVertical || 7.5,
-    marginBottom: compact.gutter || 5,
-    borderRadius: radii.listCard || 14,
+    alignItems: 'flex-start',
+    gap: 10,
+    paddingHorizontal: notificationLayout.paddingHorizontal || 12,
+    paddingVertical: notificationLayout.paddingVertical || 8,
+    marginBottom: notificationLayout.gap || 8,
+    borderRadius: notificationLayout.radius || 20,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: colors.border,
     overflow: 'hidden',
     backgroundColor: colors.listSurface,
   },
@@ -77,23 +85,20 @@ const styles = StyleSheet.create({
     left: 0,
     width: compact.accent || 3,
   },
-  avatar: {
-    paddingRight: 8,
-    borderRightWidth: 1,
-    borderRightColor: '#EEF2F6',
-    alignSelf: 'stretch',
-    justifyContent: 'center',
-  },
   content: {
     flex: 1,
     minWidth: 0,
-    gap: compact.rowGap || 2.5,
+    justifyContent: 'center',
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 5,
+    gap: space.xs,
+  },
+  middleRow: {
+    marginTop: 1,
+    marginBottom: 3,
   },
   largeRow: {
     flexDirection: 'column',
@@ -101,8 +106,9 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   title: {
-    ...type.listTitle,
-    color: '#142B52',
+    ...type.notificationTitle,
+    fontFamily: type.bold,
+    color: colors.navy,
     minWidth: 0,
     includeFontPadding: false,
   },
@@ -128,17 +134,21 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 5,
-    backgroundColor: '#FFF6D8',
-    paddingHorizontal: 5,
-    paddingVertical: 1.5,
+    gap: 5,
+    backgroundColor: 'transparent',
     flexShrink: 0,
   },
+  priorityDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.priorityText,
+  },
   priorityText: {
-    fontFamily: type.medium,
-    fontSize: 9.5,
-    lineHeight: 13,
-    color: '#765700',
+    fontFamily: type.bold,
+    fontSize: type.meta.fontSize,
+    lineHeight: type.meta.lineHeight,
+    color: colors.priorityText,
     includeFontPadding: false,
   },
 });

@@ -1,20 +1,25 @@
-import { MAIN_BLUE } from "../../constants/colors";
+import { type, colors, space, radii, sizes, loginLayout } from '../../theme/tokens';
 import TextInput from '../../components/common/AppInput';
 import AppBottomSheet from '../../components/common/AppBottomSheet';
 import { AppAlert as Alert } from '../../components/common/AppDialog';
 import { Text } from '../../components/common/FontText';
-import { View, TouchableOpacity, ImageBackground, Image, KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView, useWindowDimensions } from 'react-native';
+import { View, TouchableOpacity, Image, ActivityIndicator, useWindowDimensions, RefreshControl, StyleSheet } from 'react-native';
+import { useScreenRefresh } from '../../hooks/useScreenRefresh';
 import { useRef, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { typography } from "../../theme/layout";
 import { authService } from "../../services/authService";
 import VistaProcessing from '../../components/common/VistaProcessing';
+import AppButton from '../../components/common/AppButton';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import useConnectivity from '../../hooks/useConnectivity';
 
 export default function LoginScreen() {
+  const { refreshing, onRefresh } = useScreenRefresh([]);
   const resetTrigger = useRef(null);
-  const { height } = useWindowDimensions();
+  const passwordInput = useRef(null);
+  const { height, width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,6 +35,7 @@ export default function LoginScreen() {
   const [resetStep, setResetStep] = useState("email");
   const [isResetting, setIsResetting] = useState(false);
   const { login } = useAuth();
+  const online = useConnectivity();
 
   const handleSignIn = async () => {
     if (!email.trim() || !password) {
@@ -109,89 +115,81 @@ export default function LoginScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white">
-      <ImageBackground
-        source={require("../../assets/login-illustration-hq.webp")}
-        resizeMode="cover"
-        style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }}
-        accessibilityIgnoresInvertColors
-      />
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1"
-      >
-        <ScrollView
+    <View style={styles.screen}>
+        <KeyboardAwareScrollView
+          alwaysBounceVertical overScrollMode="always"
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          bottomOffset={space.lg}
+          keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ flexGrow: 1, paddingTop: Math.max(insets.top, 16) + Math.max(64, height * 0.23), paddingBottom: Math.max(insets.bottom, 24) }}
+          contentContainerStyle={{ flexGrow: 1, paddingTop: Math.max(insets.top, space.lg) }}
         >
-          <View style={{ width: "80%", maxWidth: 340, alignSelf: "center" }}>
-          <View>
-        <View className="items-center mb-6">
-          <Image
-            source={require("../../assets/logo.webp")}
-            style={{ width: 92, height: 92 }}
-            resizeMode="contain"
-            accessibilityLabel="VISTA Logo"
-          />
-          <Text
-            style={{
-              fontFamily: "DMSans_800ExtraBold",
-              fontSize: 24,
-              letterSpacing: 2.5,
-              color: MAIN_BLUE,
-              marginTop: 6,
-            }}
-          >
-            VISTA
-          </Text>
-        </View>
+          <View style={[styles.hero, { minHeight: Math.min(loginLayout.heroMaxHeight, Math.max(loginLayout.heroMinHeight, height * loginLayout.heroRatio)), paddingLeft: Math.max(insets.left, space.xxl), paddingRight: Math.max(insets.right, space.xxl) }]}>
+            <View pointerEvents="none" accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.artwork}>
+              <View style={[styles.dot, styles.dotLeft]} /><View style={[styles.dot, styles.dotRight]} />
+              <Image source={require('../../assets/login-students.webp')} resizeMode="contain" accessibilityIgnoresInvertColors
+                style={{ width: Math.min(loginLayout.artWidth, width - space.xxxl * 2), height: loginLayout.artHeight }} />
+            </View>
+            <Text accessibilityRole="header" style={styles.welcome}>Let’s get you{'\n'}signed in!</Text>
+          </View>
+          <View style={[styles.panel, { paddingLeft: Math.max(insets.left, space.xxl), paddingRight: Math.max(insets.right, space.xxl), paddingBottom: Math.max(insets.bottom, space.xxl) }]}>
+          <View style={styles.form}>
+            <View style={styles.brand}>
+              <Image source={require('../../assets/logo.webp')} style={styles.logo} resizeMode="contain" accessibilityLabel="VISTA Logo" />
+              <Text style={styles.brandName}>VISTA</Text>
+            </View>
+            {!online ? <Text accessibilityLiveRegion="polite" style={styles.connectionHint}>Connect to the internet to sign in.</Text> : null}
 
-        <View className="bg-white rounded-full border border-[#F0B34B] px-4 mb-3"
-          style={{ minHeight: 48, justifyContent: "center" }}>
+        <Text style={styles.label}>Email address</Text>
           <TextInput
             placeholder="youremail@gmail.com"
-            placeholderTextColor="#9CA3AF"
+            accessibilityLabel="Email address"
+            autoComplete="email"
+            returnKeyType="next"
+            onSubmitEditing={() => passwordInput.current?.focus()}
+            blurOnSubmit={false}
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
             autoCorrect={false}
             keyboardType="email-address"
-            className="text-gray-700 text-sm"
-            style={{ flex: 1, minHeight: 48, paddingVertical: 10, borderWidth: 0, backgroundColor: "transparent", paddingHorizontal: 0, fontSize: 14 }}
+            style={styles.emailInput}
           />
-        </View>
 
-        <View className="bg-white rounded-full border border-[#F0B34B] px-4 mb-3 flex-row items-center"
-          style={{ minHeight: 48 }}>
+        <Text style={styles.label}>Password</Text>
+        <View style={styles.passwordField}>
           <TextInput
             placeholder="password"
-            placeholderTextColor="#9CA3AF"
+            ref={passwordInput}
+            accessibilityLabel="Password"
+            autoComplete="current-password"
+            returnKeyType="go"
+            onSubmitEditing={() => { if (!isSubmitting) handleSignIn(); }}
             value={password}
             onChangeText={setPassword}
             secureTextEntry={!showPassword}
             autoCapitalize="none"
             autoCorrect={false}
             textContentType="password"
-            className="text-gray-700 text-sm"
-            style={{ flex: 1, minHeight: 48, paddingVertical: 10, borderWidth: 0, backgroundColor: "transparent", paddingHorizontal: 0, fontSize: 14 }}
+            style={styles.passwordInput}
           />
           <TouchableOpacity
             onPress={() => setShowPassword(!showPassword)}
             accessibilityLabel={showPassword ? "Hide password" : "Show password"}
             accessibilityRole="button"
-            style={{ width: 48, minHeight: 48, alignItems: "center", justifyContent: "center", marginRight: -12 }}
+            style={styles.visibilityButton}
           >
             <Feather
               name={showPassword ? "eye" : "eye-off"}
-              size={20}
-              color="#9CA3AF"
+              size={sizes.icon}
+              color={colors.muted}
             />
           </TouchableOpacity>
         </View>
 
         {errorMessage ? (
-          <Text className="text-red-600 text-sm font-semibold mb-3 px-2">
+          <Text selectable accessibilityRole="alert" style={styles.error}>
             {errorMessage}
           </Text>
         ) : null}
@@ -202,34 +200,18 @@ export default function LoginScreen() {
             setResetEmail(email);
             setIsForgotOpen(true);
           }}
-          className="self-end mb-3 px-1"
-          style={{ minHeight: 48, justifyContent: "center" }}
+          accessibilityRole="button"
+          style={styles.forgotButton}
         >
-          <Text className="text-vistaNavy font-semibold text-sm">
+          <Text style={styles.forgotText}>
             Forgot password?
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={handleSignIn}
-          disabled={isSubmitting}
-          className={`bg-vistaOrange rounded-full py-3 items-center ${
-            isSubmitting ? "opacity-70" : ""
-          }`}
-        >
-          {isSubmitting ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <Text className="text-white"
-              style={[typography.section, { letterSpacing: 0 }]}>
-              Sign in
-            </Text>
-          )}
-        </TouchableOpacity>
+        <AppButton label="Sign in" variant="accent" onPress={handleSignIn} busy={isSubmitting} />
           </View>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+        </KeyboardAwareScrollView>
       <AppBottomSheet returnFocusRef={resetTrigger} visible={isForgotOpen} title="Reset Password" onClose={() => setIsForgotOpen(false)} busy={isResetting}>
 
             {resetStep === "email" ? (
@@ -334,3 +316,27 @@ export default function LoginScreen() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.blue },
+  hero: { alignItems: 'center', justifyContent: 'center', paddingVertical: space.xl, gap: space.md },
+  artwork: { alignItems: 'center', justifyContent: 'center' },
+  dot: { position: 'absolute', width: loginLayout.decorationSize, height: loginLayout.decorationSize, borderRadius: radii.pill },
+  dotLeft: { left: -space.lg, top: space.xxl, backgroundColor: colors.yellow },
+  dotRight: { right: -space.sm, bottom: space.xxl, width: space.sm, height: space.sm, backgroundColor: colors.onBrand },
+  welcome: { ...type.display, color: colors.onBrand, textAlign: 'center' },
+  panel: { flexGrow: 1, backgroundColor: colors.surface, borderTopLeftRadius: space.xxxl, borderTopRightRadius: space.xxxl, borderCurve: 'continuous', paddingTop: space.xxl },
+  form: { width: '100%', maxWidth: loginLayout.formWidth, alignSelf: 'center' },
+  brand: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm, marginBottom: space.xl },
+  logo: { width: loginLayout.logoSize, height: loginLayout.logoSize },
+  brandName: { ...type.display, color: colors.blue },
+  label: { ...type.label, color: colors.navy, marginBottom: space.sm },
+  connectionHint: { ...type.meta, color: colors.muted, textAlign: 'center', marginBottom: space.lg },
+  emailInput: { minHeight: loginLayout.fieldHeight, marginBottom: space.lg },
+  passwordField: { flexDirection: 'row', alignItems: 'center', minHeight: loginLayout.fieldHeight, backgroundColor: colors.field, borderWidth: 1, borderColor: colors.border, borderRadius: radii.field, borderCurve: 'continuous' },
+  passwordInput: { flex: 1, minWidth: 0, minHeight: loginLayout.fieldHeight, borderWidth: 0, backgroundColor: 'transparent' },
+  visibilityButton: { width: sizes.touch, minHeight: sizes.touch, alignItems: 'center', justifyContent: 'center' },
+  error: { ...type.label, color: colors.danger, marginTop: space.md },
+  forgotButton: { alignSelf: 'center', minHeight: sizes.touch, justifyContent: 'center', marginVertical: space.sm },
+  forgotText: { ...type.button, color: colors.navy },
+});
