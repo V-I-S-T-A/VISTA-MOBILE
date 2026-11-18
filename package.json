@@ -16,7 +16,8 @@
     "test": "node scripts/ci/run-tests.cjs",
     "test:push": "npm test",
     "bundle:android:ci": "expo export:embed --entry-file node_modules/expo/AppEntry.js --platform android --dev false --minify true --max-workers 2 --bundle-output dist/ci/index.android.bundle --assets-dest dist/ci/assets",
-    "audit:ci": "npm audit --package-lock-only --omit=dev --audit-level=high"
+    "audit:ci": "node scripts/ci/audit-dependencies.cjs",
+    "audit:versions": "npm audit --package-lock-only --omit=dev --audit-level=high"
   },
   "dependencies": {
     "@expo-google-fonts/dm-sans": "^0.4.2",

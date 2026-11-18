@@ -40,6 +40,7 @@ test('ordinary pull requests receive independent checks without credentials or d
   }
   assert.ok(fast.jobs.regression.steps.some(step => step.run === 'npm test'));
   assert.ok(fast.jobs.security.steps.some(step => step.run === 'npm run audit:ci'));
+  assert.ok(fast.jobs.security.steps.some(step => step.run === 'npm ci --no-audit --no-fund'), 'Security verification must inspect source patched by the real postinstall');
 });
 
 test('native verification uses the committed debug variant, independent caches and no release credentials', () => {
@@ -73,7 +74,7 @@ test('native detection includes dependencies, Expo/autolinking, Gradle, Android 
     'package.json', 'package-lock.json', 'app.json', 'app.config.js', 'app.config.ts', 'react-native.config.js',
     'android/build.gradle', 'android/settings.gradle', 'android/gradle.properties', 'android/gradle/wrapper/gradle-wrapper.properties',
     'android/app/src/main/java/com/wayvbb/vistaapp/MainActivity.kt', 'android/app/src/main/AndroidManifest.xml',
-    'plugins/android/VistaSplashAnimation.kt', 'scripts/apply-native-patches.js', 'scripts/ci/native-changes.cjs',
+    'plugins/android/VistaSplashAnimation.kt', 'scripts/apply-native-patches.js', 'scripts/ci/native-changes.cjs', 'patches/picomatch/4.0.5.json',
     'assets/native/splash.png', 'src/assets/branding/lucide-LICENSE.txt', '.node-version', '.github/workflows/android-native.yml',
   ]) {
     assert.equal(isNativeInput(file), true, file);

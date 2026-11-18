@@ -81,5 +81,6 @@ jobs:
         with:
           node-version-file: .node-version
           cache: npm
-      # Audit the lockfile without executing dependency lifecycle scripts.
+      # Apply and verify the committed source backports before auditing versions.
+      - run: npm ci --no-audit --no-fund
       - run: npm run audit:ci

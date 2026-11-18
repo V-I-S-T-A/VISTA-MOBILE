@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const root = path.resolve(__dirname, "..");
+require('./patch-picomatch.cjs').applyPatches(root);
 require('./patch-expo-metro.cjs').applyExpoMetroWatcherPatch(root);
 require('../plugins/withSplashBranding').applyNativeSplashPatch(root);
 

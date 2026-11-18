@@ -4,7 +4,7 @@ const { execFileSync } = require('node:child_process');
 // Keep the workflow/check present on every PR. Only expensive native steps skip.
 // Match inputs to Android compilation/autolinking rather than ordinary UI files.
 function isNativeInput(file) {
-  return /^(android|plugins|assets\/native|src\/assets\/branding|scripts|\.github\/actions)\//.test(file) ||
+  return /^(android|plugins|patches|assets\/native|src\/assets\/branding|scripts|\.github\/actions)\//.test(file) ||
     /^(package\.json|package-lock\.json|app\.json|app\.config\.(js|cjs|ts)|react-native\.config\.(js|cjs)|\.node-version|\.npmrc|gradle\.properties|settings\.gradle(?:\.kts)?|build\.gradle(?:\.kts)?|\.github\/workflows\/android-native\.yml)$/.test(file);
 }
 
